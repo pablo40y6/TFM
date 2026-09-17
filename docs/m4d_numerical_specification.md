@@ -1,10 +1,10 @@
 # M4D spectroscopy numerical specification — partial / not frozen
 
-Status: **PARTIAL SPECIFICATION / A-BAND SOURCE MATERIALIZATION BLOCKER / B+IRA BASELINE CANDIDATES SELECTED**
+Status: **PARTIAL SPECIFICATION / A AUXILIARY BYTE+MAPPING BLOCKER / B+IRA BASELINE CANDIDATES SELECTED**
 
 Branch: `milestone/m4d-design`
 
-> This is not the final M4D implementation specification. `docs/m4d_final_design_review.md` and `docs/m4d_pressure_broadening_provenance_followup.md` supersede the old Doppler-only prescription. Only the rules explicitly marked retained or selected below may be carried forward.
+> This is not the final M4D implementation specification. `docs/m4d_final_design_review.md`, `docs/m4d_pressure_broadening_provenance_followup.md`, `docs/m4d_a_band_auxiliary_source_recovery.md`, and `docs/m4d_ira_cia_historical_source_recovery.md` supersede the old Doppler-only prescription. Only the rules explicitly marked retained or selected below may be carried forward.
 
 ## 1. Required outputs — retained
 
@@ -36,7 +36,7 @@ gA    430 lines  SHA256 176a6c21ee37b1244bd11ef7047f6e31f7cada7edff2c3498f31f8d1
 gB    320 lines  SHA256 bb5f8b26a2ad3c9dc31870506c3c05bcdb115b7c5b06d7141c9660c952d83c2d
 ```
 
-This freezes transition identity/intensity provenance. It does not imply that classic 160-character records contain every advanced A-band relation required by HITRAN2016.
+This freezes transition identity/intensity provenance. It does not imply that classic 160-character records contain every advanced/auxiliary A-band parameter required by the historical design.
 
 ### TIPS-2017
 
@@ -76,19 +76,46 @@ Do not apply terrestrial abundance a second time. Standard HITRAN `sw` already i
 
 TIPS interpolation follows the pinned historical HAPI implementation. A project-local implementation must reproduce that source to numerical roundoff and must not depend on current mutable HAPI at runtime.
 
-## 4. Per-band profile selection/status
+## 4. Per-band / per-isotopologue profile selection
 
 There is no single common M4D line profile.
 
-### 4.1 A band — not executable yet
+### 4.1 A iso 1 / principal isotopologue — not executable yet
 
-For principal isotopologue O2, the final historical representation must reproduce the HITRAN2016/Drouin speed-dependent + line-mixing treatment. The public Drouin source and exact supplement identity are known, but the project has not yet frozen the supplement bytes or executable Drouin-to-HITRAN/Rosenkranz mapping.
+The final historical representation must reproduce the HITRAN2016/Drouin speed-dependent + line-mixing treatment. The public Drouin source and exact supplement identity are known:
+
+```text
+PMC5103325
+NIHMS804415-supplement-supplement_1.pdf
+reported size 94.8 kB
+```
+
+but the project has not yet frozen the supplement bytes or the executable Drouin-to-HITRAN/Rosenkranz mapping.
 
 Do not substitute isolated Voigt merely for implementation convenience.
 
-For A rare isotopologues, recover the historical profile or quantitatively demonstrate that a documented classic-profile fallback changes final `gA` by no more than `0.1%` throughout the validation domain.
+### 4.2 A iso 2/3 / rare isotopologues — Galatry historical candidate selected
 
-### 4.2 B band — classic Voigt baseline candidate selected
+HITRAN2012/Long et al. document the rare A-band isotopologues with **Galatry** profiles including pressure broadening and Dicke narrowing. HITRAN2016 documents the Drouin replacement specifically for the principal isotopologue rather than an equivalent rare-isotopologue update.
+
+The historical auxiliary identities are:
+
+```text
+07_A-band_SDF.dat
+07_hit12_0.76mic_Galatry.par
+```
+
+The accepted rare-isotopologue integrated strength is approximately `0.4674%` of total A at 296 K, so omitting those lines cannot be justified against a `0.1%` tolerance without calculation.
+
+Selected candidate:
+
+```text
+A iso 2/3 -> Long/HITRAN2012 Galatry + historical Dicke-narrowing parameters
+```
+
+This remains conditional on exact auxiliary bytes/hash, deterministic line mapping and a HITRAN2016 continuity check.
+
+### 4.3 B band — classic Voigt baseline candidate selected
 
 Use the complete accepted HITRAN2016 classic fields:
 
@@ -106,13 +133,13 @@ with pressures in atm and Lorentz HWHM coefficients in `cm^-1 atm^-1`.
 
 A source-corrected qSDV sensitivity on the historically covered principal-isotopologue lines is mandatory. The classic-Voigt baseline candidate remains accepted only if that sensitivity changes all validated B rates by `<=0.1%`.
 
-### 4.3 IRA — classic Voigt monomer baseline candidate selected
+### 4.4 IRA — classic Voigt monomer baseline candidate selected
 
 Use the same classic HITRAN2016 Voigt equations and accepted line fields as B for the discrete `a(0)-X(0)` monomer lines.
 
 This remains conditional on final consistent target+attenuation convergence.
 
-IRA CIA is not folded into this monomer line profile; it is the separate Option-B twilight sensitivity in Section 14.
+IRA CIA is not folded into this monomer line profile; it is the separate Option-B closure sensitivity in Section 14.
 
 ## 5. Solar spectral photon flux — retained
 
@@ -160,9 +187,9 @@ tau(nu,z,SZA)
 
 The target-temperature-cross-section-times-total-column approximation is rejected.
 
-For classic B/IRA profiles each shell uses its shell-local pressure, O2 partial pressure and temperature in the selected width expression, and its shell-local pressure shift.
+For classic B/IRA profiles each shell uses shell-local pressure, O2 partial pressure and temperature in the selected width expression, plus shell-local pressure shift.
 
-For A, shell-local advanced parameters must follow the recovered historical representation.
+For A iso 1, shell-local advanced parameters must follow the recovered historical Drouin/HITRAN representation. For A iso 2/3, shell-local broadening/narrowing must follow the recovered Galatry auxiliary parameters.
 
 ## 8. Excitation integral — retained
 
@@ -177,7 +204,7 @@ g_band(z,SZA)
 
 Units must close to `s^-1`.
 
-At zero absorber column recover the unattenuated integral. The target and attenuation calculations must use the same physical profile semantics for that band.
+At zero absorber column recover the unattenuated integral. Target excitation and shell attenuation must use the same selected physical profile semantics for each isotopologue/profile family.
 
 ## 9. Doppler quadrature evidence — diagnostic only
 
@@ -187,7 +214,7 @@ The independent review established a converged Doppler reference with line-centr
 +/-8 Doppler HWHM / 64 points
 ```
 
-versus a `+/-10 HWHM / 128` reference produced maximum tested differences of approximately:
+versus `+/-10 HWHM / 128`, with maximum tested differences approximately:
 
 ```text
 A     0.07584%
@@ -219,9 +246,11 @@ Because every accepted target subset is finite, evaluating all absorber lines at
 
 The final support/order is not frozen until the full-domain calculation passes the gate below.
 
-## 11. A-band quadrature — open
+## 11. A-band quadrature — open by profile family
 
-A-band spectral support and convergence must be defined from the recovered HITRAN2016/Drouin SDV + line-mixing representation. It must not be inferred from isolated-Voigt wings.
+A iso-1 spectral support and convergence must be defined from the recovered Drouin/HITRAN2016 SDV + line-mixing representation and must not be inferred from isolated-Voigt wings.
+
+A iso-2/3 spectral support/convergence must be appropriate to the recovered Galatry representation, including Dicke narrowing. The final A calculation must sum all accepted isotopologues consistently before applying the M4D convergence gate.
 
 ## 12. Final numerical convergence gate
 
@@ -251,6 +280,8 @@ The B/IRA convergence study must test at least:
 - pressure-shift on/off sensitivity;
 - all-absorber-lines attenuation evaluation.
 
+The A convergence study must separately validate the numerical controls appropriate to the Drouin/Rosenkranz and Galatry components, then validate their summed `gA`.
+
 ## 13. Unattenuated validation — retained
 
 The accepted design-forensics values are:
@@ -276,18 +307,28 @@ A+B    ~5.56e-9 s^-1
 
 No empirical normalization may be used to force agreement.
 
-## 14. IRA CIA Option B — source narrowed, sensitivity still open
+## 14. IRA CIA Option B — historical source recovered, exact asset/run open
 
 The monomer baseline excludes CIA from both `gIRA` source and baseline attenuation.
 
 The historical CIA sensitivity is nevertheless required. HITRAN2016 identifies Maté et al. (1999), DOI `10.1029/1999JD900824`, as the revised 1.27-micron CIA source and distinguishes:
 
-- pure-O2 data in the historical `O2-O2` CIA file;
-- 21:79 O2:N2 mixture data in the historical `O2-Air` file.
+- pure-O2 data in `O2-O2`;
+- 21:79 O2:N2 mixture data in `O2-Air`.
 
-Do not double count O2-O2 by combining an atmospheric O2-Air coefficient with another O2-O2 contribution representing the same mixture.
+Do not double count O2-O2 by combining atmospheric O2-Air with a second O2-O2 contribution for the same mixture.
 
-Before milestone closure, freeze the exact historical HITRAN2016 CIA file bytes/hash and run the required twilight sensitivity. Do not substitute current HITRAN CIA data silently.
+The candidate atmospheric sensitivity is:
+
+```text
+tau_CIA(nu)
+  = sum_shell k_O2-Air(nu,T_shell)
+              * n_O2,shell * n_air,shell * ds_shell.
+```
+
+Maté measurements were made at `253`, `273`, and `296 K`; colder M4D shells require an explicitly bounded or separately sourced policy. No post-2016 temperature extension is an automatic historical replacement.
+
+Before milestone closure, freeze the exact historical HITRAN2016 CIA file bytes/hash and run the required twilight sensitivity. See `docs/m4d_ira_cia_historical_source_recovery.md`.
 
 ## 15. Physical/numerical invariants
 
@@ -303,7 +344,7 @@ The final implementation must enforce at least:
 - deterministic source-order invariance;
 - accepted subset hashes verified before generation.
 
-For isolated profiles, normalized integrated profile strength must recover `S(T)`.
+For normalized isolated/Galatry profiles, integrated profile strength must recover `S(T)` according to the recovered historical formalism and numerical tolerance.
 
 For A line mixing, apply non-negativity and conservation tests to the total physical band absorption according to the recovered historical formalism; do not assume every algebraic line-mixing contribution must be individually positive.
 
@@ -311,18 +352,18 @@ For A line mixing, apply non-negativity and conservation tests to the total phys
 
 Before `docs/m4d_final_design_specification.md` may be created, provide:
 
-- frozen Drouin A-band supplement identity/hash and executable parameter mapping;
-- resolved/bounded A rare-isotopologue treatment;
-- final A target+attenuation convergence;
+- frozen Drouin A iso-1 supplement bytes/hash and executable parameter mapping;
+- frozen historical A iso-2/3 Galatry auxiliary bytes/hash, deterministic mapping, and HITRAN2016 continuity check;
+- final A target+attenuation convergence over all isotopologues;
 - final B classic-Voigt target+attenuation convergence;
 - corrected B qSDV sensitivity on covered lines;
 - final IRA classic-Voigt target+attenuation convergence;
 - pressure-shift sensitivity;
-- historical IRA CIA file identity/hash and twilight sensitivity;
+- historical IRA CIA file identity/hash, cold-shell policy and twilight sensitivity;
 - retained source/TIPS/solar/g0 regression checks.
 
 ## 17. Implementation boundary
 
 **M4D DESIGN IS NOT FROZEN / M4D IS NOT IMPLEMENTED.**
 
-No production implementation, implementation PR, M5 work, or modification of accepted M1-M4C-R2 behavior is authorized until the remaining A-source and final numerical gates close.
+No production implementation, implementation PR, M5 work, or modification of accepted M1-M4C-R2 behavior is authorized until the remaining source-materialization and final numerical gates close.
