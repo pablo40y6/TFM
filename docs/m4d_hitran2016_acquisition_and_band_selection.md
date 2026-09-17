@@ -4,215 +4,234 @@ Status: **DRAFT EVIDENCE / DESIGN NOT FROZEN**
 
 Branch: `milestone/m4d-design`
 
-This note records what can now be specified independently about the O2 spectroscopy inputs required for M4D, and what is still missing before implementation is allowed. It does not authorize M4D coding and does not reopen M1-M4C-R2.
+This note records the current evidence-backed spectroscopy design for M4D. It does not authorize M4D coding and does not reopen M1-M4C-R2.
 
 ## 1. Current outcome
 
-The semantic definition of the three required O2 bands and the HITRAN abundance convention can now be narrowed substantially, but an exact machine-readable O2 line file whose provenance establishes **HITRAN2016** has still not been frozen in this repository.
+The physical definition of the three required O2 bands, the isotopologue convention and the historical TIPS-2017 route are now substantially constrained. A concrete historical line-list acquisition route has also been identified through SpectralCalc.
 
-Current status of the numerical line source therefore remains:
+The exact numerical O2 HITRAN2016 transition asset has **not yet been retrieved and frozen**, so M4D remains:
 
-**UNRESOLVED PROVENANCE RISK — not yet SOURCE BLOCKER.**
+**DESIGN NOT FROZEN / NOT IMPLEMENTED.**
 
 A present-day live HITRANonline download must not be used as a silent replacement for the required historical edition.
 
-## 2. Canonical O2 identity in HITRAN2016
+## 2. Canonical O2 identity and corrected HITRAN2016 fingerprints
 
 HITRAN assigns molecular oxygen molecule number `7`.
 
-The HITRAN2016 paper reports three O2 isotopologues in the line-by-line database:
+HITRAN2016 Table 3 reports three O2 isotopologues in the line-by-line database. The correct HITRAN2016 fingerprints are:
 
-| local iso | AFGL | isotopologue | HITRAN2016 full-range line count | reported range (cm^-1) |
+| local iso | HITRAN isotopologue code | isotopologue | HITRAN2016 line count | HITRAN2016 spectral coverage (cm^-1) |
 | --- | --- | --- | ---: | ---: |
-| 1 | 66 | 16O2 | 15,263 | 0-15,928 |
-| 2 | 68 | 16O18O | 2,965 | 1-15,853 |
-| 3 | 67 | 16O17O | 11,313 | 0-14,538 |
+| 1 | 66 | 16O2 | 15,263 | 0-57,028 |
+| 2 | 68 | 16O18O | 2,965 | 1-56,670 |
+| 3 | 67 | 16O17O | 11,313 | 0-14,537 |
 
-These counts/ranges are useful fingerprints for a future full O2 extraction. They are not by themselves sufficient to authenticate a candidate file, but a complete claimed HITRAN2016 O2 file should be checked against them.
+### Correction record
 
-Primary reference:
+An earlier draft of this note incorrectly paired the **HITRAN2012** coverage values `0-15,928`, `1-15,853`, `0-14,538 cm^-1` with the HITRAN2016 counts. Table 3 contains adjacent columns for HITRAN2012 and HITRAN2016, which caused the transcription error.
 
-- Gordon et al. (2017), *The HITRAN2016 Molecular Spectroscopic Database*, JQSRT 203, 3-69, DOI 10.1016/j.jqsrt.2017.06.038.
+The counts `15,263 / 2,965 / 11,313` were already correct; the full-range HITRAN2016 coverage for isotopologues 1 and 2 extends to about `57,000 cm^-1`.
+
+This correction affects the preferred full-dataset acquisition/fingerprint test, but does not change the M4D target A/B/IRA systems, all of which lie below about `15,000 cm^-1`.
+
+Primary source:
+
+- Gordon et al. (2017), *The HITRAN2016 Molecular Spectroscopic Database*, JQSRT 203, 3-69, Table 3, DOI `10.1016/j.jqsrt.2017.06.038`.
 - https://hitran.org/media/refs/HITRAN-2016.pdf
+
+SpectralCalc's HITRAN2016 abundance table independently identifies O2 molecule 7 local isotopologues 1-3 as `16O2`, `16O18O` and `16O17O`:
+
+- https://spectralcalc.com/calc/abundances.php
 
 ## 3. Natural-abundance convention: do not double-weight isotopologues
 
-HITRAN line intensity `sw` is defined using terrestrial natural isotopic abundance. The official HITRAN definitions explicitly include isotopic abundance in the line-intensity convention.
+HITRAN line intensity `sw` uses the terrestrial natural isotopic abundance convention. The official HITRAN documentation describes line intensities as abundance-scaled, and SpectralCalc explicitly explains the same convention.
 
-An independent MATS/HAPI header preserved in `innosat-mats/MATS-analysis` states the same point directly for its downloaded HITRAN data:
+An independent MATS/HAPI header preserved in `innosat-mats/MATS-analysis` states:
 
 > `sw`: "Line intensity, multiplied by isotopologue abundance, at T = 296 K"
 
-Therefore the M4D implementation, if it consumes standard HITRAN line strengths and a bulk O2 number density under the HITRAN natural-terrestrial isotopic convention, must **not multiply each line by isotopologue abundance a second time**.
+Therefore, if M4D consumes standard HITRAN line strengths and a bulk O2 number density under the terrestrial isotopic convention, it must **not multiply `sw` by isotopologue abundance a second time**.
 
-This rule should be frozen only for standard HITRAN `sw` values. If any transformed/third-party line source is eventually used, its intensity convention must first be demonstrated to be equivalent.
-
-Official definitions:
+Sources:
 
 - https://hitran.org/docs/definitions-and-units/
-- https://hitran.org/docs/iso-meta/
-
-MATS witness:
-
+- https://www.spectralcalc.com/info/help.php
 - https://github.com/innosat-mats/MATS-analysis/blob/1b16746bf030af9b13d1e568033fcd0dfc7ece46/Bjorn/retrieval/1D_full/Abandabs/Abanddata/oxygen.header
 
-## 4. Semantic band selection should use quantum labels, not wavelength windows
+This rule must be rechecked if a transformed line source is used instead of a standard HITRAN-style export.
 
-The required physical target states are already established independently from Li et al. (2020):
+## 4. Semantic band selection: quantum labels, not acquisition windows
 
-- `gA`: O2(X, v''=0) -> O2(b, v'=0), atmospheric A band, near 762 nm;
-- `gB`: O2(X, v''=0) -> O2(b, v'=1), atmospheric B band, near 688 nm;
-- `gIRA`: O2(X, v''=0) -> O2(a, v'=0), infrared atmospheric system, near 1.27 micron.
+The required physical target systems are:
 
-The standard HITRAN record format contains global upper/lower quantum fields representing electronic and vibrational labels. Therefore the robust M4D selection rule should be based on those state labels, not on broad hard-coded wavelength windows.
+- `gA`: O2(X, v''=0) -> O2(b, v'=0), atmospheric A band near 762 nm;
+- `gB`: O2(X, v''=0) -> O2(b, v'=1), atmospheric B band near 688 nm;
+- `gIRA`: O2(X, v''=0) -> O2(a, v'=0), infrared atmospheric system near 1.27 micron.
 
-Provisional semantic filters to validate against the actual HITRAN2016 file are:
+The robust selection rule should use the HITRAN global electronic/vibrational labels:
 
 ```text
-gA   : upper electronic/vibrational state b(v'=0), lower X(v''=0)
-gB   : upper electronic/vibrational state b(v'=1), lower X(v''=0)
-gIRA : upper electronic/vibrational state a(v'=0), lower X(v''=0)
+gA   : upper b(v'=0), lower X(v''=0)
+gB   : upper b(v'=1), lower X(v''=0)
+gIRA : upper a(v'=0), lower X(v''=0)
 ```
 
-The exact fixed-width string formatting and accepted variants must be derived from the acquired HITRAN2016 records before implementation.
+The exact fixed-width strings must be derived from the acquired HITRAN2016 records before implementation.
 
-All relevant transition types carried by HITRAN inside those state-to-state systems should remain eligible unless a source-supported reason exists to exclude them. In particular, M4D must not assume that selecting only a specific rotational branch is equivalent to selecting the complete physical band.
+Do not define the physical systems using only hard-coded wavelength or wavenumber windows. Windows may be used for acquisition convenience and diagnostics, but the final frozen subsets must be generated from the state labels.
 
-## 5. Historical wavenumber windows are diagnostics only
+## 5. Diagnostic spectral regions
 
-Older HITRAN documentation gives approximate system ranges useful as sanity checks, for example:
+Historical/independent implementations suggest approximate diagnostic regions:
 
-- a(0) <- X(0): roughly the 1.27-micron region (~7,700-8,100 cm^-1);
-- b(0) <- X(0), A band: roughly 12,900-13,170 cm^-1;
-- b(1) <- X(0), B band: roughly 14,300-14,560 cm^-1.
+- `a(0) <- X(0)` / IRA: around 1.27 micron, roughly `7,700-8,100 cm^-1`;
+- `b(0) <- X(0)` / A: around `12,900-13,300 cm^-1` depending on how completely weak/hot neighboring transitions are represented;
+- `b(1) <- X(0)` / B: roughly `14,300-14,600 cm^-1`.
 
-These historical windows are **not** the M4D selection criterion. Once the actual HITRAN2016 O2 records are acquired, min/max wavenumbers and line counts must be derived from the quantum-label filter itself and recorded as evidence.
+These ranges are deliberately broader than some legacy model grids. They are not frozen selectors.
 
-This avoids silently excluding updated or weak transitions merely because an older band window was too narrow.
+The public MATS A-band notebook provides a useful independent example: after fetching approximately 749-776 nm for principal `16O2`, it selects upper global state `b, v=0` and obtains records spanning `12892.859666-13339.201391 cm^-1`.
+
+This independently demonstrates why Anqi's narrower `12900-13170 cm^-1` grid should not be promoted to the definition of the complete A system.
 
 ## 6. Isotopologue policy
 
-The future extraction should begin from all O2 isotopologues actually present in HITRAN2016 line-by-line data (local IDs 1-3 above) and then apply the semantic band filter.
+Begin from all three O2 isotopologues represented in the HITRAN2016 line-by-line database and then apply the semantic band filters.
 
-For each target band, record:
+For each target system record:
 
-- isotopologues contributing at least one line;
+- contributing isotopologues;
 - line count by isotopologue;
 - min/max wavenumber by isotopologue;
-- summed reference-temperature line strength by isotopologue as a diagnostic;
-- reference identifiers (`iref`) retained from the source where available.
+- summed reference-temperature `sw` by isotopologue as a diagnostic;
+- retained HITRAN reference identifiers (`iref`) and relevant uncertainty codes.
 
-Do not invent transitions for additional O2 isotopologues simply because TIPS-2017 contains partition sums for more isotopic species. TIPS coverage and line-list coverage are not the same thing.
+Do not invent line transitions for additional O2 isotopic species merely because TIPS-2017 provides partition sums for more isotopologues. TIPS coverage and line-list coverage are separate concepts.
 
-## 7. TIPS-2017 is now much less ambiguous
+## 7. TIPS-2017 historical route
 
-Gamache et al. (2017) provides the partition-sum generation associated with HITRAN2016 and describes six O2 isotopologues in TIPS-2017. It also documents the standalone/subroutine data-code products `TIPS_2017_v1p0` and `BD_TIPS_2017_v1p0`.
+The TIPS part of the provenance gate is now much stronger than it was in the first draft of this note.
 
-Primary reference:
+A strong freeze candidate has been identified:
 
-- Gamache et al. (2017), JQSRT 203, 70-87, DOI 10.1016/j.jqsrt.2017.03.045.
+- repository: `sergio66/UMBC_LBL`;
+- commit: `2cde4f679a1398403d6bd5ced4b130be7055d33f`;
+- path: `Global_Data_HITRAN2016/ORIG/BD_TIPS_2017_v1p0.for`;
+- Git blob SHA-1: `525350fef5305a02c6708b9111c8b6b63e4b97de`;
+- repository-reported size: `9,603,971` bytes.
 
-The official `hitranonline/hapi` Git history gives an exact source-control path:
+Independent witnesses include the official `hitranonline/hapi` historical TIPS-2017 commit and a preserved `BD_TIPS_2017_v1p0.zip` in `HUyoshis/Radmodel`, plus the TU Berlin `KSPECTRUM_Htr16` archive.
 
-- `2a12552364f0ac93e3f3bdfa7b3a9701a45d446b` — `Added partition sums from TIPS-2017`;
-- `f41d9911f2631eed51b96d6c617b4f27786ad477` — follow-up `fixed I=(2,0) in TIPS-2017`.
+Full evidence and the pending local SHA-256 / numerical cross-check procedure are recorded in:
 
-HITRAN molecule 2 is CO2, whereas O2 is molecule 7. Consequently the explicitly named `(2,0)` correction is not an O2 key. This reduces concern that this particular follow-up correction changed O2 partition sums, although the complete diff still must be treated carefully when selecting the exact historical snapshot.
+- `docs/m4d_tips2017_provenance_recovery.md`
 
-For a reproducible baseline, prefer a post-fix historical snapshot unless a stronger versioned archive is recovered. Before implementation, freeze the exact O2 TIPS numerical source/data used and record its SHA-256.
+TIPS-2017 should therefore be treated as **provenance recovered, freeze candidate identified**, not as the main remaining M4D blocker.
 
-Official HAPI commits:
+## 8. Canonical historical line-list identity witnesses
 
-- https://github.com/hitranonline/hapi/commit/2a12552364f0ac93e3f3bdfa7b3a9701a45d446b
-- https://github.com/hitranonline/hapi/commit/f41d9911f2631eed51b96d6c617b4f27786ad477
+Several independent scientific software projects refer to a historical file explicitly named `HITRAN2016.par` or `hitran2016.par`:
 
-An additional institutional archive, `KSPECTRUM_Htr16`, explicitly states that it uses HITRAN2016 and includes `BD_TIPS_2017_v1p0`, providing a second recovery/check path:
-
-- DOI 10.14279/depositonce-10054
-- https://depositonce.tu-berlin.de/items/0dc3d4b8-c913-49b2-b4c1-14646a2f5c3e
-
-## 8. Evidence that a canonical historical `HITRAN2016.par` existed
-
-Several independent scientific-software projects refer to an all-molecule file explicitly named `HITRAN2016.par` or `hitran2016.par`:
-
-- Oxford RFM/HITBIN documentation shows direct conversion of `HITRAN2016.par` and records HITRAN2016-specific parser changes made in September 2017;
-- VPL modeling scripts point to `HITRAN_Data/HITRAN2016.par` and explicitly request the HITRAN 2016 `.par` format;
-- NOAA-GFDL GRTCODE workflows refer to `HITRAN_files/hitran2016.par`.
-
-Oxford also reports 5,507,557 records for a full `HITRAN2016.par` example. These are valuable historical witnesses of file identity/workflow, but none of the inspected repositories exposes the full licensed line file as a source we can currently freeze.
+- Oxford RFM/HITBIN documentation demonstrates conversion of `HITRAN2016.par` and records a September 2017 parser change specifically required for HITRAN2016;
+- VPL modeling scripts point to `HITRAN_Data/HITRAN2016.par` and request HITRAN2016 `.par` format;
+- NOAA-GFDL workflows refer to `HITRAN_files/hitran2016.par`.
 
 Oxford reference:
 
 - https://eodg.atm.ox.ac.uk/RFM/hitbin.html
 
-These witnesses therefore strengthen provenance expectations but do **not** satisfy the acquisition gate themselves.
+These sources prove the historical workflow/file identity but do not expose the complete historical line bytes for us to freeze.
 
-## 9. MATS A-band data are a useful witness, not yet an edition-proof source
+## 9. SpectralCalc is now the primary acquisition candidate
 
-The public `innosat-mats/MATS-analysis` repository contains an A-band HITRAN download:
+SpectralCalc explicitly announced adding the HITRAN2016 line list on 20 August 2018. Its current Line List Browser documentation states that users can download complete line-list datasets or selected molecules/wavebands, and its Extract Data page supports spectral ranges up to `60,000 cm^-1`.
 
-- `oxygen.data`;
-- `oxygen.header`;
-- notebook output stating `Data is fetched from http://hitran.org` and `Lines parsed: 199`.
+Sources:
 
-The header preserves standard HITRAN fixed-column semantics and independently confirms that `sw` is abundance-weighted.
+- https://spectralcalc.com/info/news.php
+- https://www.spectralcalc.com/info/help.php
+- https://www.spectralcalc.com/spectral_browser/db_data.php
+- https://www.spectralcalc.com/info/glossary.php
 
-However, the path history currently visible in that repository shows the present file entering its current location during a 2024 restructuring commit. That does **not** establish when the HITRAN download itself occurred or which database edition served it.
+A 2024 peer-reviewed JQSRT study by Gava, Costa and Sena explicitly reports obtaining its HITRAN2016 parameters from SpectralCalc on 11 March 2024. Its public RFM reproduction script points to a local file named `hitran2016-spectralcalc.bin`.
 
-Therefore this 199-line A-band file is currently only an independent formatting/content witness. It must not be relabelled HITRAN2016 without stronger provenance.
+Evidence is recorded in:
 
-Relevant repository paths:
+- `docs/m4d_hitran2016_line_source_recovery.md`
+- `docs/m4d_spectralcalc_2024_reproduction_witness.md`
 
-- https://github.com/innosat-mats/MATS-analysis/blob/1b16746bf030af9b13d1e568033fcd0dfc7ece46/Bjorn/retrieval/1D_full/Abandabs/Abanddata/oxygen.data
-- https://github.com/innosat-mats/MATS-analysis/blob/1b16746bf030af9b13d1e568033fcd0dfc7ece46/Bjorn/retrieval/1D_full/Abandabs/Abanddata/oxygen.header
+This makes SpectralCalc the current primary acquisition route, but not yet the accepted source: the actual bytes still have to be retrieved, hashed and checked.
 
-## 10. Other public O2 line fragments are not sufficient provenance
+## 10. MATS and other public O2 fragments are validation witnesses only
 
-Public GitHub repositories contain O2 line files with recognisable HITRAN records, including A-band lines around 13,000 cm^-1 and files spanning the IRA/A regions. These are useful for cross-checking parsing and individual line identities.
+The public MATS repository contains a 199-line principal-isotopologue A-band download fetched from hitran.org. It is useful for:
 
-Unless their exact database edition, retrieval process and file identity can be established, they must not be promoted to the `historical_2020` numerical baseline.
+- fixed-column semantics;
+- A-band quantum-label behavior;
+- independent record spot-checks;
+- exposing an abundance-handling quirk that M4D must not copy.
 
-In other words, numerical agreement of a few lines is useful validation evidence but is not a substitute for edition provenance.
+Its public history does not prove which HITRAN edition generated the file, so it is not the historical numerical source.
 
-## 11. Acceptance gate for the HITRAN2016 O2 asset
+Likewise, miscellaneous public O2 line files may be used for record-level comparisons but must not be relabeled HITRAN2016 without edition provenance.
 
-Before M4D implementation starts, the selected spectroscopy source must satisfy all of the following:
+## 11. Required full-O2 acquisition and acceptance gate
+
+Preferred SpectralCalc extraction:
+
+```text
+Line list        : HITRAN2016
+Molecule         : O2 / molecule 7
+Isotopologues    : all line-list isotopologues
+Intensity cutoff : 0 / least restrictive exact option
+Spectral range   : 0-57028 cm^-1 for a complete O2 fingerprint if service limits permit
+Output            : transition-level line data
+Preferred format : standard HITRAN fixed-width format
+```
+
+If one full export is not possible, use lossless non-overlapping chunks covering the same interval. Preserve/hash every original chunk before concatenation.
+
+Before M4D implementation starts, the accepted source must have:
 
 1. provider/archive documented;
-2. exact original filename documented;
-3. evidence that the bytes/records correspond to HITRAN2016;
-4. access/retrieval date recorded;
-5. original file SHA-256 recorded where licensing permits local preservation;
-6. format documented (prefer standard HITRAN fixed-width records or a transparent lossless extraction);
-7. complete O2 record count and isotopologue counts checked against HITRAN2016 publication fingerprints if a full O2 file is used;
-8. target-band extraction performed by documented quantum-state rules;
-9. extracted band files/subsets receive their own SHA-256 hashes;
-10. line counts, isotopologue counts, min/max wavenumber and diagnostic summed strengths are recorded for A, B and IRA;
-11. line-reference identifiers and necessary quantum labels are retained;
-12. no current HITRAN2024/live-data substitution is hidden inside the source chain.
+2. exact selected edition documented as HITRAN2016;
+3. original filename(s) and retrieval date recorded;
+4. SHA-256 and byte size for every original source file;
+5. format/field mapping documented;
+6. full O2 line counts checked as `15263 / 2965 / 11313` if complete coverage is acquired;
+7. HITRAN2016 spectral coverage checked as `0-57028 / 1-56670 / 0-14537 cm^-1` for local isotopologues 1/2/3;
+8. A/B/IRA extraction generated by quantum-state rules;
+9. hashes for each frozen source-derived band subset;
+10. line counts, isotopologue counts, min/max wavenumber and diagnostic summed strengths recorded for A/B/IRA;
+11. quantum labels, `iref` and other provenance-rich fields retained;
+12. no current HITRAN2024/live-data substitution hidden in the source chain.
 
-If licensing prevents committing the original line database, preserve a reproducible source-derived subset when permitted plus source identity/hash/provenance metadata sufficient to audit the extraction. Do not redistribute data contrary to the source licence.
+If licensing prevents committing the raw line data, keep the exact bytes locally and commit the source identity, retrieval procedure and cryptographic hashes. Do not redistribute contrary to provider terms.
 
-## 12. Decisions that are now close to freeze
+## 12. Decisions close to freeze
 
-Subject to final review against the acquired HITRAN2016 records, the following design choices are now strongly supported:
+Subject to final review against the acquired HITRAN2016 records, the following choices are strongly supported:
 
-- select A/B/IRA by electronic/vibrational state labels, not arbitrary wavelength windows;
-- start from the three O2 isotopologues represented in the HITRAN2016 O2 line list and retain those that contribute lines to each selected system;
+- select A/B/IRA by electronic/vibrational state labels;
+- consider all three O2 isotopologues present in the HITRAN2016 line list before quantifying whether minor isotopologues can be neglected;
 - use standard HITRAN `sw` without an extra isotopic-abundance multiplier;
-- use a historical TIPS-2017 numerical source for HITRAN temperature scaling if the full HITRAN convention is adopted;
-- preserve Anqi's Doppler-only implementation as a historical methodological anchor, but do not inherit its nonstandard spectral normalization as physics.
+- use a frozen historical TIPS-2017 source for line-strength temperature scaling;
+- preserve Anqi's Doppler-only treatment as a historical methodological anchor, while independently validating normalization and source conventions;
+- preserve the original spectroscopy export separately from any later RFM/HITBIN or project-specific conversion.
 
-The exact numerical spectroscopy asset itself is **not frozen**.
+The exact numerical line asset itself is **not frozen**.
 
-## 13. Next acquisition actions
+## 13. Next action
 
-The next research step should be narrow and practical:
+The research phase has reached a practical acquisition boundary.
 
-1. inspect the institutional `KSPECTRUM_Htr16` archive for recoverable/pinnable `BD_TIPS_2017_v1p0` material and its licence/provenance;
-2. continue searching official/institutional historical HITRAN access routes for a verifiably HITRAN2016 O2 line source;
-3. investigate older MATS-analysis history/related repositories for the original creation/fetch of the 199-line A-band file;
-4. if no archival raw file is recoverable, identify the appropriate official HITRAN route for obtaining the historical 2016 edition rather than substituting the live edition;
-5. only after the line asset is acquired, compute the exact A/B/IRA extraction statistics and freeze the M4D spectroscopy specification.
+The next decisive step is to retrieve a SpectralCalc **HITRAN2016 O2 transition-level export** using the configuration above. Once the bytes are available, immediately run the forensic acceptance checks, derive the A/B/IRA subsets and record their hashes/statistics.
 
-If these reasonable recovery routes fail, then and only then reassess whether the spectroscopy gate has become a true **SOURCE BLOCKER**.
+Until that happens:
+
+- do not implement M4D;
+- do not use current HITRAN2024 as historical data;
+- do not advance to M5.
