@@ -1,189 +1,212 @@
 # M4D pressure-broadening and line-shape provenance follow-up
 
-Status: **SOURCE/PROVENANCE BLOCKER CONFIRMED / DESIGN NOT FROZEN**
+Status: **A-BAND SOURCE MATERIALIZATION BLOCKER / B+IRA BASELINE CANDIDATES SELECTED / DESIGN NOT FROZEN**
 
 Branch: `milestone/m4d-design`
 
-This note follows `docs/m4d_final_design_review.md`. It does not implement M4D, change the accepted M4C-R2 baseline, or authorize M5. Its purpose is to determine whether the pressure-broadened treatment exposed by the numerical review can be frozen from the historical HITRAN2016-era evidence already available to the project.
+This note follows `docs/m4d_final_design_review.md`. It does not implement M4D, change the accepted M4C-R2 baseline, or authorize M5. It narrows the remaining pressure-broadening / line-shape gate using the historical HITRAN2016-era evidence.
 
 ## 1. Accepted starting point
 
-The previous numerical review is retained:
+The previous numerical review remains accepted:
 
 - Doppler-only is not adequate over the full required altitude/SZA domain because illuminated twilight rays can traverse substantially denser atmosphere below the 50 km chemistry boundary.
 - The accepted M4C spherical geometry remains valid.
 - Shell-local temperature scaling is mandatory.
 - Deterministic atmospheric/path sub-stratification at `0.125 km`, checked against `0.0625 km`, is the current converged M4D path rule.
-- Plain truncated Voigt sensitivities did not close the A/B far-wing gate at the declared `1e-15 s^-1` diagnostic floor.
+- The mixed Doppler-target/Voigt-attenuation experiment was sufficient to reject Doppler-only, but it was not a final pressure-broadened calculation.
+- Plain Voigt attenuation windows `+/-10 -> +/-20 cm^-1` did not close the declared `0.1%` gate for weak A/B twilight rates.
 
-This follow-up does not reopen those numerical findings.
+## 2. A band: exact historical source identified, executable materialization still blocked
 
-## 2. What HITRAN2016 establishes for the A band
+Gordon et al. (2017), HITRAN2016, Section 2.7.2 identifies Drouin et al. (2017), *Multispectrum analysis of the oxygen A-band*, JQSRT 186, 118-138, DOI `10.1016/j.jqsrt.2016.03.037`, as the principal-isotopologue A-band source.
 
-Gordon et al. (2017), HITRAN2016, Section 2.7.2 states that the principal-isotopologue A-band update was based on Drouin et al. (2017), *Multispectrum analysis of the oxygen A-band*, JQSRT 186, 118-138, DOI `10.1016/j.jqsrt.2016.03.037`.
+The historical representation is not plain isolated Voigt. HITRAN2016 describes:
 
-The HITRAN2016 paper is explicit that this was not a plain isolated-Voigt parameterization. For the principal isotopologue it incorporated:
-
-- a speed-dependent Voigt line shape;
+- speed-dependent Voigt broadening;
 - collisional line mixing;
-- a full W-matrix treatment in the underlying Drouin analysis;
-- a HITRAN-facing transformation to first-order line-by-line Rosenkranz parameters evaluated from the scaled W matrices at four standard temperatures;
-- pressure shifts and temperature dependences associated with the advanced line-shape representation;
-- CIA represented separately from the resonant line list.
+- a full W-matrix treatment in the Drouin source model;
+- conversion of Drouin foreign-broadening quantities to air using the `N2:O2 = 0.79:0.21` atmospheric mixture;
+- evaluation of scaled foreign/self W matrices at four standard temperatures and transformation to first-order line-by-line Rosenkranz parameters for HITRAN;
+- pressure shifts and temperature dependences associated with the advanced parameterization;
+- CIA as a separate spectroscopic component rather than a resonant-line wing surrogate.
 
-Primary sources:
+Drouin et al. explicitly state that high-accuracy A-band absorption across atmospheric pressures requires a sophisticated line shape together with line mixing. Their public PMC record, `PMC5103325`, identifies the exact supplementary file
 
-- Gordon et al. (2017), *The HITRAN2016 molecular spectroscopic database*, JQSRT 203, 3-69, DOI `10.1016/j.jqsrt.2017.06.038`, Section 2.7.2 and Table 2.
-- Drouin et al. (2017), *Multispectrum analysis of the oxygen A-band*, JQSRT 186, 118-138, DOI `10.1016/j.jqsrt.2016.03.037`.
-- Stable public manuscript witness: PubMed Central `PMC5103325`, which also exposes the associated supplemental material and states that the modified W matrices and temperature-dependent Y values are provided there.
+```text
+NIHMS804415-supplement-supplement_1.pdf
+reported size: 94.8 kB
+```
 
-The Drouin paper also states that accurate A-band absorption over atmospheric pressures requires a beyond-Voigt line shape together with line mixing; this is consistent with the HITRAN2016 representation.
+and states that the supplement contains the modified line-mixing matrices and temperature-dependent `Y` values. The article describes four retained sub-matrices: `PP` and `RR` of size `18 x 18`, and `PQ` and `RQ` of size `17 x 17`.
 
-### Consequence for the project
+Therefore A is no longer a source-*discovery* blocker: the authoritative source family and exact supplement identity are known.
 
-The accepted SpectralCalc export contains classic 160-character HITRAN records. Those records are sufficient for the already accepted transition identities, intensities, lower-state energies, classic `gamma_air`, `gamma_self`, `n_air`, and `delta_air` fields, but they do **not** by themselves carry the full HITRAN2016 advanced A-band SDV/Rosenkranz parameter set described in HITRAN2016 Table 2.
+It remains a **SOURCE MATERIALIZATION / PARAMETER-MAPPING BLOCKER** because the project still lacks:
 
-Therefore the project cannot claim that an executable HITRAN2016 A-band SDV + line-mixing model has been recovered from the current raw export.
+1. frozen bytes and SHA-256 for the historical supplement;
+2. a deterministic transcription/extraction of the required W-matrix / `Y(T)` material;
+3. the exact executable mapping from the Drouin native model to the HITRAN2016 Rosenkranz representation used for the project;
+4. a frozen policy for the rare A-band isotopologues, whose summed 296-K intensity is small but non-zero and for which the same principal-isotopologue parameterization cannot simply be assumed.
 
-The public Drouin supplemental material is strong provenance evidence and may become a valid recovery source, but it has not yet been frozen in this repository with the exact byte identity, parameter mapping, temperature convention, and deterministic conversion required to reproduce the HITRAN2016 representation used by the project.
+The current 160-character SpectralCalc records remain valid transition/intensity provenance, but do not contain the complete advanced A-band relation set.
 
-**A-band result: SOURCE/PROVENANCE BLOCKER.**
+**A-band decision:** do not replace the historical advanced representation by an arbitrary isolated Voigt model merely to obtain convergence.
 
-An isolated Voigt profile with an arbitrary cutoff must not be promoted to the historical HITRAN2016 A-band baseline merely because it can be made numerically convergent.
+## 3. B band: classic HITRAN2016 Voigt selected as baseline candidate
 
-## 3. What HITRAN2016 establishes for the B band
+The B band must be separated from A.
 
-The B-band requires separate treatment; the A-band model must not be copied automatically.
+The HITRAN2016 O2 discussion describes a Domyslawska/Wojtewicz/Lisak quadratic speed-dependent Voigt dataset for self-broadened principal-isotopologue B-band transitions, but also states that incorporation into HITRAN was planned. HITRAN2020 later states retrospectively that B-band SDV parameters adopted in HITRAN2016 contained a concrete width-convention defect: values reported as full widths in the source work had been treated as half-widths and were subsequently corrected.
 
-HITRAN-era spectroscopy introduced speed-dependent Voigt information for self-broadened B-band transitions from the Domyslawska/Wojtewicz/Lisak measurement series. However, the later HITRAN2020 database paper documents a concrete defect in the HITRAN2016 B-band advanced line-shape data:
+This leaves the advanced B-band history both partial and version-sensitive. It is also primarily a self-broadened dataset rather than a complete all-isotopologue atmospheric profile model.
 
-> the speed-dependent Voigt broadening parameters adopted in HITRAN2016 were treated as half-widths although the original publications reported full widths.
+For `historical_2020`, the design policy is therefore:
 
-HITRAN2020 Section 2.7.3 states that this discrepancy was subsequently corrected.
+**Baseline candidate: classic isolated Voigt using the complete historical HITRAN2016 160-character fields already present in the accepted B subset.**
 
-Primary source:
+For every B line, the classic Lorentz HWHM is
 
-- Gordon et al. (2022), *The HITRAN2020 molecular spectroscopic database*, JQSRT 277, 107949, DOI `10.1016/j.jqsrt.2021.107949`, Section 2.7.3.
+```text
+gamma_L(p,T)
+  = (296/T)^n_air
+    * [gamma_air * (p - p_O2) + gamma_self * p_O2]
+```
 
-Supporting historical spectroscopy:
+with pressures in atm and HITRAN HWHM coefficients in `cm^-1 atm^-1`.
 
-- Domyslawska et al. (2017), *Speed-dependent Voigt profile parameters for oxygen B-band measured by cavity ring-down spectrometer referenced to the optical frequency comb*, J. Phys.: Conf. Ser. 810, 012030, DOI `10.1088/1742-6596/810/1/012030`.
+The classic shifted center is
 
-A later B-band study also records that the ordinary air-broadening values in HITRAN2016 inherited older/scaled information and that self-shift parameters were not generally present for the B-band line list. This reinforces the need to distinguish classic Voigt fields from the advanced self-broadened SDV dataset rather than treating them as one homogeneous parameterization.
+```text
+nu_shifted = nu0 + delta_air * p
+```
 
-### Consequence for the project
+under the historical classic HITRAN convention unless a more specific historical relation is explicitly recovered for that line.
 
-The historical_2020 branch has two scientifically different choices that must not be conflated:
+`gamma_air` is already the HITRAN air-broadening coefficient. Do **not** convert it again with another `0.79/0.21` mixture. The partial pressure term above already combines air and O2 self broadening in the standard HITRAN formula.
 
-1. reproduce the released HITRAN2016 advanced B-band values literally, including a now-documented width interpretation error; or
-2. apply the later documented correction while still using the HITRAN2016-era spectroscopic source family.
+The known defective/partial advanced B-band SDV values are **not** reproduced silently in the baseline. Instead, a corrected source-based qSDV calculation on the covered principal-isotopologue lines is a required sensitivity. If that sensitivity changes any accepted M4D B-band rate by more than the `0.1%` design tolerance, the classic-Voigt baseline candidate must be reopened before freeze.
 
-The project has not approved either policy. Because the TFM has consistently avoided silently reproducing known source mistakes or silently substituting newer editions, this choice requires an explicit scientific decision and a frozen parameter source.
+This closes the previous B-band scientific-policy ambiguity without claiming that numerical validation is complete.
 
-The current 160-character SpectralCalc records are not enough to recover the full historical B-band SDV representation or to document a corrected historical advanced parameter set.
+## 4. IRA / 1.27 micron: classic HITRAN2016 Voigt selected as monomer baseline candidate
 
-**B-band result: SOURCE/PROVENANCE + SCIENTIFIC-DESIGN BLOCKER.**
+Mendonca et al. (2019) records that the discrete HITRAN2016 1.27-micron line parameters are very similar to HITRAN2012 except for improved line positions, and that the HITRAN2012-era parameters were derived from Voigt-profile analyses. Later beyond-Voigt studies improve high-accuracy terrestrial retrievals, but do not establish a complete historical HITRAN2016 advanced profile analogous to the A-band update.
 
-The previous isolated-Voigt sensitivity remains useful numerical evidence, but it is not a frozen final B-band profile.
+Therefore the selected historical monomer baseline candidate for `gIRA` is:
 
-## 4. What the historical evidence establishes for the 1.27 micron IRA band
+**classic isolated Voigt using the accepted HITRAN2016 `gamma_air`, `gamma_self`, `n_air`, and `delta_air` fields with the same standard pressure/temperature equations stated for B.**
 
-For the `a(0) <- X(0)` discrete monomer lines, HITRAN2016 is much closer to the HITRAN2012 discrete-line compilation, with improved line positions among the important changes. The HITRAN2012-era 1.27-micron line parameters were obtained using Voigt-profile analyses.
+This is now a design selection, not merely an open possibility. It remains conditional on the final consistent target+attenuation convergence run.
 
-A later dedicated study of the 1.27-micron band reports that non-Voigt effects can matter for high-accuracy terrestrial column retrievals, but that does not establish that HITRAN2016 supplied an executable advanced line-shape parameterization for the complete IRA line set analogous to the 2016 A-band update.
+## 5. Pressure-shift rule and remaining sensitivity
 
-Relevant source:
+For classic B/IRA profiles, the baseline candidate uses the historical HITRAN shift convention
 
-- Mendonca et al. (2019), *Using a speed-dependent Voigt line shape to retrieve O2 from Total Carbon Column Observing Network solar spectra to improve measurements of XCO2*, Atmos. Meas. Tech. 12, 35-50, DOI `10.5194/amt-12-35-2019`.
+```text
+nu_shifted = nu0 + delta_air * p
+```
 
-That paper explicitly notes that HITRAN2016 discrete 1.27-micron parameters are very similar to HITRAN2012 apart from improved line positions, while discussing subsequent evidence for beyond-Voigt effects.
+with shell-local total pressure. No separate temperature dependence of classic `delta_air` is invented.
 
-### Consequence for the project
+For A, the advanced historical source contains richer shift information, including temperature-dependent shift behavior, so the final A treatment must follow the recovered A parameterization rather than force the classic rule onto it.
 
-For a strictly HITRAN2016 historical reconstruction, isolated Voigt remains a defensible *candidate* monomer profile for IRA, unlike the principal-isotopologue A band where HITRAN2016 itself documents an advanced representation.
+A full-path pressure-shift sensitivity remains required because twilight rays sample denser shells far below the chemistry target.
 
-However, the previous M4D numerical review changed shell attenuation to Voigt while retaining a Doppler target/source decomposition as a sensitivity experiment. That was sufficient to reject Doppler-only, but it did not perform the final required calculation with the same Voigt profile applied consistently to both target excitation and shell attenuation over the full validation domain.
+## 6. A-band rare isotopologues
 
-**IRA result: no new historical-source blocker for an isolated-Voigt candidate, but the final consistent full-profile numerical convergence test is still required before freeze.**
+The accepted A subset contains:
 
-## 5. Pressure shifts cannot be silently discarded
+```text
+iso 1: 150 lines
+iso 2: 140 lines
+iso 3: 140 lines
+```
 
-The accepted classic HITRAN records include `delta_air`. The low-target twilight counterexample demonstrates why a shift assessment must use the pressure along the complete illuminated ray rather than only the pressure at the 50-100 km target.
+and the rare-isotopologue summed strengths are small compared with iso 1 but not identically zero. The principal-isotopologue Drouin parameterization must not be copied automatically to iso 2/3.
 
-For any band that ultimately uses a classic or advanced pressure-broadened profile, the implementation design must state explicitly:
+Before A can be frozen, either:
 
-- which pressure-shift parameter is used for air and, where available, self broadening;
-- its temperature dependence when the selected historical representation defines one;
-- how the line center is evaluated shell by shell;
-- what is done when a historical self-shift or advanced shift parameter is unavailable.
+- recover the historically appropriate line-shape treatment for the rare isotopologues; or
+- demonstrate quantitatively that a documented classic-profile fallback for iso 2/3 changes final `gA` by `<=0.1%` throughout the validation domain.
 
-No assumption that `delta_air` is negligible is frozen by this follow-up. A quantitative full-path sensitivity is still required once the final historical profile source is recovered.
+## 7. Far-wing / quadrature policy
 
-## 6. Line mixing and numerical invariants
+No universal fixed `+/-N cm^-1` physical cutoff is frozen.
 
-If A-band line mixing is recovered, implementation tests must apply invariants to the **total physical band absorption**, not blindly to every algebraic per-line mixing contribution.
+For the classic Voigt B/IRA candidates, the preferred convergence strategy is to separate source integration support from attenuation evaluation:
 
-Required invariants include:
+1. integrate the target/source contribution on deterministic line-centred quadrature;
+2. at every target quadrature node, evaluate attenuation from **all accepted absorber lines in the band**, rather than discarding absorber contributions outside an arbitrary `+/-10` or `+/-20 cm^-1` window;
+3. converge target quadrature/support independently against a stricter reference;
+4. verify the resulting rates over the complete altitude/SZA validation set.
 
-- total absorption/cross section finite and physically nonnegative over the validated domain;
-- correct unattenuated limit at zero absorber column;
-- finite and nonnegative excitation rates;
-- deterministic source-order invariance;
-- conservation/normalization consistent with the recovered historical line-mixing formalism;
-- identical selected physical profile semantics in target excitation and shell attenuation.
+This is a candidate numerical strategy, not yet a frozen final algorithm. Its purpose is to remove the artificial attenuation-wing truncation that caused the previous Voigt convergence failure.
 
-The exact conservation rule cannot be frozen until the historical A-band parameterization and its executable formula have been recovered.
+For A, the computational support/convergence rule must follow the recovered SDV + line-mixing representation and cannot be inferred from an isolated Voigt tail.
 
-## 7. Far-wing rule
-
-No universal `+/-N cm^-1` cutoff is frozen here.
-
-The previous review showed that `+/-10 -> +/-20 cm^-1` isolated-Voigt changes still exceed the declared `0.1%` gate for weak A/B twilight cases. More importantly, an arbitrarily extended isolated Voigt is not necessarily the correct physical model for a band whose historical representation includes line mixing and separate CIA.
-
-The required order of operations is therefore:
-
-1. recover/freeze the historical profile parameterization for the relevant band;
-2. define its physical support/cutoff or computational evaluation rule from the source model;
-3. only then demonstrate numerical convergence of target excitation and shell attenuation to `<=0.1%` over the accepted validation domain.
-
-## 8. IRA CIA scope clarification
+## 8. IRA CIA Option-B source chain narrowed
 
 The existing Option-B decision is retained:
 
 - CIA is excluded from the historical monomer `gIRA` baseline source term and baseline attenuation;
 - CIA remains a required documented twilight sensitivity/limitation.
 
-For design-freeze purposes, this does not require injecting CIA into the baseline profile. The future final M4D specification must state the historical CIA sensitivity as required milestone-closure evidence, with its own exact historical source/provenance, rather than silently converting Option B into Option C or silently adding modern CIA data.
+HITRAN2016 narrows the historical CIA provenance substantially. For the 1.27-micron transition it states that the revised data are from Maté et al. (1999), *Absolute intensities for the O2 1.27 um continuum absorption*, JGR Atmospheres 104(D23), 30585-30590, DOI `10.1029/1999JD900824`.
 
-If an exact historical CIA source cannot be obtained when that sensitivity is executed, that limitation must be reported explicitly; it must not be solved by substituting current HITRAN CIA products.
+HITRAN2016 places:
 
-## 9. Current gate decision
+- pure-O2 measurements in the `O2-O2` CIA file;
+- `21:79 O2:N2` air-mixture measurements in the `O2-Air` file;
+- and explicitly warns not to double count O2-O2 by adding both atmospheric `O2-Air` and a separate O2-O2 contribution for the same mixture.
+
+Thus the CIA sensitivity no longer lacks a historical source family. What remains is to freeze the exact historical machine-readable HITRAN2016 CIA file bytes/hash and execute the twilight sensitivity. Current HITRAN2024 CIA products must not be substituted silently.
+
+## 9. Line-mixing numerical invariants
+
+When A line mixing is materialized, tests must apply invariants to the **total physical band absorption**, not blindly to every algebraic per-line mixing contribution.
+
+Required invariants include:
+
+- total absorption finite and physically nonnegative over the validated domain;
+- zero absorber column recovers the unattenuated limit;
+- final excitation rates finite and nonnegative;
+- deterministic source-order invariance;
+- normalization/conservation consistent with the recovered historical line-mixing formalism;
+- identical selected profile semantics in target excitation and shell attenuation.
+
+## 10. Current gate decision
 
 **M4D DESIGN REMAINS NOT FROZEN.**
 
-The pressure-broadening blocker is now more specific than in `docs/m4d_final_design_review.md`:
+The blocker is now narrower.
 
-### Source/provenance blocker
+### Source/materialization blocker
 
-- Recover and freeze the executable HITRAN2016-era principal-isotopologue A-band advanced parameterization needed for SDV + line mixing, including the exact historical parameter source, parameter mapping, temperature dependence, pressure shifts and line-mixing representation.
-- Resolve the historical B-band advanced-parameter provenance together with the documented HITRAN2016 FWHM/HWHM defect; explicitly approve whether the historical_2020 branch reproduces the released 2016 values or applies the later source-documented correction.
+- Freeze the exact Drouin A-band supplement bytes/hash and executable parameter mapping needed to reproduce the HITRAN2016 principal-isotopologue SDV + line-mixing representation.
+- Resolve or numerically bound the A-band rare-isotopologue line-shape treatment.
+- Freeze the exact historical HITRAN2016 1.27-micron CIA file required for the Option-B sensitivity.
 
-### Scientific-design blocker
+### Scientific-design status
 
-- Decide the approved historical policy for the known B-band HITRAN2016 width defect.
-- Define per-band/per-isotopologue profile semantics once the source parameters are available; do not require A, B and IRA to share one profile if the historical evidence does not support that.
+- A principal isotopologue: advanced historical SDV + line mixing required; not yet executable.
+- B: classic HITRAN2016 Voigt selected as baseline candidate; corrected qSDV on covered principal-isotopologue lines is a required sensitivity.
+- IRA: classic HITRAN2016 Voigt selected as monomer baseline candidate.
+- No unresolved B-band policy choice remains.
 
 ### Numerical-convergence blocker
 
-After source recovery:
+Once the required source bytes are locally available:
 
-- apply the selected profile consistently to target excitation and shell attenuation;
-- include shell-local pressure shifts where required by the selected representation;
-- repeat the full 51-altitude validation at `SZA = 0, 60, 85, 89, 89.9, 95, 99 deg` plus tangent/just-shadowed cases;
-- demonstrate `<=0.1%` convergence above the currently declared `1e-15 s^-1` floor or separately justify any revised floor before implementation authorization.
+- apply each selected profile consistently to target excitation and shell attenuation;
+- quantify pressure-shift impact;
+- test the all-absorber-lines attenuation strategy for B/IRA;
+- repeat all 51 target altitudes at `SZA = 0, 60, 85, 89, 89.9, 95, 99 deg` plus illuminated-tangent and immediately-shadowed boundary cases;
+- demonstrate `<=0.1%` numerical convergence above the current `1e-15 s^-1` diagnostic floor, or separately justify any revised floor before implementation authorization;
+- execute the required historical IRA CIA twilight sensitivity.
 
 ### Environment/tool limitation
 
-None. The blocker is historical spectroscopic provenance, not computational capability.
+The remaining numerical closure cannot be reproduced from repository bytes alone because the licensed raw HITRAN2016 line export is intentionally not committed. The source document identities are known, but the A supplement and historical CIA bytes are not yet frozen locally.
 
-Do not create `docs/m4d_final_design_specification.md` and do not authorize implementation until these items close.
+Do not create `docs/m4d_final_design_specification.md` and do not authorize production M4D implementation until these items close.
