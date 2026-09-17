@@ -31,9 +31,30 @@ The immutable current artifact is stored at `artifacts/accepted/m4c-r2/tfm-photo
 
 ## Current next milestone
 
-M4D is **NOT IMPLEMENTED / DESIGN NOT FROZEN**. Its intended outputs are the remaining `gA`, `gB`, and `gIRA` physical forcings. The design must be reconstructed independently from primary and historical sources before implementation.
+M4D is **NOT IMPLEMENTED / DESIGN NOT FROZEN**. Its intended outputs are the remaining `gA`, `gB`, and `gIRA` physical forcings. M1-M4C-R2 remain closed and must not be reopened during this design investigation.
 
-There is a known unresolved provenance risk concerning historical O2 spectroscopy, including the exact historical HITRAN2016 line dataset and TIPS2017 partition-function provenance. Modern HITRAN, HAPI, or HITRANonline data must not be substituted silently. NASA/JPL Evaluation 20 is corroborative material only. If the required historical inputs cannot be verified during the independent M4D source investigation, the project must stop with **SOURCE BLOCKER** rather than silently substitute modern data.
+The historical spectroscopy investigation has progressed substantially:
+
+- The physical target systems are now constrained to `b(v'=0) <- X(v''=0)` for `gA`, `b(v'=1) <- X(v''=0)` for `gB`, and `a(v'=0) <- X(v''=0)` for `gIRA`, with final subsets to be selected from HITRAN quantum labels rather than arbitrary wavelength windows.
+- Standard HITRAN line intensity `sw` is treated under its terrestrial natural-isotopic-abundance convention; an extra isotopic-abundance multiplier must not be applied silently.
+- A strong historical TIPS-2017 freeze candidate has been identified at `sergio66/UMBC_LBL@2cde4f679a1398403d6bd5ced4b130be7055d33f`, path `Global_Data_HITRAN2016/ORIG/BD_TIPS_2017_v1p0.for`. TIPS-2017 provenance is therefore considered **recovered with freeze candidate identified**, while local SHA-256 and numerical O2 `Q(T)` cross-checks are still pending.
+- SpectralCalc is the primary practical acquisition candidate for the historical HITRAN2016 O2 transition list. Its own history records HITRAN2016 support from 2018, and a peer-reviewed 2024 RFM study independently records using SpectralCalc for HITRAN2016.
+- The correct HITRAN2016 O2 Table-3 fingerprints are: local iso 1 / `16O2` = 15,263 transitions over `0-57,028 cm^-1`; local iso 2 / `16O18O` = 2,965 transitions over `1-56,670 cm^-1`; local iso 3 / `16O17O` = 11,313 transitions over `0-14,537 cm^-1`.
+
+The remaining decisive source gate is now operational rather than open-ended: obtain an untouched **SpectralCalc HITRAN2016 O2 transition-level export**, preserve its original bytes, compute SHA-256, verify the published fingerprints where full coverage is available, and derive A/B/IRA subsets semantically from the quantum labels. The exact browser procedure and chunked fallbacks are frozen as an acquisition protocol in `docs/m4d_spectralcalc_manual_acquisition.md`.
+
+Current live HITRANonline data correspond to a newer HITRAN edition and must not be substituted silently. If the historical export cannot be obtained with adequate provenance, the project must stop with **SOURCE BLOCKER** rather than replace it with modern data.
+
+Current supporting M4D evidence is consolidated across:
+
+- `docs/m4d_hitran2016_acquisition_and_band_selection.md`;
+- `docs/m4d_hitran2016_line_source_recovery.md`;
+- `docs/m4d_spectralcalc_2024_reproduction_witness.md`;
+- `docs/m4d_tips2017_provenance_recovery.md`;
+- `docs/m4d_mats_aband_forensics.md`;
+- `docs/m4d_spectralcalc_manual_acquisition.md`.
+
+Until that acquisition/forensic gate passes, no M4D implementation and no M5 work are authorized.
 
 ## Known bootstrap reproducibility finding
 
