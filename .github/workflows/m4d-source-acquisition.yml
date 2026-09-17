@@ -13,40 +13,41 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Probe Drouin supplement
+      - name: Probe Drouin supplement from publisher/CDN
         shell: bash
         run: |
           set -u
           mkdir -p acquisition/files acquisition/diag
           : > acquisition/MANIFEST.txt
           note(){ printf '%s\n' "$*" | tee -a acquisition/MANIFEST.txt; }
-          try_url(){ label="$1"; url="$2"; out="$3"; note ""; note "[$label]"; note "url=$url"; if curl -fL --retry 1 --connect-timeout 20 --max-time 120 -A 'Mozilla/5.0' "$url" -o "$out"; then note "status=downloaded"; note "bytes=$(wc -c < "$out")"; note "sha256=$(sha256sum "$out"|awk '{print $1}')"; note "type=$(file -b "$out")"; return 0; else rm -f "$out"; note "status=failed"; return 1; fi; }
+          try_url(){ label="$1"; url="$2"; out="$3"; note ""; note "[$label]"; note "url=$url"; if curl -fL --retry 1 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' -e 'https://www.sciencedirect.com/' "$url" -o "$out"; then note "status=downloaded"; note "bytes=$(wc -c < "$out")"; note "sha256=$(sha256sum "$out"|awk '{print $1}')"; note "type=$(file -b "$out")"; return 0; else rm -f "$out"; note "status=failed"; return 1; fi; }
           note "access_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-
-          try_url PMC_HTML 'https://pmc.ncbi.nlm.nih.gov/articles/PMC5103325/' acquisition/diag/pmc.html || true
-          if [ -f acquisition/diag/pmc.html ]; then
-            grep -Eo 'https?://[^"'"'"' ]+supplement[^"'"'"' ]+\.pdf[^"'"'"' ]*|href="[^"]*supplement[^"]*\.pdf[^"]*"' acquisition/diag/pmc.html > acquisition/diag/pmc_supp_links.txt || true
-            cat acquisition/diag/pmc_supp_links.txt | tee -a acquisition/MANIFEST.txt || true
-          fi
-
-          for url in \
-            'https://pmc.ncbi.nlm.nih.gov/articles/PMC5103325/bin/NIHMS804415-supplement-supplement_1.pdf' \
-            'https://pmc.ncbi.nlm.nih.gov/articles/PMC5103325/bin/NIHMS804415-supplement-supplement_1.pdf?download=1' \
-            'https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5103325/bin/NIHMS804415-supplement-supplement_1.pdf' \
-            'https://pmc.ncbi.nlm.nih.gov/articles/instance/5103325/bin/NIHMS804415-supplement-supplement_1.pdf'; do
-            if try_url A1_DIRECT "$url" acquisition/files/NIHMS804415-supplement-supplement_1.pdf; then
-              if file acquisition/files/NIHMS804415-supplement-supplement_1.pdf | grep -qi PDF; then break; else rm -f acquisition/files/NIHMS804415-supplement-supplement_1.pdf; fi
+          pii='S0022407316301108'
+          found=''
+          for suffix in mmc1.pdf mmc1.docx mmc1.zip mmc2.pdf mmc2.zip mmc3.pdf; do
+            out="acquisition/diag/1-s2.0-${pii}-${suffix}"
+            url="https://ars.els-cdn.com/content/image/1-s2.0-${pii}-${suffix}"
+            if try_url "ELSEVIER_${suffix}" "$url" "$out"; then
+              if file "$out" | grep -qi PDF; then
+                cp "$out" acquisition/files/NIHMS804415-supplement-supplement_1.pdf
+                found="$url"
+                break
+              fi
             fi
           done
-
+          note ""
+          note "selected_source_url=$found"
           if [ -f acquisition/files/NIHMS804415-supplement-supplement_1.pdf ]; then
+            note "A1_bytes=$(wc -c < acquisition/files/NIHMS804415-supplement-supplement_1.pdf)"
+            note "A1_sha256=$(sha256sum acquisition/files/NIHMS804415-supplement-supplement_1.pdf|awk '{print $1}')"
             pdfinfo acquisition/files/NIHMS804415-supplement-supplement_1.pdf > acquisition/diag/drouin_pdfinfo.txt 2>&1 || true
             pdftotext -layout acquisition/files/NIHMS804415-supplement-supplement_1.pdf acquisition/diag/drouin_supplement.txt 2>/dev/null || true
+            grep -Ei 'matrix|PP|PQ|RR|RQ|Y\(|temperature|line.?mix' acquisition/diag/drouin_supplement.txt | head -n 120 > acquisition/diag/drouin_key_lines.txt || true
           fi
           cat acquisition/MANIFEST.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: m4d-drouin-supplement-probe
+          name: m4d-drouin-elsevier-probe
           path: acquisition/
           retention-days: 7
