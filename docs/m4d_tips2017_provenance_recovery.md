@@ -1,159 +1,160 @@
 # M4D TIPS-2017 provenance recovery
 
-Status: **DRAFT EVIDENCE / TIPS-2017 FREEZE CANDIDATE**
+Status: **HISTORICAL SOURCE SELECTED / NUMERICAL BASELINE PINNED / LOCAL DERIVED-ASSET HASH PENDING**
 
 Branch: `milestone/m4d-design`
 
-This note narrows the TIPS-2017 part of the M4D spectroscopy provenance gate. It does not authorize M4D implementation and does not resolve the still-open HITRAN2016 O2 line-list acquisition gate.
+This note closes the source-selection part of the TIPS-2017 gate for M4D. It does not authorize M4D implementation by itself and does not advance M5.
 
-## 1. Current conclusion
+## 1. Selected historical TIPS-2017 baseline
 
-TIPS-2017 is no longer the main historical-source blocker for M4D.
+The primary numerical source for M4D temperature scaling is now the official historical HITRAN/HAPI implementation at the post-fix commit:
 
-A near-contemporaneous scientific repository preserves an `ORIG` copy of `BD_TIPS_2017_v1p0.for` explicitly inside a `Global_Data_HITRAN2016` tree, with accompanying documentation tracing the working copy to an institutional `/asl/data/hitran/H2016/QTIPS` directory. Independent official and institutional witnesses are also available.
+- repository: `hitranonline/hapi`
+- commit: `f41d9911f2631eed51b96d6c617b4f27786ad477`
+- path: `hapi/hapi.py`
+- Git blob SHA-1: `caeab1bfaa278b5420adef7efe7ab566991ba763`
+- blob size: `1,204,196` bytes
+- embedded HAPI version: `1.1.0.8.2`
 
-The strongest current freeze candidate is:
+The source's own changelog states:
+
+```text
+ADDED TIPS-2017 (ver. 1.1.0.8)
+FIXED LINK TO (2,0) ISOTOPOLOGUE IN TIPS-2017 (ver. 1.1.0.8.2)
+```
+
+The same source cites Gamache et al. (2017), JQSRT 203, 70-87, DOI `10.1016/j.jqsrt.2017.03.045`, as the TIPS-2017 reference.
+
+This is preferred as the primary M4D source because it is official HITRAN-controlled code, source-control pinned, contemporaneous with HITRAN2016/TIPS-2017, and contains the numerical partition-sum tables directly.
+
+Stable source:
+
+- https://github.com/hitranonline/hapi/blob/f41d9911f2631eed51b96d6c617b4f27786ad477/hapi/hapi.py
+
+## 2. Why the post-fix commit is selected
+
+The preceding official commit
+
+`2a12552364f0ac93e3f3bdfa7b3a9701a45d446b`
+
+was committed on 2018-05-08 with message `Added partition sums from TIPS-2017`.
+
+The selected follow-up commit `f41d9911...` fixes the `(2,0)` TIPS-2017 link and adds data-file extension support. HITRAN molecule 2 is CO2, whereas molecular oxygen is molecule 7. The named correction is therefore not an O2 key, but using the post-fix snapshot avoids deliberately pinning a known-bug revision.
+
+No current/default HAPI installation is used at runtime as a mutable TIPS source.
+
+## 3. Exact O2 TIPS-2017 temperature grid
+
+For the three O2 line-list isotopologues needed by M4D, the selected HAPI source assigns the same TIPS-2017 temperature grid `TIPS_2017_ISOT[5]`.
+
+The grid begins at 1 K, then 20 K, and proceeds in 20 K increments through the documented table range. This fully covers the accepted mesospheric temperature profile used by the project (~185-265 K on the 50-100 km chemistry grid).
+
+M4D will use the historical table through an explicit frozen interpolation rule rather than calling a mutable external HAPI install.
+
+## 4. Numerical O2 anchors from the selected historical source
+
+The following exact table values are transcribed from the pinned HAPI source and serve as regression anchors.
+
+### HITRAN molecule 7, local isotopologue 1: 16O2
+
+| T (K) | Q(T) |
+| ---: | ---: |
+| 200 | 145.9015 |
+| 220 | 160.4275 |
+| 240 | 174.9609 |
+| 260 | 189.5058 |
+| 280 | 204.0679 |
+| 300 | 218.6540 |
+| 320 | 233.2724 |
+
+The beginning of the table is `Q(1 K)=1.259272`, `Q(20 K)=15.41160`, `Q(40 K)=29.84283`.
+
+### HITRAN molecule 7, local isotopologue 2: 16O18O
+
+| T (K) | Q(T) |
+| ---: | ---: |
+| 200 | 307.2954 |
+| 220 | 338.0581 |
+| 240 | 368.8395 |
+| 260 | 399.6500 |
+| 280 | 430.5039 |
+| 300 | 461.4188 |
+
+The beginning of the table is `Q(1 K)=3.562445`, `Q(20 K)=30.92123`, `Q(40 K)=61.51168`.
+
+### HITRAN molecule 7, local isotopologue 3: 16O17O
+
+| T (K) | Q(T) |
+| ---: | ---: |
+| 200 | 1794.512 |
+| 220 | 1974.123 |
+| 240 | 2153.834 |
+| 260 | 2333.703 |
+| 280 | 2513.805 |
+| 300 | 2694.239 |
+
+The beginning of the table is `Q(1 K)=20.92314`, `Q(20 K)=180.8102`, `Q(40 K)=359.4239`.
+
+These values must be reproduced by any derived M4D TIPS asset.
+
+## 5. Secondary archival cross-checks
+
+### UMBC historical HITRAN2016 tree
+
+A near-contemporaneous scientific repository independently preserves the original Fortran product:
 
 - repository: `sergio66/UMBC_LBL`
-- repository commit: `2cde4f679a1398403d6bd5ced4b130be7055d33f`
-- commit date: 2018-07-07 UTC
+- commit: `2cde4f679a1398403d6bd5ced4b130be7055d33f`
+- date: 2018-07-07 UTC
 - path: `Global_Data_HITRAN2016/ORIG/BD_TIPS_2017_v1p0.for`
 - Git blob SHA-1: `525350fef5305a02c6708b9111c8b6b63e4b97de`
 - repository-reported size: `9,603,971` bytes
 
-This is a **freeze candidate**, not yet the final locally frozen M4D asset. A local byte copy and SHA-256 are still required before the numerical input is accepted.
+The surrounding repository documentation traces its H2016 TIPS material to `/asl/data/hitran/H2016/QTIPS`.
 
-## 2. Why the UMBC copy is strong provenance evidence
+This copy is retained as an independent archival witness and future numerical cross-check rather than the primary runtime/frozen source.
 
-The UMBC repository contains a dedicated `Global_Data_HITRAN2016` directory and an `ORIG` subdirectory with preserved TIPS files, including:
+### Recovered original supplemental ZIP
 
-- `BD_TIPS_2017_v1p0.for`;
-- `TIPS_2017_v1p0.for`;
-- `BD_ISO_2016.for`;
-- `BD_MOL_2016.FOR`.
+`HUyoshis/Radmodel` preserves the original retrieval URL and a copy of `BD_TIPS_2017_v1p0.zip`:
 
-The repository's H2016 setup documentation states that the local TIPS material was taken from:
+- blob SHA-1: `306f0ad21a2b931607f58c78ffcf97f865850e9d`
+- size: `1,367,428` bytes
 
-```text
-/asl/data/hitran/H2016/QTIPS
-```
+Its README records the historical URL `http://hitran.org/suppl/TIPS/BD_TIPS_2017_v1p0.zip`.
 
-and separately documents unpacking:
+### Institutional archive
 
-```text
-QTpy.zip
-TIPS_2017_v1p0.zip
-BD_TIPS_2017_v1p0.zip
-```
+TU Berlin DepositOnce `KSPECTRUM_Htr16`, DOI `10.14279/depositonce-10054`, independently documents pairing HITRAN2016 with `BD_TIPS_2017_v1p0`.
 
-The same documentation describes the surrounding workflow as getting `H2016` running and refers to HITRAN2016 by-gas line directories and HITRAN molecular/isotopic metadata.
+## 6. Frozen M4D usage convention
 
-The `ORIG` path is important because the same repository also documents later local adaptations of the TIPS code for UMBC interfaces. For M4D provenance, the `ORIG/BD_TIPS_2017_v1p0.for` bytes are therefore preferable to the adapted working copy.
+For each HITRAN line at temperature `T`, M4D will use the standard HITRAN line-intensity temperature scaling with the partition-sum ratio from this historical TIPS-2017 baseline. The exact mathematical formula, constants, stimulated-emission factor and interpolation implementation will be written into the final M4D design specification before coding.
 
-Stable witnesses:
+The partition function for each line is selected by its HITRAN local isotopologue ID. Standard HITRAN `sw` values are already terrestrial-natural-abundance weighted; no additional isotope-abundance multiplier is introduced.
 
-- https://github.com/sergio66/UMBC_LBL/tree/2cde4f679a1398403d6bd5ced4b130be7055d33f/Global_Data_HITRAN2016/ORIG
-- https://github.com/sergio66/UMBC_LBL/blob/2cde4f679a1398403d6bd5ced4b130be7055d33f/Readme_make_new_qtipsH16
-- https://github.com/sergio66/UMBC_LBL/blob/2cde4f679a1398403d6bd5ced4b130be7055d33f/Global_Data_HITRAN2016/Readme
+The interpolation must be deterministic and covered by tests at exact tabulated temperatures and intermediate mesospheric temperatures.
 
-## 3. Independent official HAPI witness
+## 7. Materialization requirement before closure
 
-The official `hitranonline/hapi` Git history independently records:
+During M4D implementation, derive a compact project asset containing only the TIPS-2017 O2 data required for local isotopologues 1-3, together with:
 
-- commit `2a12552364f0ac93e3f3bdfa7b3a9701a45d446b`;
-- date: 2018-05-08 UTC;
-- message: `Added partition sums from TIPS-2017`.
+- source repository/commit/path/blob identity;
+- exact source table points used;
+- deterministic extraction script;
+- project asset SHA-256;
+- tests against the numerical anchors above;
+- an independent check against the archived Fortran copy where practical.
 
-This gives an official HITRAN-controlled, date-pinned implementation witness only months after the TIPS-2017/HITRAN2016 publications.
+The project need not depend on HAPI at runtime.
 
-The immediately following historical commit:
+## 8. Gate decision
 
-- `f41d9911f2631eed51b96d6c617b4f27786ad477`;
-- message: `Added custom extension support for datafiles and fixed I=(2,0) in TIPS-2017`.
+The TIPS-2017 source/provenance question is now:
 
-The explicitly named `(2,0)` correction concerns molecule number 2, whereas O2 is HITRAN molecule 7. This makes that named correction non-O2-specific. Nevertheless, the full file changed substantially between those commits, so M4D must not infer byte identity from the commit message alone. The O2 partition sums should be cross-checked numerically between the selected historical source and the official HAPI history.
+**PASS — historical source selected and numerical O2 baseline pinned.**
 
-Stable witnesses:
+The remaining work is reproducible materialization and implementation testing, not source discovery.
 
-- https://github.com/hitranonline/hapi/commit/2a12552364f0ac93e3f3bdfa7b3a9701a45d446b
-- https://github.com/hitranonline/hapi/commit/f41d9911f2631eed51b96d6c617b4f27786ad477
-
-## 4. Independent recovery of the original HITRAN supplemental ZIP
-
-A second scientific repository, `HUyoshis/Radmodel`, preserves both the acquisition instructions and a binary copy of the historical supplemental archive.
-
-Its README records the original retrieval command:
-
-```text
-wget http://hitran.org/suppl/TIPS/BD_TIPS_2017_v1p0.zip
-```
-
-and an alternative author-hosted TIPS-2017 route at Robert Gamache's UML page.
-
-The repository currently preserves:
-
-- path: `lbl_k-dist/src_common/TIPS_2017.org/downloaded/BD_TIPS_2017_v1p0.zip`;
-- Git blob SHA-1: `306f0ad21a2b931607f58c78ffcf97f865850e9d`;
-- repository-reported size: `1,367,428` bytes.
-
-The ZIP itself entered that Git repository in 2024, so the Git commit date is not primary evidence of the archive's original publication date. Its value is instead that the exact filename and historical HITRAN supplemental download URL are preserved alongside the binary archive.
-
-The repository also contains a transformed `BD_TIPS_2017.f`. Its transformation script only adjusts include-file capitalization/name compatibility and splits long Fortran lines before compilation. Therefore this transformed source is useful as an independent numerical cross-check, but it should not replace an original preserved source when one is available.
-
-Stable witnesses:
-
-- https://github.com/HUyoshis/Radmodel/blob/5e501894a336b5304936fd8473b630a6286249fa/lbl_k-dist/src_common/TIPS_2017.org/README
-- https://github.com/HUyoshis/Radmodel/blob/5e501894a336b5304936fd8473b630a6286249fa/lbl_k-dist/src_common/TIPS_2017.org/downloaded/BD_TIPS_2017_v1p0.zip
-- https://github.com/HUyoshis/Radmodel/blob/5e501894a336b5304936fd8473b630a6286249fa/lbl_k-dist/src_common/TIPS_2017.org/modify_programs.sh
-
-## 5. Independent institutional archive
-
-TU Berlin's DepositOnce archive `KSPECTRUM_Htr16` provides another institutional witness. Its metadata explicitly states that the package uses the HITRAN 2016 line list and includes the updated total internal partition sums `BD_TIPS_2017_v1p0` from R. Gamache.
-
-- DOI: `10.14279/depositonce-10054`
-- issued: 2020-05-19
-- institutional repository: Technische Universitaet Berlin / DepositOnce
-
-This is not required to become the numerical TIPS source, but it independently supports the pairing of HITRAN2016 spectroscopy with `BD_TIPS_2017_v1p0`.
-
-## 6. Relation to the TIPS-2017 publication
-
-Gamache et al. (2017), JQSRT 203, 70-87, documents the TIPS generation associated with the HITRAN2016 era and the corresponding standalone/program products. The recovered Fortran source header identifies R. R. Gamache and records a last-change date of 27 June 2017.
-
-The recovered program supports six O2 isotopologues in its TIPS tables. This must not be confused with the HITRAN2016 O2 line-list coverage, which contains three O2 isotopologues in the line-by-line database. Partition-sum coverage and transition-list coverage are separate concepts.
-
-Primary publication:
-
-- Gamache et al. (2017), DOI `10.1016/j.jqsrt.2017.03.045`.
-
-## 7. Proposed TIPS-2017 freeze procedure
-
-Before M4D coding, perform the following narrow acceptance procedure:
-
-1. Obtain the exact bytes of the UMBC `ORIG/BD_TIPS_2017_v1p0.for` freeze candidate at commit `2cde4f...`.
-2. Record its local filename, source URL, access date, byte size and SHA-256.
-3. Preserve either the original file locally when licensing permits or an auditable provenance manifest plus an exact retrieval procedure.
-4. Extract/evaluate the O2 partition sums required by the O2 line isotopologues actually selected from HITRAN2016.
-5. Compare representative O2 `Q(T)` values over the mesospheric temperature range against the historical official HAPI TIPS-2017 implementation from commit `2a125...` and, where practical, the independently recovered Radmodel copy.
-6. Verify the 296 K values against the HITRAN2016-era molecular/isotopic metadata used by the historical source.
-7. Record the numerical comparison and hashes in the M4D provenance manifest.
-8. Freeze the exact interpolation convention used by M4D rather than depending on a mutable external HAPI installation at runtime.
-
-No present-day TIPS table or current HAPI default should silently replace this frozen historical source.
-
-## 8. What this resolves and what it does not
-
-This evidence is sufficient to change the working assessment from "TIPS-2017 historical source uncertain" to:
-
-**TIPS-2017 PROVENANCE RECOVERED — FREEZE CANDIDATE IDENTIFIED; LOCAL SHA-256/NUMERICAL CROSS-CHECK PENDING.**
-
-It does **not** close the M4D spectroscopy gate as a whole.
-
-The remaining critical acquisition problem is the exact HITRAN2016 O2 transition line list. We still need a machine-readable O2 line source whose edition is demonstrably HITRAN2016, after which the A/B/IRA subsets can be selected by quantum labels and frozen with line counts, ranges and hashes.
-
-Therefore:
-
-- do not implement M4D yet;
-- do not use a live/current HITRANonline download as a historical substitute;
-- do not advance to M5;
-- focus the next acquisition effort on the HITRAN2016 O2 line bytes.
+This closes the historical TIPS-2017 source risk for M4D. It does not by itself freeze the overall M4D design; solar forcing, line shape/broadening, geometry, CIA handling, numerical convergence and final validation criteria remain separate gates.
