@@ -2,10 +2,8 @@ name: M4D source acquisition probe
 
 on:
   push:
-    branches:
-      - milestone/m4d-design
-    paths:
-      - .github/workflows/m4d-source-acquisition.yml
+    branches: [milestone/m4d-design]
+    paths: [.github/workflows/m4d-source-acquisition.yml]
 
 permissions:
   contents: read
@@ -15,49 +13,40 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Acquire public historical sources
+      - name: Probe Drouin supplement
         shell: bash
         run: |
           set -u
           mkdir -p acquisition/files acquisition/diag
           : > acquisition/MANIFEST.txt
           note(){ printf '%s\n' "$*" | tee -a acquisition/MANIFEST.txt; }
-          fetch_url(){ label="$1"; url="$2"; out="$3"; note ""; note "[$label]"; note "url=$url"; if curl -fL --retry 2 --connect-timeout 20 --max-time 240 -A 'Mozilla/5.0' "$url" -o "$out"; then note "status=downloaded"; note "bytes=$(wc -c < "$out")"; note "sha256=$(sha256sum "$out"|awk '{print $1}')"; note "file=$(file -b "$out")"; file "$out"|grep -qi text && note "lines=$(wc -l < "$out")"; return 0; else rm -f "$out"; note "status=failed"; return 1; fi; }
+          try_url(){ label="$1"; url="$2"; out="$3"; note ""; note "[$label]"; note "url=$url"; if curl -fL --retry 1 --connect-timeout 20 --max-time 120 -A 'Mozilla/5.0' "$url" -o "$out"; then note "status=downloaded"; note "bytes=$(wc -c < "$out")"; note "sha256=$(sha256sum "$out"|awk '{print $1}')"; note "type=$(file -b "$out")"; return 0; else rm -f "$out"; note "status=failed"; return 1; fi; }
           note "access_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-          base='https://lweb.cfa.harvard.edu/HITRAN/HITRAN2012/HITRAN2012/By-Molecule/Uncompressed-files'
-          fetch_url A2 "$base/07_A-band_SDF.dat" acquisition/files/07_A-band_SDF.dat || true
-          fetch_url A3 "$base/07_hit12_0.76mic_Galatry.par" acquisition/files/07_hit12_0.76mic_Galatry.par || true
-          fetch_url A_HITRAN2012_FULL "$base/07_hit12.par" acquisition/files/07_hit12.par || true
-
-          fetch_url A1_EUROPEPMC 'https://www.ebi.ac.uk/europepmc/webservices/rest/PMC5103325/supplementaryFiles' acquisition/diag/PMC5103325_supplementary.zip || true
-          if [ -f acquisition/diag/PMC5103325_supplementary.zip ]; then
-            mkdir -p acquisition/epmc_suppl
-            unzip -q acquisition/diag/PMC5103325_supplementary.zip -d acquisition/epmc_suppl || true
-            find acquisition/epmc_suppl -type f -printf '%P\t%s\n' > acquisition/diag/epmc_file_list.txt || true
-            supp="$(find acquisition/epmc_suppl -type f -iname '*supplement*1*.pdf' -print -quit)"
-            [ -z "$supp" ] && supp="$(find acquisition/epmc_suppl -type f -iname '*.pdf' -print -quit)"
-            note "A1_supplement_path=$supp"
-            if [ -n "$supp" ]; then
-              cp "$supp" acquisition/files/NIHMS804415-supplement-supplement_1.pdf
-              note "A1_bytes=$(wc -c < acquisition/files/NIHMS804415-supplement-supplement_1.pdf)"
-              note "A1_sha256=$(sha256sum acquisition/files/NIHMS804415-supplement-supplement_1.pdf|awk '{print $1}')"
-              pdfinfo acquisition/files/NIHMS804415-supplement-supplement_1.pdf > acquisition/diag/drouin_pdfinfo.txt 2>&1 || true
-              pdftotext -layout acquisition/files/NIHMS804415-supplement-supplement_1.pdf acquisition/diag/drouin_supplement.txt 2>/dev/null || true
-            fi
+          try_url PMC_HTML 'https://pmc.ncbi.nlm.nih.gov/articles/PMC5103325/' acquisition/diag/pmc.html || true
+          if [ -f acquisition/diag/pmc.html ]; then
+            grep -Eo 'https?://[^"'"'"' ]+supplement[^"'"'"' ]+\.pdf[^"'"'"' ]*|href="[^"]*supplement[^"]*\.pdf[^"]*"' acquisition/diag/pmc.html > acquisition/diag/pmc_supp_links.txt || true
+            cat acquisition/diag/pmc_supp_links.txt | tee -a acquisition/MANIFEST.txt || true
           fi
 
-          fetch_url C1_CURRENT_2024 'https://hitran.org/data/CIA/O2-air_2024.cia' acquisition/files/O2-air_2024.cia || true
-          fetch_url C1_NEGATIVE_CONTROL 'https://hitran.org/data/CIA/alternate/O2-Air_altern_2016.cia' acquisition/files/O2-Air_altern_2016.cia || true
-          fetch_url C1_THEORY_2018 'https://hitran.org/data/CIA/alternate/O2-Air_theory_temp_2018.cia' acquisition/files/O2-Air_theory_temp_2018.cia || true
+          for url in \
+            'https://pmc.ncbi.nlm.nih.gov/articles/PMC5103325/bin/NIHMS804415-supplement-supplement_1.pdf' \
+            'https://pmc.ncbi.nlm.nih.gov/articles/PMC5103325/bin/NIHMS804415-supplement-supplement_1.pdf?download=1' \
+            'https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5103325/bin/NIHMS804415-supplement-supplement_1.pdf' \
+            'https://pmc.ncbi.nlm.nih.gov/articles/instance/5103325/bin/NIHMS804415-supplement-supplement_1.pdf'; do
+            if try_url A1_DIRECT "$url" acquisition/files/NIHMS804415-supplement-supplement_1.pdf; then
+              if file acquisition/files/NIHMS804415-supplement-supplement_1.pdf | grep -qi PDF; then break; else rm -f acquisition/files/NIHMS804415-supplement-supplement_1.pdf; fi
+            fi
+          done
 
-          note ""; note "[FINAL_FILE_HASHES]"
-          find acquisition/files -maxdepth 1 -type f -print0 | sort -z | while IFS= read -r -d '' f; do note "$(basename "$f") bytes=$(wc -c < "$f") sha256=$(sha256sum "$f"|awk '{print $1}')"; done
+          if [ -f acquisition/files/NIHMS804415-supplement-supplement_1.pdf ]; then
+            pdfinfo acquisition/files/NIHMS804415-supplement-supplement_1.pdf > acquisition/diag/drouin_pdfinfo.txt 2>&1 || true
+            pdftotext -layout acquisition/files/NIHMS804415-supplement-supplement_1.pdf acquisition/diag/drouin_supplement.txt 2>/dev/null || true
+          fi
           cat acquisition/MANIFEST.txt
-      - name: Upload acquisition evidence
+      - uses: actions/upload-artifact@v4
         if: always()
-        uses: actions/upload-artifact@v4
         with:
-          name: m4d-source-acquisition-evidence-v2
+          name: m4d-drouin-supplement-probe
           path: acquisition/
           retention-days: 7
