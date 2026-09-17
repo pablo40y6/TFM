@@ -1,0 +1,448 @@
+{
+  "baseline_profile_summaries": {
+    "0.0": {
+      "illuminated_level_count": 51,
+      "rates_s-1": {
+        "JH": {
+          "max": 0.007950473760152139,
+          "min": 0.006352893772443762
+        },
+        "J_H2O2": {
+          "max": 9.076081461023114e-05,
+          "min": 8.10646108005572e-05
+        },
+        "J_H2O_A": {
+          "max": 7.724854981222497e-06,
+          "min": 1.4594650362892261e-06
+        },
+        "J_H2O_B": {
+          "max": 6.258566807861506e-07,
+          "min": 1.5247121728113377e-22
+        },
+        "J_LYA": {
+          "max": 3.758792373012428e-09,
+          "min": 9.36555388704753e-25
+        },
+        "J_O2_TOTAL": {
+          "max": 1.715245343883134e-07,
+          "min": 4.702267443953786e-10
+        },
+        "J_O3_TOTAL": {
+          "max": 0.008070654137088065,
+          "min": 0.0064635163436894995
+        },
+        "J_SRC": {
+          "max": 1.626977524448115e-07,
+          "min": 0.0
+        }
+      }
+    },
+    "60.0": {
+      "illuminated_level_count": 51,
+      "rates_s-1": {
+        "JH": {
+          "max": 0.007949568405296344,
+          "min": 0.005149091832186357
+        },
+        "J_H2O2": {
+          "max": 9.066283766115728e-05,
+          "min": 7.181845325485835e-05
+        },
+        "J_H2O_A": {
+          "max": 6.9507600795357485e-06,
+          "min": 1.4230546332836564e-06
+        },
+        "J_H2O_B": {
+          "max": 6.098970161527797e-07,
+          "min": 4.763090823162143e-38
+        },
+        "J_LYA": {
+          "max": 3.698929862332712e-09,
+          "min": 2.9257314638588107e-40
+        },
+        "J_O2_TOTAL": {
+          "max": 6.622544676146706e-08,
+          "min": 4.2451306326988404e-10
+        },
+        "J_O3_TOTAL": {
+          "max": 0.008069387584879528,
+          "min": 0.00525933427187076
+        },
+        "J_SRC": {
+          "max": 5.996641037947572e-08,
+          "min": 0.0
+        }
+      }
+    },
+    "85.0": {
+      "illuminated_level_count": 51,
+      "rates_s-1": {
+        "JH": {
+          "max": 0.00794154304550004,
+          "min": 0.001466368353683317
+        },
+        "J_H2O2": {
+          "max": 9.055276700467506e-05,
+          "min": 3.7891741542237344e-05
+        },
+        "J_H2O_A": {
+          "max": 5.763251116499995e-06,
+          "min": 1.1467338137059178e-06
+        },
+        "J_H2O_B": {
+          "max": 5.264226917319043e-07,
+          "min": 1.6097069152473224e-166
+        },
+        "J_LYA": {
+          "max": 3.2316266697479504e-09,
+          "min": 9.887634614541292e-169
+        },
+        "J_O2_TOTAL": {
+          "max": 4.425926045823788e-09,
+          "min": 2.079399771794817e-10
+        },
+        "J_O3_TOTAL": {
+          "max": 0.008060055864750622,
+          "min": 0.0015736051937392994
+        },
+        "J_SRC": {
+          "max": 6.14174204185545e-10,
+          "min": 0.0
+        }
+      }
+    },
+    "89.9": {
+      "illuminated_level_count": 51,
+      "rates_s-1": {
+        "JH": {
+          "max": 0.007906811754780751,
+          "min": 0.00036131390139905743
+        },
+        "J_H2O2": {
+          "max": 9.030600796468676e-05,
+          "min": 1.7996025742527774e-05
+        },
+        "J_H2O_A": {
+          "max": 4.172913476098297e-06,
+          "min": 5.242124057955455e-07
+        },
+        "J_H2O_B": {
+          "max": 3.308454688981099e-07,
+          "min": 0.0
+        },
+        "J_LYA": {
+          "max": 2.032213552779608e-09,
+          "min": 0.0
+        },
+        "J_O2_TOTAL": {
+          "max": 2.556163705548734e-09,
+          "min": 3.997755968010386e-11
+        },
+        "J_O3_TOTAL": {
+          "max": 0.00802252894400766,
+          "min": 0.0004600990362461411
+        },
+        "J_SRC": {
+          "max": 2.5550550442957155e-15,
+          "min": 0.0
+        }
+      }
+    },
+    "95.0": {
+      "illuminated_level_count": 51,
+      "rates_s-1": {
+        "JH": {
+          "max": 0.006915533550117648,
+          "min": 4.30105509718831e-22
+        },
+        "J_H2O2": {
+          "max": 8.25436665984465e-05,
+          "min": 1.455878603979757e-06
+        },
+        "J_H2O_A": {
+          "max": 1.4739780887528102e-06,
+          "min": 6.255030537833548e-48
+        },
+        "J_H2O_B": {
+          "max": 5.734409533829179e-39,
+          "min": 0.0
+        },
+        "J_LYA": {
+          "max": 3.5223645785191513e-41,
+          "min": 0.0
+        },
+        "J_O2_TOTAL": {
+          "max": 4.806742249075796e-10,
+          "min": 1.2271986625319271e-76
+        },
+        "J_O3_TOTAL": {
+          "max": 0.007026201728599171,
+          "min": 4.275882971915804e-06
+        },
+        "J_SRC": {
+          "max": 0.0,
+          "min": 0.0
+        }
+      }
+    },
+    "99.0": {
+      "illuminated_level_count": 21,
+      "rates_s-1": {
+        "JH": {
+          "max": 9.777013416007412e-19,
+          "min": 0.0
+        },
+        "J_H2O2": {
+          "max": 1.3958570659444886e-06,
+          "min": 0.0
+        },
+        "J_H2O_A": {
+          "max": 1.810428433647205e-40,
+          "min": 0.0
+        },
+        "J_H2O_B": {
+          "max": 0.0,
+          "min": 0.0
+        },
+        "J_LYA": {
+          "max": 0.0,
+          "min": 0.0
+        },
+        "J_O2_TOTAL": {
+          "max": 1.2031515205325455e-115,
+          "min": 0.0
+        },
+        "J_O3_TOTAL": {
+          "max": 5.298610532074517e-06,
+          "min": 0.0
+        },
+        "J_SRC": {
+          "max": 0.0,
+          "min": 0.0
+        }
+      }
+    }
+  },
+  "configuration": "historical_2020",
+  "geometry": {
+    "earth_radius_km": 6370.0,
+    "path_sum_km": {
+      "z100_sza99.0": 2305.927394165518,
+      "z50_sza0.0": 100.0,
+      "z80_sza60.0": 137.81504100359234,
+      "z80_sza90.0": 952.8378665859158,
+      "z80_sza95.0": 1668.4626929362385
+    },
+    "shadow_thresholds": {
+      "100": {
+        "above_shadowed": true,
+        "at_illuminated": true,
+        "below_illuminated": true,
+        "sza_deg": 100.08663838402701
+      },
+      "50": {
+        "above_shadowed": true,
+        "at_illuminated": true,
+        "below_illuminated": true,
+        "sza_deg": 97.1554571393882
+      },
+      "80": {
+        "above_shadowed": true,
+        "at_illuminated": true,
+        "below_illuminated": true,
+        "sza_deg": 99.03342979747013
+      }
+    },
+    "top_km": 150.0
+  },
+  "h2o2_clamped_level_count": 13,
+  "h2o_jpl18_typographical_correction": {
+    "classification": "typographical correction",
+    "corroborating_source": {
+      "entry_sigma_cm2": 1.08e-20,
+      "entry_wavelength_nm": 189.0,
+      "pdf_sha256": "835496c8fd180b29ff9fc456e038dc8fd34e829e5f6e00346b0837ad71b4169c",
+      "printed_page": "4-40",
+      "role": "corroboration only; not a numerical source",
+      "table": "4B-2-2",
+      "title": "JPL Publication 25-1 / Evaluation 20"
+    },
+    "evidence": [
+      "the printed row occurs between the 188 and 190 nm rows",
+      "Table 4B-3 states a nominal wavelength range of 121-198 nm",
+      "the table notes assign the surrounding 183-191 nm interval to one source",
+      "JPL Evaluation 20 prints 189 nm for the same cross section and is corroboration only"
+    ],
+    "implemented_asset_has_189_nm": true,
+    "implemented_asset_has_no_199_nm": true,
+    "implemented_entry": {
+      "sigma_cm2": 1.08e-20,
+      "wavelength_nm": 189.0
+    },
+    "numerical_source_configuration": {
+      "configuration": "historical_2020",
+      "numerical_source": "JPL Publication 15-10 / Evaluation 18 / Table 4B-3"
+    },
+    "printed_entry": {
+      "sigma_cm2": 1.08e-20,
+      "wavelength_nm": 199.0
+    },
+    "source": {
+      "printed_page": "4-43",
+      "table": "4B-3",
+      "title": "JPL Publication 15-10 / Evaluation 18",
+      "year": 2015
+    }
+  },
+  "interpretation": "provenance plus synthetic/regression evidence; not atmospheric validation",
+  "jpl18_source_pdf_sha256": "149a4bab985402c67419e02ff8ca80202d1ba55f5383fbf69692e2184b68da08",
+  "m4a_asset_sha256": {
+    "midlatitude_equinox_quiet_chemical_background.csv": "c1c115d840fa1b3115d7bcb7a1feca769b9dbbddd0faee5a2df0edadc4b5c291",
+    "midlatitude_equinox_quiet_metadata.json": "5b4c53276b587141201b74116faf3210e3ce0ffa0de025e767fb944b25daa75a",
+    "midlatitude_equinox_quiet_radiative_background.csv": "217fe7187c42a4ca8f590e1fa382ef815adffae6f5f1429816cea739f27c604f",
+    "socrates_prescribed_vmr.csv": "8985b4774b6e1aa91e3522758c7a33b652501601cdd167871afdc215474b4e01"
+  },
+  "m4b_compatibility": {
+    "actual_local_closure_smoke_at_80km_sza60": true,
+    "gross_subset_invariants_all_profiles": true,
+    "h2o2_lya": {
+      "max_ratio_at_sza_deg": 0.0,
+      "max_ratio_at_z_km": 100.0,
+      "max_upper_to_production_ratio_at_rate_floor": 0.04065058478608969,
+      "production_definition_includes_lya": false,
+      "scientific_follow_up_over_10_percent": false,
+      "unattenuated_upper_s-1": 3.7436e-06
+    },
+    "synthetic_external_g_s-1": {
+      "gA": 1e-09,
+      "gB": 2e-10,
+      "gIRA": 3e-09
+    }
+  },
+  "milestone": "4C-R2",
+  "not_implemented": [
+    "gA",
+    "gB",
+    "gIRA",
+    "astronomy",
+    "temporal solver"
+  ],
+  "o3_upper_tail_sensitivity": {
+    "alternative": "prescribed external O3 nodes z>=109 km set to zero",
+    "classification": "not material at specified threshold",
+    "metrics": {
+      "JH": {
+        "max_absolute_at_sza_deg": 89.9,
+        "max_absolute_at_z_km": 100.0,
+        "max_absolute_s-1": 7.40589961150187e-07,
+        "max_relative_at_rate_floor": 9.365603019278648e-05,
+        "max_relative_at_sza_deg": 89.9,
+        "max_relative_at_z_km": 100.0
+      },
+      "J_H2O2": {
+        "max_absolute_at_sza_deg": 89.9,
+        "max_absolute_at_z_km": 100.0,
+        "max_absolute_s-1": 5.1512844316347174e-09,
+        "max_relative_at_rate_floor": 5.703929032097995e-05,
+        "max_relative_at_sza_deg": 89.9,
+        "max_relative_at_z_km": 100.0
+      },
+      "J_H2O_A": {
+        "max_absolute_at_sza_deg": 89.9,
+        "max_absolute_at_z_km": 100.0,
+        "max_absolute_s-1": 8.33705155804757e-10,
+        "max_relative_at_rate_floor": 0.00019974979786730888,
+        "max_relative_at_sza_deg": 89.9,
+        "max_relative_at_z_km": 100.0
+      },
+      "J_H2O_B": {
+        "max_absolute_at_sza_deg": 89.9,
+        "max_absolute_at_z_km": 100.0,
+        "max_absolute_s-1": 1.0112910026686352e-10,
+        "max_relative_at_rate_floor": 0.00030557528277525773,
+        "max_relative_at_sza_deg": 89.9,
+        "max_relative_at_z_km": 100.0
+      },
+      "J_LYA": {
+        "max_absolute_at_sza_deg": 89.9,
+        "max_absolute_at_z_km": 100.0,
+        "max_absolute_s-1": 6.211856111290491e-13,
+        "max_relative_at_rate_floor": 0.0003055760507225498,
+        "max_relative_at_sza_deg": 89.9,
+        "max_relative_at_z_km": 100.0
+      },
+      "J_O2_TOTAL": {
+        "max_absolute_at_sza_deg": 89.9,
+        "max_absolute_at_z_km": 100.0,
+        "max_absolute_s-1": 6.421952464870701e-13,
+        "max_relative_at_rate_floor": 0.00025117090283909845,
+        "max_relative_at_sza_deg": 89.9,
+        "max_relative_at_z_km": 100.0
+      },
+      "J_O3_TOTAL": {
+        "max_absolute_at_sza_deg": 89.9,
+        "max_absolute_at_z_km": 100.0,
+        "max_absolute_s-1": 7.421605076902288e-07,
+        "max_relative_at_rate_floor": 9.250098844005838e-05,
+        "max_relative_at_sza_deg": 89.9,
+        "max_relative_at_z_km": 100.0
+      },
+      "J_SRC": {
+        "max_absolute_at_sza_deg": 0.0,
+        "max_absolute_at_z_km": 100.0,
+        "max_absolute_s-1": 1.347193251376804e-13,
+        "max_relative_at_rate_floor": 6.542634185941608e-06,
+        "max_relative_at_sza_deg": 85.0,
+        "max_relative_at_z_km": 100.0
+      }
+    },
+    "principal_rate_change_over_1_percent": false,
+    "rate_floor_s-1": 1e-12,
+    "sza_deg": [
+      0.0,
+      60.0,
+      85.0,
+      89.9,
+      95.0,
+      99.0
+    ]
+  },
+  "scope": "eight UV/VUV photolysis J rates; direct beam; supplied SZA",
+  "source_identity": {
+    "array_equal": {
+      "irrad": true,
+      "sN2": true,
+      "sO": true,
+      "sO2": true,
+      "sO3": true,
+      "wave": true
+    },
+    "duplicate_117_30308_matlab_indices": [
+      21,
+      22
+    ],
+    "matlab_element_28_nm": 121.567,
+    "sigma_mat_sha256": "a98567c4f971721cec4197ad7ea17182e95df78c3a0eea880acb08fc6d560424",
+    "source_rows": 125
+  },
+  "unattenuated_anchors_s-1": {
+    "JH": 0.007951381890000001,
+    "J_H2O2_200K": 9.062306562966788e-05,
+    "J_H2O2_298K": 9.48327294630001e-05,
+    "J_H2O2_LYA_ABS_UPPER": 3.7436e-06,
+    "J_H2O_A": 1.1454298921361168e-05,
+    "J_H2O_B": 6.647332715993185e-07,
+    "J_H2O_REPRESENTED_TOTAL": 1.2119032192960486e-05,
+    "J_LYA": 3.82e-09,
+    "J_O2_TOTAL": 4.5171738408e-06,
+    "J_O3_TOTAL": 0.00807364762308,
+    "J_SRC": 3.622712e-06
+  },
+  "uv_asset_sha256": {
+    "jpl18_h2o2_cross_sections_298k.csv": "bec01ae613d088455bdb64657b46f33bfe3cdb3b6e294c6f41fd21cbd611f4a1",
+    "jpl18_h2o_cross_sections_298k.csv": "d70d7d79405cb4b86de2186d1fd1212c332eb1eb362279f117b99daa00ce2e2c",
+    "jpl18_uv_cross_sections_metadata.json": "20dae1b58fa5dce498b7b3bb28dfcfbd0e644196f1190a19863853e0686b818d",
+    "uv_spectral_backbone_2017.csv": "a398b97e7b2ae68efa9c72353444317e8a73f836870f0bd2cd6f21a5b1c7b135",
+    "uv_spectral_backbone_2017_metadata.json": "1dc9c033449805ed432bffe3fd9bc80b9b2f76d7261cc6e2e6f5dec44b201df2"
+  }
+}

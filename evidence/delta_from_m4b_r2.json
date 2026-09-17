@@ -1,0 +1,39 @@
+{
+  "added": [
+    "docs/historical_2020_uv_radiation.md",
+    "docs/milestone4c_report.md",
+    "scripts/generate_historical_2020_uv_assets.py",
+    "scripts/validate_historical_2020_uv.py",
+    "src/tfm_photochem/assets/historical_2020/jpl18_h2o2_cross_sections_298k.csv",
+    "src/tfm_photochem/assets/historical_2020/jpl18_h2o_cross_sections_298k.csv",
+    "src/tfm_photochem/assets/historical_2020/jpl18_uv_cross_sections_metadata.json",
+    "src/tfm_photochem/assets/historical_2020/uv_spectral_backbone_2017.csv",
+    "src/tfm_photochem/assets/historical_2020/uv_spectral_backbone_2017_metadata.json",
+    "src/tfm_photochem/historical_2020/uv_assets.py",
+    "src/tfm_photochem/historical_2020/uv_cross_sections.py",
+    "src/tfm_photochem/historical_2020/uv_geometry.py",
+    "src/tfm_photochem/historical_2020/uv_radiation.py",
+    "tests/test_historical_2020_uv_assets.py",
+    "tests/test_historical_2020_uv_geometry.py",
+    "tests/test_historical_2020_uv_radiation.py"
+  ],
+  "base_artifact": "tfm-photochem-milestone4b-r2.zip",
+  "base_sha256": "87fe1d585efa6f42231fc6d9898ca37c5afa51d1b4baa6325015caaee03530c8",
+  "changed": [
+    "README.md",
+    "docs/architecture.md",
+    "docs/historical_2020_local_closure.md",
+    "docs/historical_2020_odd_oxygen.md",
+    "docs/historical_2020_topology.md",
+    "docs/milestone4b_report.md",
+    "docs/source_inventory.md",
+    "docs/validation_report.md",
+    "pyproject.toml",
+    "src/tfm_photochem/__init__.py",
+    "src/tfm_photochem/historical_2020/__init__.py",
+    "src/tfm_photochem/historical_2020/background_types.py",
+    "uv.lock"
+  ],
+  "package_version": "0.5.0",
+  "scope": "Milestone 4C only"
+}

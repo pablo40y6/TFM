@@ -1,0 +1,52 @@
+{
+  "base_artifact": {
+    "file": "tfm-photochem-milestone4c.zip",
+    "sha256": "27ec4168ca38bd193f88dd05dbaf8e702eb2be0ce77eb679e2d7f311f32fb101",
+    "status": "mathematically and numerically accepted"
+  },
+  "changed_files": [
+    "README.md",
+    "docs/architecture.md",
+    "docs/historical_2020_uv_radiation.md",
+    "docs/milestone4c_report.md",
+    "docs/source_inventory.md",
+    "docs/validation_report.md",
+    "evidence/software_checks.json",
+    "evidence/validate_historical_2020_uv.json",
+    "pyproject.toml",
+    "scripts/generate_historical_2020_uv_assets.py",
+    "scripts/validate_historical_2020_uv.py",
+    "src/tfm_photochem/__init__.py",
+    "src/tfm_photochem/assets/historical_2020/jpl18_uv_cross_sections_metadata.json",
+    "src/tfm_photochem/historical_2020/uv_cross_sections.py",
+    "tests/test_historical_2020_uv_assets.py",
+    "uv.lock"
+  ],
+  "new_files": [
+    "evidence/delta_from_m4c.json"
+  ],
+  "package_version": {
+    "after": "0.5.1",
+    "before": "0.5.0"
+  },
+  "provenance_only": true,
+  "unchanged_numerical_files": {
+    "src/tfm_photochem/assets/historical_2020/jpl18_h2o2_cross_sections_298k.csv": "bec01ae613d088455bdb64657b46f33bfe3cdb3b6e294c6f41fd21cbd611f4a1",
+    "src/tfm_photochem/assets/historical_2020/jpl18_h2o_cross_sections_298k.csv": "d70d7d79405cb4b86de2186d1fd1212c332eb1eb362279f117b99daa00ce2e2c",
+    "src/tfm_photochem/assets/historical_2020/midlatitude_equinox_quiet_chemical_background.csv": "c1c115d840fa1b3115d7bcb7a1feca769b9dbbddd0faee5a2df0edadc4b5c291",
+    "src/tfm_photochem/assets/historical_2020/midlatitude_equinox_quiet_metadata.json": "5b4c53276b587141201b74116faf3210e3ce0ffa0de025e767fb944b25daa75a",
+    "src/tfm_photochem/assets/historical_2020/midlatitude_equinox_quiet_radiative_background.csv": "217fe7187c42a4ca8f590e1fa382ef815adffae6f5f1429816cea739f27c604f",
+    "src/tfm_photochem/assets/historical_2020/socrates_prescribed_vmr.csv": "8985b4774b6e1aa91e3522758c7a33b652501601cdd167871afdc215474b4e01",
+    "src/tfm_photochem/assets/historical_2020/uv_spectral_backbone_2017.csv": "a398b97e7b2ae68efa9c72353444317e8a73f836870f0bd2cd6f21a5b1c7b135",
+    "src/tfm_photochem/assets/historical_2020/uv_spectral_backbone_2017_metadata.json": "1dc9c033449805ed432bffe3fd9bc80b9b2f76d7261cc6e2e6f5dec44b201df2",
+    "src/tfm_photochem/assets/legacy_2017/sigma.mat": "a98567c4f971721cec4197ad7ea17182e95df78c3a0eea880acb08fc6d560424",
+    "src/tfm_photochem/historical_2020/background_types.py": "3b66965a5e56d4b2ed9b84376f15aa1a33dc1962dafc5e164fec6d85b60bc872",
+    "src/tfm_photochem/historical_2020/photolysis_budget.py": "31a33fa8cadea87f6e5fe788eef5aa451fe0dc32db00ee4274c626386a3ac537",
+    "src/tfm_photochem/historical_2020/uv_geometry.py": "67f758fda37b5cdf79cd6b0331c3970bf406e4f20f0c2515c7439985910c74de",
+    "src/tfm_photochem/historical_2020/uv_radiation.py": "700508fd721405018c9db3ae53bbea64de5e2ab3ede08131a3f6a2f2f5c211a6"
+  },
+  "validation": {
+    "numerical_validator_equivalence": "PASS: normalized M4C and M4C-R2 UV validator payloads are byte-identical",
+    "scope_boundary": "No gA, gB, gIRA, M4D, or M5 implementation"
+  }
+}

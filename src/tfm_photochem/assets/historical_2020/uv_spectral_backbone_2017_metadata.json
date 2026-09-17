@@ -1,0 +1,28 @@
+{
+  "configuration": "historical_2020",
+  "derived_asset": "uv_spectral_backbone_2017.csv",
+  "derived_asset_sha256": "a398b97e7b2ae68efa9c72353444317e8a73f836870f0bd2cd6f21a5b1c7b135",
+  "description": "baseline UV spectral backbone inherited from the validated 2017 Chalmers asset",
+  "duplicate_source_indices": [
+    21,
+    22
+  ],
+  "irradiance_operational_unit": "photon cm^-2 s^-1 per tabulated spectral element",
+  "lyman_alpha_source_matlab_index": 28,
+  "provenance_limitation": "exact project-local 2017 arrays; not claimed as an exact Li-2020 or JPL18 spectrum",
+  "row_count": 125,
+  "source_arrays": [
+    "wave",
+    "irrad",
+    "sO",
+    "sO2",
+    "sO3",
+    "sN2"
+  ],
+  "source_asset": "assets/legacy_2017/sigma.mat",
+  "source_asset_sha256": "a98567c4f971721cec4197ad7ea17182e95df78c3a0eea880acb08fc6d560424",
+  "wavelength_range_nm": [
+    7.5,
+    360.0
+  ]
+}

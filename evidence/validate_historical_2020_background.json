@@ -1,0 +1,168 @@
+{
+  "M3_LocalBackground_mapping": {
+    "100": {
+      "CO2": 5190350793.976754,
+      "H2": 42166025.15832007,
+      "H2O": 2096724.1999380449,
+      "M": 12815680972782.11,
+      "N2": 9996231158770.045,
+      "O2": 2691293004284.2427,
+      "T": 185.60606384277344
+    },
+    "50": {
+      "CO2": 8587824287393.528,
+      "H2": 7138145311.73479,
+      "H2O": 113072869722.5629,
+      "M": 2.1204504413317356e+16,
+      "N2": 1.6539513442387538e+16,
+      "O2": 4452945926796644.5,
+      "T": 264.9381103515625
+    },
+    "80": {
+      "CO2": 135054421917.82855,
+      "H2": 799787853.37064,
+      "H2O": 964341583.0099804,
+      "M": 333467708439082.9,
+      "N2": 260104812582484.66,
+      "O2": 70028218772207.4,
+      "T": 207.4347381591797
+    }
+  },
+  "asset_sha256": {
+    "midlatitude_equinox_quiet_chemical_background.csv": "c1c115d840fa1b3115d7bcb7a1feca769b9dbbddd0faee5a2df0edadc4b5c291",
+    "midlatitude_equinox_quiet_metadata.json": "5b4c53276b587141201b74116faf3210e3ce0ffa0de025e767fb944b25daa75a",
+    "midlatitude_equinox_quiet_radiative_background.csv": "217fe7187c42a4ca8f590e1fa382ef815adffae6f5f1429816cea739f27c604f",
+    "socrates_prescribed_vmr.csv": "8985b4774b6e1aa91e3522758c7a33b652501601cdd167871afdc215474b4e01"
+  },
+  "case_name": "midlatitude_equinox_quiet",
+  "configuration": "historical_2020",
+  "fixed_vmr_checks": {
+    "CO2": true,
+    "N2": true,
+    "O2": true
+  },
+  "metadata_inputs": {
+    "aps_vector": [
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.0
+    ],
+    "daily_Ap": 4.0,
+    "datetime_utc": "2020-03-20T12:00:00Z",
+    "derived_local_solar_time_hours": 12.0,
+    "f107_previous_day": 150.0,
+    "f107a_81day": 150.0,
+    "generator_package_version": "0.12.0",
+    "latitude_deg": 45.0,
+    "longitude_deg": 0.0,
+    "model_version_argument": 0,
+    "msis_option_vector": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "msis_options": {
+      "all_ut_effects": 1,
+      "asymmetrical_annual": 1,
+      "asymmetrical_semiannual": 1,
+      "diurnal": 1,
+      "f107": 1,
+      "geomagnetic_activity": 1,
+      "longitudinal": 1,
+      "mixed_ap_ut_long": 1,
+      "mixed_ut_long": 1,
+      "semidiurnal": 1,
+      "symmetrical_annual": 1,
+      "symmetrical_semiannual": 1,
+      "terdiurnal": 1,
+      "time_independent": 1
+    },
+    "source_model": "NRLMSISE-00 / MSISE-00"
+  },
+  "ozone_composition": {
+    "dynamic_100": 51.0,
+    "dynamic_50": 1.0,
+    "external_101_preserved": true,
+    "external_49_preserved": true
+  },
+  "prescribed_H2O_H2_anchors": {
+    "100": {
+      "H2O_cm3": 2096724.1999380449,
+      "H2O_vmr": 1.636061481548315e-07,
+      "H2_cm3": 42166025.15832007,
+      "H2_vmr": 3.2901899827150895e-06
+    },
+    "50": {
+      "H2O_cm3": 113072869722.5629,
+      "H2O_vmr": 5.332492923133265e-06,
+      "H2_cm3": 7138145311.73479,
+      "H2_vmr": 3.3663344224407917e-07
+    },
+    "80": {
+      "H2O_cm3": 964341583.0099804,
+      "H2O_vmr": 2.891858967466243e-06,
+      "H2_cm3": 799787853.37064,
+      "H2_vmr": 2.3983967056790553e-06
+    }
+  },
+  "radiative_anchors": {
+    "0": {
+      "M_cm3": 2.5719328316280975e+19,
+      "O3_reference_cm3": 977334476018.6771,
+      "O3_reference_vmr": 3.8e-08,
+      "T_K": 283.8648376464844
+    },
+    "100": {
+      "M_cm3": 12815680972782.11,
+      "O3_reference_cm3": 40884337.52164357,
+      "O3_reference_vmr": 3.1901806551266033e-06,
+      "T_K": 185.60606384277344
+    },
+    "150": {
+      "M_cm3": 50237509715.755005,
+      "O3_reference_cm3": 4.195707668696557,
+      "O3_reference_vmr": 8.351742935579349e-11,
+      "T_K": 742.3129272460938
+    },
+    "50": {
+      "M_cm3": 2.1204504413317356e+16,
+      "O3_reference_cm3": 63018959639.88981,
+      "O3_reference_vmr": 2.971960976381563e-06,
+      "T_K": 264.9381103515625
+    },
+    "80": {
+      "M_cm3": 333467708439082.9,
+      "O3_reference_cm3": 96362413.31281863,
+      "O3_reference_vmr": 2.889707485137857e-07,
+      "T_K": 207.4347381591797
+    }
+  },
+  "z_chem_count": 51,
+  "z_rad_count": 151
+}
