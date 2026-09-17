@@ -1,106 +1,156 @@
 # M4D IRA collision-induced absorption scope freeze
 
-Status: **BASELINE SCOPE SELECTED / CIA DEFERRED AS SENSITIVITY**
+Status: **BASELINE SCOPE SELECTED / HISTORICAL TWILIGHT SENSITIVITY REQUIRED BEFORE M4D CLOSURE**
 
 Branch: `milestone/m4d-design`
 
-This note resolves whether O2 collision-induced absorption (CIA) is part of the frozen `historical_2020` M4D `gIRA` baseline.
+This note resolves whether O2 collision-induced absorption (CIA) is part of the `historical_2020` M4D `gIRA` baseline and clarifies the closure obligation after the historical-source recovery in `docs/m4d_ira_cia_historical_source_recovery.md`.
 
-## 1. Decision
+## 1. Baseline decision
 
-The M4D historical baseline defines `gIRA` from the **monomer resonance system**
+The M4D historical baseline defines `gIRA` from the first-order monomer resonance system
 
 ```text
 O2(X, v''=0) + h nu -> O2(a1Delta_g, v'=0)
 ```
 
-using the frozen HITRAN2016 `a(0)-X(0)` line subset.
+using the accepted HITRAN2016 `a(0)-X(0)` line subset.
 
-O2-O2 / O2-N2 collision-induced absorption around 1.27 microns is **not added to the `gIRA` production coefficient in the baseline** and is **not included as an extra continuum attenuation term in the first historical implementation**.
+O2-O2 / O2-N2 CIA is:
 
-CIA is retained as an explicit later sensitivity/limitation, especially for extreme twilight rays with low tangent altitudes.
+- **not** added as a binary-density production term to `gIRA`;
+- **not** included in the monomer baseline attenuation;
+- **required** as a separate historical twilight attenuation sensitivity before M4D milestone closure.
 
-## 2. Why this matches the reduced historical model semantics
+This is Option B from the design review. It must not be silently converted into Option C (an unspecified later milestone).
 
-Li et al. (2020) describes `gA`, `gB`, and `gIRA` as resonance absorption of ground-state O2 at 762, 688, and 1270 nm, respectively. Table A1 writes `gIRA` as a first-order process:
+## 2. Why the monomer baseline matches the reduced historical model
+
+Li et al. (2020) writes `gIRA` as the first-order process
 
 ```text
 O2 + h nu -> O2(a1Delta_g)
 ```
 
-with a vertical-profile coefficient sourced to HITRAN.
+and sources the profile to HITRAN. Yankovsky and Manuilova (2006) use the same first-order direct photoexcitation process and report the independent top-of-atmosphere scale near `1.54e-10 s^-1`.
 
-Yankovsky and Manuilova (2006), a direct predecessor in the oxygen-airglow modelling lineage, writes the same first-order process explicitly:
-
-```text
-O2 + h nu (1.27 micron) -> O2(a1Delta_g, v=0)
-```
-
-and reports the top-of-atmosphere photoexcitation rate `1.54e-10 s^-1`. Their table also reports `5.35e-9 s^-1` for A and `2.94e-10 s^-1` for B. These are first-order per-molecule solar excitation rates, not density-squared collision-pair source terms.
-
-This makes the monomer line system the coherent baseline interpretation of the accepted reduced `gIRA` forcing.
+A density-squared collision-pair source is therefore not silently folded into the accepted reduced `gIRA` coefficient.
 
 Sources:
 
 - Li et al. (2020), AMT 13, 6215-6236, DOI `10.5194/amt-13-6215-2020`.
 - Yankovsky & Manuilova (2006), Ann. Geophys. 24, 2823-2839.
 
-## 3. CIA is physically real and is not being declared nonexistent
+## 3. Historical CIA source now identified
 
-Laboratory and atmospheric studies establish a broad collision-induced continuum beneath the 1.27-micron O2 `a-X(0,0)` system.
-
-Smith & Newnham (2000) separately measured monomer and binary O2/O2-N2 absorption. Smith, Newnham & Williams (2001) validated continuum absorption near 1.27 microns against direct solar observations. HITRAN2016 includes revised O2 CIA products in this spectral region and treats monomer line absorption and CIA as separate spectroscopic components.
-
-Modern spectroscopy describes the scaling distinction explicitly:
-
-- monomer line absorption is proportional to O2 number density;
-- O2-O2 CIA is proportional approximately to `[O2]^2`;
-- foreign-pair CIA includes products such as `[O2][N2]`.
-
-Therefore CIA cannot be silently represented by simply modifying the first-order monomer HITRAN line strengths.
-
-## 4. Why CIA is deferred from the historical baseline
-
-The project is reconstructing the documented Li-2020 reduced topology before adding updated physics. The current evidence does not establish that Li's `gIRA` vertical profile folded a particular HITRAN2016 CIA file into the direct excitation coefficient, nor does it define how collision-pair absorption would be mapped into the single first-order forcing field.
-
-Adding CIA now would require several new, independently sourced choices:
-
-- exact historical HITRAN2016 CIA file/version;
-- O2-O2 and O2-N2 density-pair convention;
-- temperature interpolation;
-- whether CIA absorption creates O2(a1Delta) with unit/effective yield or only attenuates the direct beam in the reduced model;
-- treatment along spherical twilight rays that may pass below the 50-km chemistry domain.
-
-Those additions would enlarge M4D beyond the independently reconstructed historical baseline.
-
-## 5. Expected domain behavior and limitation
-
-Within the 50-100 km chemistry domain, local CIA falls much faster with decreasing density than monomer absorption because of its binary-density scaling. This supports its exclusion from the local baseline source term.
-
-However, near sunrise/sunset, an illuminated ray to a high-altitude target can have a tangent altitude below the target level and may traverse much denser air. CIA may then add continuum attenuation around 1.27 microns. The baseline explicitly does not claim this effect is zero.
-
-The practical consequence is:
-
-- baseline M4D: monomer lines only;
-- later sensitivity: historical CIA attenuation on selected near-twilight rays;
-- if that sensitivity materially changes `gIRA` over the time/SZA range important to the final sunrise integration, elevate CIA into an explicit model extension rather than silently editing the frozen baseline.
-
-## 6. Validation implication
-
-The monomer baseline must recover the historical top-of-atmosphere scales before attenuation:
+HITRAN2016 Section 4.1 states that the revised 1.27-micron CIA data in that edition are taken from:
 
 ```text
-gA   ~ 5.35e-9 s^-1
-gB   ~ 2.94e-10 s^-1
-gIRA ~ 1.54e-10 s^-1
+B. Maté, C. Lugez, G. T. Fraser, W. J. Lafferty,
+Absolute intensities for the O2 1.27 um continuum absorption,
+J. Geophys. Res. Atmos. 104 (1999) 30585-30590,
+DOI 10.1029/1999JD900824
 ```
 
-These values are historical validation anchors, not exact forced answers for HITRAN2016 + Wehrli1985 because both spectroscopy and solar-source choices differ slightly from older compilations.
+The HITRAN2016 semantics are:
 
-A material discrepancy outside a predeclared validation tolerance must be investigated rather than corrected by adding CIA ad hoc.
+- pure-O2 spectra -> `O2-O2`;
+- 21:79 O2:N2 mixture spectra -> `O2-Air`;
+- the `O2-Air` product already contains the atmospheric O2-O2 and O2-N2 collision contributions represented by that mixture;
+- do **not** add a separate O2-O2 term on top of `O2-Air` for the same atmospheric calculation.
 
-## 7. Gate decision
+This replaces the earlier open question about which historical CIA source family should be used.
 
-**PASS — M4D `historical_2020` uses monomer resonance absorption only for `gIRA`; CIA is deferred to a documented sensitivity/limitation.**
+## 4. Candidate atmospheric sensitivity equation
 
-This decision avoids both extremes: it does not erase known CIA physics, and it does not inject a new density-pair process into a first-order forcing field without source-supported semantics.
+For the required atmospheric twilight sensitivity, the historically simplest candidate is the HITRAN2016 `O2-Air` product:
+
+```text
+tau_CIA(nu,z,SZA)
+  = sum_shell k_O2-Air(nu,T_shell)
+              * n_O2,shell
+              * n_air,shell
+              * ds_shell
+```
+
+with:
+
+```text
+k           [cm^5 molecule^-2]
+n_O2,n_air  [molecule cm^-3]
+ds          [cm]
+tau_CIA     dimensionless
+```
+
+Use the same M4D spherical path semantics and `0.125 km` atmospheric sub-stratification as the monomer calculation.
+
+This equation defines an attenuation sensitivity only. It does not assign a CIA absorption event unit yield into O2(a1Delta) and does not change the first-order `gIRA` source definition.
+
+## 5. Historical temperature-domain limitation
+
+Maté et al. measured the 1.27-micron continuum at three temperatures:
+
+```text
+253 K
+273 K
+296 K
+```
+
+HITRAN documentation preserves three O2-Air sets over the 1.27-micron region (approximately `7450-8480 cm^-1`).
+
+The accepted M4D radiative profile includes shells colder than the lowest Maté temperature. Therefore the sensitivity must not silently extrapolate a Maté interpolation below its historical measurement range.
+
+Before executing the sensitivity, freeze one explicit policy:
+
+- a documented endpoint-bound sensitivity below 253 K; or
+- another pre-/HITRAN2016 source that genuinely supplies the required colder-temperature behavior and whose combination with Maté is scientifically justified.
+
+Post-2016 theoretical/experimental extensions are useful comparison evidence but are not automatic historical replacements.
+
+## 6. Why CIA still matters even though it is outside baseline
+
+CIA scales with the product of two number densities. It therefore falls rapidly with altitude locally, but illuminated twilight rays to mesospheric targets can have much lower tangent altitudes and traverse substantially denser air.
+
+HITRAN2016 explicitly notes that CIA is relatively important around 1.27 microns because the monomer magnetic-dipole lines are weak. Later direct measurements independently confirm that the Maté/HITRAN2016 continuum has the correct broad scale.
+
+Consequently the baseline may remain monomer-only only if the required twilight sensitivity is quantified and disclosed.
+
+## 7. Exact byte provenance still required
+
+The source family and transfer semantics are now resolved, but the exact historical HITRAN2016 machine-readable CIA bytes are not frozen in the project.
+
+Before executing the sensitivity, record:
+
+- historical provider/archive;
+- exact filename;
+- edition/version evidence;
+- access date;
+- byte size;
+- SHA-256;
+- file header/reference identity;
+- spectral coverage;
+- all three temperature sets and their row structure.
+
+Do not substitute current HITRAN CIA files silently.
+
+## 8. Required sensitivity acceptance evidence
+
+Compare, for the accepted M4D validation domain:
+
+```text
+monomer attenuation only
+vs
+monomer attenuation + historical O2-Air CIA attenuation
+```
+
+Report maximum absolute and relative changes in `gIRA`, including the established rate floors `1e-10`, `1e-12`, and `1e-15 s^-1` and the near-tangent illuminated cases.
+
+If the CIA attenuation changes a scientifically retained baseline case by more than the `0.1%` design tolerance, the attenuation scope must be reopened explicitly before M4D is frozen. That result does not by itself redefine CIA as a first-order excitation source.
+
+## 9. Gate decision
+
+**PASS for baseline semantics; OPEN for required closure sensitivity.**
+
+The `historical_2020` baseline remains monomer resonance excitation/attenuation only. The historical CIA source is now identified as the Maté/HITRAN2016 1.27-micron product, and the atmospheric no-double-counting convention is defined.
+
+M4D must not close until the exact historical CIA asset is frozen and the twilight attenuation sensitivity has been executed with an explicit treatment of temperatures below the Maté measurement range.
