@@ -1,0 +1,218 @@
+{
+  "boundary_partitions": {
+    "exact_gross_subset_equality": {
+      "J2_ground": 0.56,
+      "J2_star": 2.44,
+      "J3_ground": 0.09999999999999998,
+      "J3_star": 0.9
+    },
+    "one_ulp_below_gross_subset_equality": {
+      "J2_ground": 0.5599999999999996,
+      "J2_star": 2.44,
+      "J3_ground": 0.09999999999999987,
+      "J3_star": 0.9
+    }
+  },
+  "cases": {
+    "hartley_only": {
+      "Delta_direct_Hartley": 1440000.0000000002,
+      "O2_identity": {
+        "algebraic_O1D": 0.0,
+        "direct_O": 0.0,
+        "expected_two_atoms": 0.0,
+        "residual": 0.0
+      },
+      "O3_identity": {
+        "O3_loss": -1600000.0000000002,
+        "algebraic_O1D": 1440000.0000000002,
+        "direct_O": 159999.9999999999,
+        "residual": 0.0
+      },
+      "fluxes_molecule_cm-3_s-1": {
+        "O2_LYMAN_ALPHA": 0.0,
+        "O2_PHOTOLYSIS_GROUND_EFFECTIVE": 0.0,
+        "O2_SRC": 0.0,
+        "O3_HARTLEY_GROSS": 1600000.0,
+        "O3_HARTLEY_PRODUCTS": 1440000.0000000002,
+        "O3_PHOTOLYSIS_GROUND_EFFECTIVE": 159999.9999999999
+      },
+      "forcing_s-1": {
+        "JH": 0.008,
+        "J_H2O2": 0.0,
+        "J_H2O_A": 0.0,
+        "J_H2O_B": 0.0,
+        "J_LYA": 0.0,
+        "J_O2_TOTAL": 0.0,
+        "J_O3_TOTAL": 0.008,
+        "J_SRC": 0.0,
+        "gA": 0.0,
+        "gB": 0.0,
+        "gIRA": 0.0
+      },
+      "partition_s-1": {
+        "J2_ground": 0.0,
+        "J2_star": 0.0,
+        "J3_ground": 0.0007999999999999995,
+        "J3_star": 0.007200000000000001
+      }
+    },
+    "lyman_only": {
+      "Delta_direct_Hartley": 0.0,
+      "O2_identity": {
+        "algebraic_O1D": 5280.0,
+        "direct_O": 18720.0,
+        "expected_two_atoms": 24000.0,
+        "residual": 0.0
+      },
+      "O3_identity": {
+        "O3_loss": -0.0,
+        "algebraic_O1D": 0.0,
+        "direct_O": 0.0,
+        "residual": 0.0
+      },
+      "fluxes_molecule_cm-3_s-1": {
+        "O2_LYMAN_ALPHA": 5280.0,
+        "O2_PHOTOLYSIS_GROUND_EFFECTIVE": 6720.0,
+        "O2_SRC": 0.0,
+        "O3_HARTLEY_GROSS": 0.0,
+        "O3_HARTLEY_PRODUCTS": 0.0,
+        "O3_PHOTOLYSIS_GROUND_EFFECTIVE": 0.0
+      },
+      "forcing_s-1": {
+        "JH": 0.0,
+        "J_H2O2": 0.0,
+        "J_H2O_A": 0.0,
+        "J_H2O_B": 0.0,
+        "J_LYA": 3e-09,
+        "J_O2_TOTAL": 3e-09,
+        "J_O3_TOTAL": 0.0,
+        "J_SRC": 0.0,
+        "gA": 0.0,
+        "gB": 0.0,
+        "gIRA": 0.0
+      },
+      "partition_s-1": {
+        "J2_ground": 1.68e-09,
+        "J2_star": 1.32e-09,
+        "J3_ground": 0.0,
+        "J3_star": 0.0
+      }
+    },
+    "mixed": {
+      "Delta_direct_Hartley": 1440000.0000000002,
+      "O2_identity": {
+        "algebraic_O1D": 85280.0,
+        "direct_O": 138719.99999999997,
+        "expected_two_atoms": 224000.0,
+        "residual": -2.9103830456733704e-11
+      },
+      "O3_identity": {
+        "O3_loss": -1800000.0,
+        "algebraic_O1D": 1440000.0000000002,
+        "direct_O": 359999.9999999997,
+        "residual": 0.0
+      },
+      "fluxes_molecule_cm-3_s-1": {
+        "O2_LYMAN_ALPHA": 5280.0,
+        "O2_PHOTOLYSIS_GROUND_EFFECTIVE": 26719.99999999999,
+        "O2_SRC": 80000.0,
+        "O3_HARTLEY_GROSS": 1600000.0,
+        "O3_HARTLEY_PRODUCTS": 1440000.0000000002,
+        "O3_PHOTOLYSIS_GROUND_EFFECTIVE": 359999.9999999997
+      },
+      "forcing_s-1": {
+        "JH": 0.008,
+        "J_H2O2": 0.0,
+        "J_H2O_A": 0.0,
+        "J_H2O_B": 0.0,
+        "J_LYA": 3e-09,
+        "J_O2_TOTAL": 2.8e-08,
+        "J_O3_TOTAL": 0.009,
+        "J_SRC": 2e-08,
+        "gA": 0.0,
+        "gB": 0.0,
+        "gIRA": 0.0
+      },
+      "partition_s-1": {
+        "J2_ground": 6.679999999999998e-09,
+        "J2_star": 2.132e-08,
+        "J3_ground": 0.0017999999999999986,
+        "J3_star": 0.007200000000000001
+      }
+    },
+    "src_only": {
+      "Delta_direct_Hartley": 0.0,
+      "O2_identity": {
+        "algebraic_O1D": 80000.0,
+        "direct_O": 80000.0,
+        "expected_two_atoms": 160000.0,
+        "residual": 0.0
+      },
+      "O3_identity": {
+        "O3_loss": -0.0,
+        "algebraic_O1D": 0.0,
+        "direct_O": 0.0,
+        "residual": 0.0
+      },
+      "fluxes_molecule_cm-3_s-1": {
+        "O2_LYMAN_ALPHA": 0.0,
+        "O2_PHOTOLYSIS_GROUND_EFFECTIVE": 0.0,
+        "O2_SRC": 80000.0,
+        "O3_HARTLEY_GROSS": 0.0,
+        "O3_HARTLEY_PRODUCTS": 0.0,
+        "O3_PHOTOLYSIS_GROUND_EFFECTIVE": 0.0
+      },
+      "forcing_s-1": {
+        "JH": 0.0,
+        "J_H2O2": 0.0,
+        "J_H2O_A": 0.0,
+        "J_H2O_B": 0.0,
+        "J_LYA": 0.0,
+        "J_O2_TOTAL": 2e-08,
+        "J_O3_TOTAL": 0.0,
+        "J_SRC": 2e-08,
+        "gA": 0.0,
+        "gB": 0.0,
+        "gIRA": 0.0
+      },
+      "partition_s-1": {
+        "J2_ground": 0.0,
+        "J2_star": 2e-08,
+        "J3_ground": 0.0,
+        "J3_star": 0.0
+      }
+    }
+  },
+  "configuration": "historical_2020",
+  "formulas": {
+    "J2_ground": "J_O2_TOTAL - J2_star",
+    "J2_star": "J_SRC + 0.44*J_LYA",
+    "J3_ground": "J_O3_TOTAL - J3_star",
+    "J3_star": "0.9*JH"
+  },
+  "gross_subset_contract": {
+    "O2": "J_O2_TOTAL >= J_SRC + J_LYA",
+    "O3": "J_O3_TOTAL >= JH",
+    "meaning": "gross parent photodissociation subsets, before product yields",
+    "relative_tolerance": 1.4210854715202004e-14
+  },
+  "invalid_partitions": {
+    "O2_total_below_combined_gross_subset": {
+      "error": "J_O2_TOTAL must be >= its known gross spectral subset; got total=1.5, known_gross_subset=2.0",
+      "raised": true
+    },
+    "O2_total_below_lyman_gross_subset": {
+      "error": "J_O2_TOTAL must be >= its known gross spectral subset; got total=0.5, known_gross_subset=1.0",
+      "raised": true
+    },
+    "O3_total_below_gross_subset": {
+      "error": "J_O3_TOTAL must be >= its known gross spectral subset; got total=0.95, known_gross_subset=1.0",
+      "raised": true
+    },
+    "total_below_represented_excited_channel": {
+      "error": "J_O3_TOTAL must be >= its represented excited-channel rate; got total=1.0, excited=1.1",
+      "raised": true
+    }
+  },
+  "scope": "M4B injected-forcing bookkeeping; no radiation calculation"
+}

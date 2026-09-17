@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tfm-photochem"
+version = "0.5.1"
+description = "Reproducible temporal mesospheric O3 and O2(a1Delta) photochemistry model"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=1.26,<3",
+  "scipy>=1.11,<2",
+]
+
+[project.optional-dependencies]
+background-gen = [
+  "pymsis==0.12.0",
+]
+dev = [
+  "pytest>=8,<10",
+  "ruff>=0.16,<0.17",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+tfm_photochem = [
+  "assets/legacy_2017/*.mat",
+  "assets/legacy_2017/*.json",
+  "assets/historical_2020/*.csv",
+  "assets/historical_2020/*.json",
+]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]

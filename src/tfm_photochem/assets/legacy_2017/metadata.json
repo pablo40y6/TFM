@@ -1,0 +1,25 @@
+{
+  "configuration": "legacy_2017",
+  "filename": "sigma.mat",
+  "format": "MATLAB 5.0 MAT-file, little endian",
+  "created": "2017-01-24T13:50:24",
+  "sha256": "a98567c4f971721cec4197ad7ea17182e95df78c3a0eea880acb08fc6d560424",
+  "variables": {
+    "wave": {"count": 125, "unit": "nm", "role": "wavelength grid"},
+    "irrad": {
+      "count": 125,
+      "unit": "photons cm-2 s-1 per stored spectral bin",
+      "role": "bin-integrated solar photon irradiance"
+    },
+    "sO": {"count": 125, "unit": "cm2 molecule-1", "role": "O cross section"},
+    "sO2": {"count": 125, "unit": "cm2 molecule-1", "role": "O2 cross section"},
+    "sO3": {"count": 125, "unit": "cm2 molecule-1", "role": "O3 cross section"},
+    "sN2": {"count": 125, "unit": "cm2 molecule-1", "role": "N2 cross section"}
+  },
+  "reference": "Li (2017), MSc thesis, Appendix A.4/A.11; original sigma.mat asset",
+  "notes": [
+    "MATLAB element 28 is 121.567 nm and is used for Jlya.",
+    "Wavelength elements 21 and 22 are both 117.30308 nm; the duplicate is preserved.",
+    "The asset must not be resaved or modified."
+  ]
+}

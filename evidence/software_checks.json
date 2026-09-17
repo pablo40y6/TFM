@@ -1,0 +1,97 @@
+{
+  "build": {
+    "isolated_offline_attempt": {
+      "classification": "ENVIRONMENT LIMITATION",
+      "command": "uv build --clear --offline",
+      "reason": "the runner cache did not contain setuptools>=68 for an isolated build",
+      "status": "UNAVAILABLE"
+    },
+    "sdist": {
+      "file": "dist/tfm_photochem-0.5.1.tar.gz",
+      "sha256": "7f8d428f387b38a043486f0646edc1b3fb1070437e71304d532509f52106dcb7",
+      "status": "PASS"
+    },
+    "successful_command": "uv build --clear --no-build-isolation --offline",
+    "status": "PASS",
+    "wheel": {
+      "file": "dist/tfm_photochem-0.5.1-py3-none-any.whl",
+      "sha256": "940084d79d11b93cc50b5cb3fdf2f24f0923274bd000a4d79cf18879196bf08a",
+      "status": "PASS"
+    }
+  },
+  "clean_install": {
+    "actual_JH_80km_sza60_s-1": 0.007935352709427145,
+    "command": "pip install --no-index --no-deps wheel; import/test outside source tree",
+    "installed_version": "0.5.1",
+    "provenance_metadata_verified": true,
+    "status": "PASS",
+    "uv_asset_count": 5
+  },
+  "compileall": {
+    "command": "python -m compileall -q src tests scripts",
+    "status": "PASS"
+  },
+  "extracted_sdist_tests": {
+    "command": "python -m pytest from extracted tfm_photochem-0.5.1.tar.gz",
+    "result": "487 passed, 13 unittest subtests passed in 1.91s",
+    "status": "PASS"
+  },
+  "lock": {
+    "online_check": {
+      "command": "uv lock --check",
+      "result": "Resolved 18 packages",
+      "status": "PASS"
+    },
+    "offline_check": {
+      "command": "uv lock --check --offline",
+      "result": "Resolved 18 packages",
+      "status": "PASS"
+    },
+    "root_package_version": "0.5.1"
+  },
+  "numerical_equivalence_to_accepted_m4c": {
+    "comparison": "normalized validate_historical_2020_uv.json excluding revision labels, the new provenance record, and its metadata hash",
+    "result": "byte-identical JSON",
+    "status": "PASS"
+  },
+  "packaged_asset_checks": {
+    "jpl18_h2o2_cross_sections_298k.csv": "bec01ae613d088455bdb64657b46f33bfe3cdb3b6e294c6f41fd21cbd611f4a1",
+    "jpl18_h2o_cross_sections_298k.csv": "d70d7d79405cb4b86de2186d1fd1212c332eb1eb362279f117b99daa00ce2e2c",
+    "jpl18_uv_cross_sections_metadata.json": "20dae1b58fa5dce498b7b3bb28dfcfbd0e644196f1190a19863853e0686b818d",
+    "sigma.mat": "a98567c4f971721cec4197ad7ea17182e95df78c3a0eea880acb08fc6d560424",
+    "status": "PASS",
+    "uv_spectral_backbone_2017.csv": "a398b97e7b2ae68efa9c72353444317e8a73f836870f0bd2cd6f21a5b1c7b135"
+  },
+  "provenance_correction": {
+    "classification": "typographical correction",
+    "implemented_asset_entry": {
+      "sigma_cm2": 1.08e-20,
+      "wavelength_nm": 189.0
+    },
+    "implemented_asset_has_no_199_nm_row": true,
+    "numerical_source": "JPL Publication 15-10 / Evaluation 18 / Table 4B-3",
+    "printed_entry": {
+      "sigma_cm2": 1.08e-20,
+      "wavelength_nm": 199.0
+    },
+    "secondary_source_role": "JPL Evaluation 20 corroboration only; not a numerical source",
+    "status": "PASS"
+  },
+  "pytest": {
+    "command": "python -m pytest",
+    "result": "487 passed, 13 unittest subtests passed in 2.00s",
+    "status": "PASS"
+  },
+  "ruff": {
+    "command": "ruff check src tests scripts",
+    "result": "All checks passed!",
+    "status": "PASS"
+  },
+  "validators": {
+    "validate_historical_2020_background.py": "PASS",
+    "validate_historical_2020_uv.py": "PASS",
+    "validate_legacy.py": "PASS",
+    "validate_local_closure.py": "PASS",
+    "validate_odd_oxygen_photolysis_budget.py": "PASS"
+  }
+}
