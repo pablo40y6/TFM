@@ -17,16 +17,15 @@ jobs:
         shell: bash
         run: |
           set -eu
-          mkdir -p acquisition/files acquisition/diag
+          mkdir -p acquisition/files
           url='https://ntrs.nasa.gov/api/citations/20140017696/downloads/20140017696.pdf?attachment=true'
           curl -fL --retry 3 --connect-timeout 20 --max-time 240 -A 'Mozilla/5.0' "$url" -o acquisition/files/boulet_ma_thibault_2014.pdf
-          printf 'url=%s\n' "$url" > acquisition/MANIFEST.txt
-          printf 'bytes=%s\n' "$(wc -c < acquisition/files/boulet_ma_thibault_2014.pdf)" >> acquisition/MANIFEST.txt
-          printf 'sha256=%s\n' "$(sha256sum acquisition/files/boulet_ma_thibault_2014.pdf | awk '{print $1}')" >> acquisition/MANIFEST.txt
-          file acquisition/files/boulet_ma_thibault_2014.pdf >> acquisition/MANIFEST.txt
-          pdfinfo acquisition/files/boulet_ma_thibault_2014.pdf > acquisition/diag/pdfinfo.txt
-          pdftotext -layout acquisition/files/boulet_ma_thibault_2014.pdf acquisition/diag/boulet.txt
-          grep -Ein -A150 -B30 'IV\. RENORMALIZATION PROCEDURE|renormalization procedure' acquisition/diag/boulet.txt > acquisition/diag/renorm_context.txt || true
+          {
+            printf 'url=%s\n' "$url"
+            printf 'bytes=%s\n' "$(wc -c < acquisition/files/boulet_ma_thibault_2014.pdf)"
+            printf 'sha256=%s\n' "$(sha256sum acquisition/files/boulet_ma_thibault_2014.pdf | awk '{print $1}')"
+            file acquisition/files/boulet_ma_thibault_2014.pdf
+          } > acquisition/MANIFEST.txt
           cat acquisition/MANIFEST.txt
       - uses: actions/upload-artifact@v4
         with:
