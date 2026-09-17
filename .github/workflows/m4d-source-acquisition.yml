@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Probe O2-Air CIA current and archived files
+      - name: Recover HITRAN2012 O2-N2 CIA data
         shell: bash
         run: |
           set -u
@@ -23,40 +23,35 @@ jobs:
           get(){ label="$1"; url="$2"; out="$3"; note ""; note "[$label]"; note "url=$url"; if curl -fL --retry 2 --connect-timeout 20 --max-time 240 -A 'Mozilla/5.0' "$url" -o "$out"; then note "status=downloaded"; note "bytes=$(wc -c < "$out")"; note "sha256=$(sha256sum "$out" | awk '{print $1}')"; note "type=$(file -b "$out")"; return 0; else rm -f "$out"; note "status=failed"; return 1; fi; }
           note "access_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-          get CURRENT 'https://hitran.org/data/CIA/main/O2-air_2024.cia' acquisition/files/O2-air_2024.cia || true
-          if [ -f acquisition/files/O2-air_2024.cia ]; then
-            grep -n -Ei 'Mate|1999|7450|8480|1270' acquisition/files/O2-air_2024.cia > acquisition/diag/current_mate_hits.txt || true
-            head -n 80 acquisition/files/O2-air_2024.cia > acquisition/diag/current_head.txt || true
+          root='https://lweb.cfa.harvard.edu/HITRAN/HITRAN2012/CIA/'
+          get CIA_ROOT "$root" acquisition/diag/cia_root.html || true
+          get O2N2_DIR "${root}Main-Folder/O2-N2/" acquisition/diag/o2n2_index.html || true
+
+          if [ -f acquisition/diag/o2n2_index.html ]; then
+            grep -Eoi 'href="[^"]+"' acquisition/diag/o2n2_index.html | sed 's/^href="//;s/"$//' | grep -Ei 'O2.*N2|\.cia$|\.dat$|\.txt$' | sort -u > acquisition/diag/o2n2_links.txt || true
+            note ""; note "[O2N2_LINKS]"; cat acquisition/diag/o2n2_links.txt | tee -a acquisition/MANIFEST.txt || true
+            while IFS= read -r href; do
+              [ -n "$href" ] || continue
+              case "$href" in
+                http*) url="$href" ;;
+                /*) url="https://lweb.cfa.harvard.edu${href}" ;;
+                *) url="${root}Main-Folder/O2-N2/${href}" ;;
+              esac
+              base="$(basename "$href")"
+              get "O2N2_$base" "$url" "acquisition/files/$base" || true
+            done < acquisition/diag/o2n2_links.txt
           fi
 
-          get CDX1 'https://web.archive.org/cdx/search/cdx?url=hitran.org%2Fdata%2FCIA%2FO2-Air.cia&output=txt&filter=statuscode%3A200&fl=timestamp%2Coriginal%2Cdigest%2Clength&from=2015&to=2019&collapse=digest' acquisition/diag/cdx1.txt || true
-          get CDX2 'https://web.archive.org/cdx/search/cdx?url=hitran.org%2Fdata%2FCIA%2FO2-air.cia&output=txt&filter=statuscode%3A200&fl=timestamp%2Coriginal%2Cdigest%2Clength&from=2015&to=2019&collapse=digest' acquisition/diag/cdx2.txt || true
-          get CDX3 'https://web.archive.org/cdx/search/cdx?url=hitran.org%2Fdata%2FCIA%2Fmain%2FO2-air.cia&output=txt&filter=statuscode%3A200&fl=timestamp%2Coriginal%2Cdigest%2Clength&from=2015&to=2019&collapse=digest' acquisition/diag/cdx3.txt || true
-          get CDX4 'https://web.archive.org/cdx/search/cdx?url=hitran.org%2Fdata%2FCIA%2F%2AO2%2AAir%2A.cia&output=txt&filter=statuscode%3A200&fl=timestamp%2Coriginal%2Cdigest%2Clength&from=2015&to=2019&collapse=digest' acquisition/diag/cdx4.txt || true
-          cat acquisition/diag/cdx*.txt 2>/dev/null | sort -u > acquisition/diag/cdx_candidates.txt || true
-          note ""; note "[CDX_CANDIDATES]"
-          cat acquisition/diag/cdx_candidates.txt | tee -a acquisition/MANIFEST.txt || true
-
-          line="$(grep -E '^2016|^2017' acquisition/diag/cdx_candidates.txt 2>/dev/null | head -n 1 || true)"
-          if [ -n "$line" ]; then
-            ts="$(printf '%s' "$line" | awk '{print $1}')"
-            original="$(printf '%s' "$line" | awk '{print $2}')"
-            snap="https://web.archive.org/web/${ts}id_/${original}"
-            if get SNAPSHOT "$snap" acquisition/files/O2-Air_historical_candidate.cia; then
-              grep -n -Ei 'Mate|1999|7450|8480|1270' acquisition/files/O2-Air_historical_candidate.cia > acquisition/diag/historical_mate_hits.txt || true
-              note "selected_timestamp=$ts"
-              note "selected_original=$original"
-            fi
-          fi
-
-          note ""; note "[FINAL_FILES]"
+          note ""; note "[CONTENT_HITS]"
           for f in acquisition/files/*; do
             [ -f "$f" ] || continue
             note "$(basename "$f") bytes=$(wc -c < "$f") sha256=$(sha256sum "$f" | awk '{print $1}')"
+            grep -n -Ei 'Mate|1999|7450|7480|7500|8000|8350|8480|253|273|296' "$f" | head -n 80 > "acquisition/diag/$(basename "$f").hits.txt" || true
           done
+          cat acquisition/MANIFEST.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: m4d-cia-history-probe-v2
+          name: m4d-hitran2012-o2n2-cia
           path: acquisition/
           retention-days: 7
