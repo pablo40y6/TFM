@@ -13,74 +13,50 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Recover O2-Air CIA history
+      - name: Probe O2-Air CIA current and archived files
         shell: bash
         run: |
           set -u
           mkdir -p acquisition/files acquisition/diag
           : > acquisition/MANIFEST.txt
           note(){ printf '%s\n' "$*" | tee -a acquisition/MANIFEST.txt; }
-          fetch(){ label="$1"; url="$2"; out="$3"; note ""; note "[$label]"; note "url=$url"; if curl -fL --retry 2 --connect-timeout 20 --max-time 240 -A 'Mozilla/5.0' "$url" -o "$out"; then note "status=downloaded"; note "bytes=$(wc -c < "$out")"; note "sha256=$(sha256sum "$out"|awk '{print $1}')"; note "type=$(file -b "$out")"; return 0; else rm -f "$out"; note "status=failed"; return 1; fi; }
+          get(){ label="$1"; url="$2"; out="$3"; note ""; note "[$label]"; note "url=$url"; if curl -fL --retry 2 --connect-timeout 20 --max-time 240 -A 'Mozilla/5.0' "$url" -o "$out"; then note "status=downloaded"; note "bytes=$(wc -c < "$out")"; note "sha256=$(sha256sum "$out" | awk '{print $1}')"; note "type=$(file -b "$out")"; return 0; else rm -f "$out"; note "status=failed"; return 1; fi; }
           note "access_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-          fetch CURRENT 'https://hitran.org/data/CIA/main/O2-air_2024.cia' acquisition/files/O2-air_2024.cia || true
+          get CURRENT 'https://hitran.org/data/CIA/main/O2-air_2024.cia' acquisition/files/O2-air_2024.cia || true
           if [ -f acquisition/files/O2-air_2024.cia ]; then
-            grep -n -E '(^|[[:space:]])(7450|74[5-9][0-9]|7[5-9][0-9][0-9]|8[0-4][0-9][0-9])' acquisition/files/O2-air_2024.cia | head -n 300 > acquisition/diag/current_1270_excerpt.txt || true
-            grep -n -Ei 'Mate|Mat[eé]|1999|7450|8480|1\.27|1270' acquisition/files/O2-air_2024.cia > acquisition/diag/current_mate_hits.txt || true
+            grep -n -Ei 'Mate|1999|7450|8480|1270' acquisition/files/O2-air_2024.cia > acquisition/diag/current_mate_hits.txt || true
+            head -n 80 acquisition/files/O2-air_2024.cia > acquisition/diag/current_head.txt || true
           fi
 
-          # Query several historically plausible paths. CDX may return the old filename/path even when current hosting changed.
-          : > acquisition/diag/cdx_all.txt
-          for target in \
-            'hitran.org/data/CIA/O2-Air.cia' \
-            'hitran.org/data/CIA/O2-air.cia' \
-            'hitran.org/data/CIA/main/O2-Air.cia' \
-            'hitran.org/data/CIA/main/O2-air.cia' \
-            'hitran.org/data/CIA/O2-Air_2016.cia' \
-            'hitran.org/data/CIA/O2-air_2016.cia' \
-            'hitran.org/data/CIA/*O2*Air*.cia'; do
-            enc="$(python3 -c 'import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1],safe=""))' "$target")"
-            url="https://web.archive.org/cdx/search/cdx?url=$enc&output=json&filter=statuscode:200&fl=timestamp,original,digest,length&filter=timestamp:201[5-9]&collapse=digest"
-            note "CDX $target"
-            curl -fL --retry 1 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' "$url" >> acquisition/diag/cdx_all.txt 2>/dev/null || true
-            printf '\n' >> acquisition/diag/cdx_all.txt
-          done
+          get CDX1 'https://web.archive.org/cdx/search/cdx?url=hitran.org%2Fdata%2FCIA%2FO2-Air.cia&output=txt&filter=statuscode%3A200&fl=timestamp%2Coriginal%2Cdigest%2Clength&from=2015&to=2019&collapse=digest' acquisition/diag/cdx1.txt || true
+          get CDX2 'https://web.archive.org/cdx/search/cdx?url=hitran.org%2Fdata%2FCIA%2FO2-air.cia&output=txt&filter=statuscode%3A200&fl=timestamp%2Coriginal%2Cdigest%2Clength&from=2015&to=2019&collapse=digest' acquisition/diag/cdx2.txt || true
+          get CDX3 'https://web.archive.org/cdx/search/cdx?url=hitran.org%2Fdata%2FCIA%2Fmain%2FO2-air.cia&output=txt&filter=statuscode%3A200&fl=timestamp%2Coriginal%2Cdigest%2Clength&from=2015&to=2019&collapse=digest' acquisition/diag/cdx3.txt || true
+          get CDX4 'https://web.archive.org/cdx/search/cdx?url=hitran.org%2Fdata%2FCIA%2F%2AO2%2AAir%2A.cia&output=txt&filter=statuscode%3A200&fl=timestamp%2Coriginal%2Cdigest%2Clength&from=2015&to=2019&collapse=digest' acquisition/diag/cdx4.txt || true
+          cat acquisition/diag/cdx*.txt 2>/dev/null | sort -u > acquisition/diag/cdx_candidates.txt || true
+          note ""; note "[CDX_CANDIDATES]"
+          cat acquisition/diag/cdx_candidates.txt | tee -a acquisition/MANIFEST.txt || true
 
-          python3 -c "import re,pathlib; s=pathlib.Path('acquisition/diag/cdx_all.txt').read_text(errors='replace'); rows=[]
-for m in re.finditer(r'\[\"(201[5-9][0-9]{10})\",\"([^\"]+)\",\"([^\"]*)\",\"([^\"]*)\"\]',s): rows.append(m.groups())
-seen=set(); out=[]
-for r in sorted(rows):
- if r not in seen: seen.add(r); out.append(r)
-pathlib.Path('acquisition/diag/cdx_candidates.tsv').write_text(''.join('\\t'.join(r)+'\\n' for r in out))" || true
-          cat acquisition/diag/cdx_candidates.tsv | tee -a acquisition/MANIFEST.txt || true
-
-          # Try each unique 2016-2017 snapshot until a text CIA payload is recovered.
-          while IFS=$'\t' read -r ts original digest length; do
-            [ -n "$ts" ] || continue
-            year="${ts:0:4}"
-            if [ "$year" = 2016 ] || [ "$year" = 2017 ]; then
-              snap="https://web.archive.org/web/${ts}id_/${original}"
-              out="acquisition/diag/snapshot_${ts}.cia"
-              if curl -fL --retry 1 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' "$snap" -o "$out"; then
-                note "snapshot=$ts original=$original bytes=$(wc -c < "$out") sha256=$(sha256sum "$out"|awk '{print $1}') type=$(file -b "$out")"
-                if file "$out" | grep -qi 'text'; then
-                  if grep -q -E '7450|7500|8000|8480' "$out"; then
-                    cp "$out" acquisition/files/O2-Air_historical_candidate.cia
-                    note "selected_snapshot=$ts"
-                    note "selected_original=$original"
-                    break
-                  fi
-                fi
-              fi
+          line="$(grep -E '^2016|^2017' acquisition/diag/cdx_candidates.txt 2>/dev/null | head -n 1 || true)"
+          if [ -n "$line" ]; then
+            ts="$(printf '%s' "$line" | awk '{print $1}')"
+            original="$(printf '%s' "$line" | awk '{print $2}')"
+            snap="https://web.archive.org/web/${ts}id_/${original}"
+            if get SNAPSHOT "$snap" acquisition/files/O2-Air_historical_candidate.cia; then
+              grep -n -Ei 'Mate|1999|7450|8480|1270' acquisition/files/O2-Air_historical_candidate.cia > acquisition/diag/historical_mate_hits.txt || true
+              note "selected_timestamp=$ts"
+              note "selected_original=$original"
             fi
-          done < acquisition/diag/cdx_candidates.tsv
+          fi
 
-          note ""; note "[FINAL]"
-          find acquisition/files -maxdepth 1 -type f -print0 | sort -z | while IFS= read -r -d '' f; do note "$(basename "$f") bytes=$(wc -c < "$f") sha256=$(sha256sum "$f"|awk '{print $1}')"; done
-          cat acquisition/MANIFEST.txt
+          note ""; note "[FINAL_FILES]"
+          for f in acquisition/files/*; do
+            [ -f "$f" ] || continue
+            note "$(basename "$f") bytes=$(wc -c < "$f") sha256=$(sha256sum "$f" | awk '{print $1}')"
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: m4d-cia-history-probe
+          name: m4d-cia-history-probe-v2
           path: acquisition/
           retention-days: 7
