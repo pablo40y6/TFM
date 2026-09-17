@@ -13,41 +13,42 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Probe Drouin supplement from publisher/CDN
+      - name: Acquire Drouin structured article and inspect CIA source links
         shell: bash
         run: |
           set -u
           mkdir -p acquisition/files acquisition/diag
           : > acquisition/MANIFEST.txt
           note(){ printf '%s\n' "$*" | tee -a acquisition/MANIFEST.txt; }
-          try_url(){ label="$1"; url="$2"; out="$3"; note ""; note "[$label]"; note "url=$url"; if curl -fL --retry 1 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' -e 'https://www.sciencedirect.com/' "$url" -o "$out"; then note "status=downloaded"; note "bytes=$(wc -c < "$out")"; note "sha256=$(sha256sum "$out"|awk '{print $1}')"; note "type=$(file -b "$out")"; return 0; else rm -f "$out"; note "status=failed"; return 1; fi; }
+          fetch(){ label="$1"; url="$2"; out="$3"; note ""; note "[$label]"; note "url=$url"; if curl -fL --retry 2 --connect-timeout 20 --max-time 240 -A 'Mozilla/5.0' "$url" -o "$out"; then note "status=downloaded"; note "bytes=$(wc -c < "$out")"; note "sha256=$(sha256sum "$out"|awk '{print $1}')"; note "type=$(file -b "$out")"; return 0; else rm -f "$out"; note "status=failed"; return 1; fi; }
           note "access_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          pii='S0022407316301108'
-          found=''
-          for suffix in mmc1.pdf mmc1.docx mmc1.zip mmc2.pdf mmc2.zip mmc3.pdf; do
-            out="acquisition/diag/1-s2.0-${pii}-${suffix}"
-            url="https://ars.els-cdn.com/content/image/1-s2.0-${pii}-${suffix}"
-            if try_url "ELSEVIER_${suffix}" "$url" "$out"; then
-              if file "$out" | grep -qi PDF; then
-                cp "$out" acquisition/files/NIHMS804415-supplement-supplement_1.pdf
-                found="$url"
-                break
-              fi
-            fi
-          done
-          note ""
-          note "selected_source_url=$found"
-          if [ -f acquisition/files/NIHMS804415-supplement-supplement_1.pdf ]; then
-            note "A1_bytes=$(wc -c < acquisition/files/NIHMS804415-supplement-supplement_1.pdf)"
-            note "A1_sha256=$(sha256sum acquisition/files/NIHMS804415-supplement-supplement_1.pdf|awk '{print $1}')"
-            pdfinfo acquisition/files/NIHMS804415-supplement-supplement_1.pdf > acquisition/diag/drouin_pdfinfo.txt 2>&1 || true
-            pdftotext -layout acquisition/files/NIHMS804415-supplement-supplement_1.pdf acquisition/diag/drouin_supplement.txt 2>/dev/null || true
-            grep -Ei 'matrix|PP|PQ|RR|RQ|Y\(|temperature|line.?mix' acquisition/diag/drouin_supplement.txt | head -n 120 > acquisition/diag/drouin_key_lines.txt || true
+
+          fetch A1_ARTICLE_XML 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=5103325' acquisition/files/PMC5103325.xml || true
+          if [ -f acquisition/files/PMC5103325.xml ]; then
+            python3 -c "import xml.etree.ElementTree as ET; r=ET.parse('acquisition/files/PMC5103325.xml').getroot(); print(r.tag); print('tables',len(r.findall('.//table-wrap'))); [(print((tw.findtext('label') or ''), (tw.findtext('caption/title') or ''))) for tw in r.findall('.//table-wrap')]" > acquisition/diag/article_table_index.txt || true
+            python3 -c "import xml.etree.ElementTree as ET; r=ET.parse('acquisition/files/PMC5103325.xml').getroot(); out=[]
+for tw in r.findall('.//table-wrap'):
+ lab=(tw.findtext('label') or '').strip()
+ if lab in {'Table 4','Table 5'}:
+  out.append('### '+lab+'\n'+''.join(tw.itertext()))
+open('acquisition/diag/drouin_tables_4_5.txt','w',encoding='utf-8').write('\n\n'.join(out))" || true
+          fi
+
+          fetch HITRAN_CIA_PAGE 'https://hitran.org/cia/' acquisition/diag/hitran_cia.html || true
+          if [ -f acquisition/diag/hitran_cia.html ]; then
+            grep -Eoi 'href=["'"'][^"'"']*O2[^"'"']*Air[^"'"']*\.cia[^"'"']*["'"']' acquisition/diag/hitran_cia.html > acquisition/diag/o2_air_links.txt || true
+            cat acquisition/diag/o2_air_links.txt | tee -a acquisition/MANIFEST.txt || true
+          fi
+
+          fetch HITRAN_CIA_INDEX 'https://hitran.org/data/CIA/' acquisition/diag/hitran_cia_index.html || true
+          if [ -f acquisition/diag/hitran_cia_index.html ]; then
+            grep -Eoi 'href=["'"'][^"'"']*O2[^"'"']*Air[^"'"']*\.cia[^"'"']*["'"']' acquisition/diag/hitran_cia_index.html > acquisition/diag/o2_air_index_links.txt || true
+            cat acquisition/diag/o2_air_index_links.txt | tee -a acquisition/MANIFEST.txt || true
           fi
           cat acquisition/MANIFEST.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: m4d-drouin-elsevier-probe
+          name: m4d-structured-source-probe
           path: acquisition/
           retention-days: 7
