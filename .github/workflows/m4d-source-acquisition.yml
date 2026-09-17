@@ -14,125 +14,50 @@ jobs:
   acquire:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Acquire public historical sources
         shell: bash
         run: |
           set -u
           mkdir -p acquisition/files acquisition/diag
           : > acquisition/MANIFEST.txt
-
-          note() {
-            printf '%s\n' "$*" | tee -a acquisition/MANIFEST.txt
-          }
-
-          fetch_url() {
-            label="$1"
-            url="$2"
-            out="$3"
-            note ""
-            note "[$label]"
-            note "url=$url"
-            if curl -fL --retry 2 --connect-timeout 20 --max-time 120 -A 'Mozilla/5.0' "$url" -o "$out"; then
-              note "status=downloaded"
-              note "bytes=$(wc -c < "$out")"
-              note "sha256=$(sha256sum "$out" | awk '{print $1}')"
-              note "file=$(file -b "$out")"
-              if file "$out" | grep -qi text; then
-                note "lines=$(wc -l < "$out")"
-                head -n 5 "$out" > "acquisition/diag/$(basename "$out").head.txt" || true
-              fi
-              return 0
-            fi
-            rm -f "$out"
-            note "status=failed"
-            return 1
-          }
-
+          note(){ printf '%s\n' "$*" | tee -a acquisition/MANIFEST.txt; }
+          fetch_url(){ label="$1"; url="$2"; out="$3"; note ""; note "[$label]"; note "url=$url"; if curl -fL --retry 2 --connect-timeout 20 --max-time 240 -A 'Mozilla/5.0' "$url" -o "$out"; then note "status=downloaded"; note "bytes=$(wc -c < "$out")"; note "sha256=$(sha256sum "$out"|awk '{print $1}')"; note "file=$(file -b "$out")"; file "$out"|grep -qi text && note "lines=$(wc -l < "$out")"; return 0; else rm -f "$out"; note "status=failed"; return 1; fi; }
           note "access_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          note "runner=$(uname -a)"
 
           base='https://lweb.cfa.harvard.edu/HITRAN/HITRAN2012/HITRAN2012/By-Molecule/Uncompressed-files'
           fetch_url A2 "$base/07_A-band_SDF.dat" acquisition/files/07_A-band_SDF.dat || true
           fetch_url A3 "$base/07_hit12_0.76mic_Galatry.par" acquisition/files/07_hit12_0.76mic_Galatry.par || true
+          fetch_url A_HITRAN2012_FULL "$base/07_hit12.par" acquisition/files/07_hit12.par || true
 
-          oa_xml='acquisition/diag/PMC5103325_oa.xml'
-          note ""
-          note "[A1_PMC_OA_PACKAGE]"
-          if curl -fL --retry 2 --connect-timeout 20 --max-time 120 -A 'Mozilla/5.0' \
-            'https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id=PMC5103325' -o "$oa_xml"; then
-            note "oa_metadata_status=downloaded"
-            cp "$oa_xml" acquisition/diag/PMC5103325_oa_raw.txt
-            python3 -c "import xml.etree.ElementTree as ET; root=ET.parse('$oa_xml').getroot(); links=[x.attrib.get('href','') for x in root.findall('.//link') if x.attrib.get('format','')=='tgz' or x.attrib.get('href','').endswith('.tar.gz')]; print((links[0].replace('ftp://ftp.ncbi.nlm.nih.gov/','https://ftp.ncbi.nlm.nih.gov/',1) if links else ''))" > acquisition/diag/PMC5103325_oa_tgz_url.txt || true
-            tgz_url="$(head -n 1 acquisition/diag/PMC5103325_oa_tgz_url.txt || true)"
-            note "oa_tgz_url=$tgz_url"
-            if [ -n "$tgz_url" ] && curl -fL --retry 2 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' "$tgz_url" -o acquisition/PMC5103325.tar.gz; then
-              note "oa_tgz_status=downloaded"
-              note "oa_tgz_bytes=$(wc -c < acquisition/PMC5103325.tar.gz)"
-              note "oa_tgz_sha256=$(sha256sum acquisition/PMC5103325.tar.gz | awk '{print $1}')"
-              mkdir -p acquisition/pmc_package
-              tar -xzf acquisition/PMC5103325.tar.gz -C acquisition/pmc_package || true
-              supp="$(find acquisition/pmc_package -type f -name 'NIHMS804415-supplement-supplement_1.pdf' -print -quit)"
-              if [ -z "$supp" ]; then
-                supp="$(find acquisition/pmc_package -type f \( -iname '*supplement*1*.pdf' -o -iname '*supp*.pdf' \) -print -quit)"
-              fi
-              note "supplement_path=$supp"
-              if [ -n "$supp" ]; then
-                cp "$supp" acquisition/files/NIHMS804415-supplement-supplement_1.pdf
-                note "supplement_bytes=$(wc -c < acquisition/files/NIHMS804415-supplement-supplement_1.pdf)"
-                note "supplement_sha256=$(sha256sum acquisition/files/NIHMS804415-supplement-supplement_1.pdf | awk '{print $1}')"
-                note "supplement_file=$(file -b acquisition/files/NIHMS804415-supplement-supplement_1.pdf)"
-                pdfinfo acquisition/files/NIHMS804415-supplement-supplement_1.pdf > acquisition/diag/drouin_pdfinfo.txt 2>&1 || true
-                pdftotext -layout acquisition/files/NIHMS804415-supplement-supplement_1.pdf acquisition/diag/drouin_supplement.txt 2>/dev/null || true
-              else
-                note "supplement_status=not_found_in_package"
-              fi
-            else
-              note "oa_tgz_status=failed"
+          fetch_url A1_EUROPEPMC 'https://www.ebi.ac.uk/europepmc/webservices/rest/PMC5103325/supplementaryFiles' acquisition/diag/PMC5103325_supplementary.zip || true
+          if [ -f acquisition/diag/PMC5103325_supplementary.zip ]; then
+            mkdir -p acquisition/epmc_suppl
+            unzip -q acquisition/diag/PMC5103325_supplementary.zip -d acquisition/epmc_suppl || true
+            find acquisition/epmc_suppl -type f -printf '%P\t%s\n' > acquisition/diag/epmc_file_list.txt || true
+            supp="$(find acquisition/epmc_suppl -type f -iname '*supplement*1*.pdf' -print -quit)"
+            [ -z "$supp" ] && supp="$(find acquisition/epmc_suppl -type f -iname '*.pdf' -print -quit)"
+            note "A1_supplement_path=$supp"
+            if [ -n "$supp" ]; then
+              cp "$supp" acquisition/files/NIHMS804415-supplement-supplement_1.pdf
+              note "A1_bytes=$(wc -c < acquisition/files/NIHMS804415-supplement-supplement_1.pdf)"
+              note "A1_sha256=$(sha256sum acquisition/files/NIHMS804415-supplement-supplement_1.pdf|awk '{print $1}')"
+              pdfinfo acquisition/files/NIHMS804415-supplement-supplement_1.pdf > acquisition/diag/drouin_pdfinfo.txt 2>&1 || true
+              pdftotext -layout acquisition/files/NIHMS804415-supplement-supplement_1.pdf acquisition/diag/drouin_supplement.txt 2>/dev/null || true
             fi
-          else
-            note "oa_metadata_status=failed"
           fi
 
-          for fname in O2-Air_2016.cia O2-air_2016.cia O2-Air_2018.cia O2-air_2018.cia O2-Air_2019.cia O2-air_2019.cia; do
-            fetch_url "C1_candidate_$fname" "https://hitran.org/data/CIA/$fname" "acquisition/files/$fname" || true
-          done
+          fetch_url C1_CURRENT_2024 'https://hitran.org/data/CIA/O2-air_2024.cia' acquisition/files/O2-air_2024.cia || true
+          fetch_url C1_NEGATIVE_CONTROL 'https://hitran.org/data/CIA/alternate/O2-Air_altern_2016.cia' acquisition/files/O2-Air_altern_2016.cia || true
+          fetch_url C1_THEORY_2018 'https://hitran.org/data/CIA/alternate/O2-Air_theory_temp_2018.cia' acquisition/files/O2-Air_theory_temp_2018.cia || true
 
-          fetch_url C1_negative_control \
-            'https://hitran.org/data/CIA/alternate/O2-Air_altern_2016.cia' \
-            acquisition/files/O2-Air_altern_2016.cia || true
-
-          cdx='https://web.archive.org/cdx/search/cdx?url=hitran.org/data/CIA/*O2*Air*.cia&output=json&filter=statuscode:200&fl=timestamp,original,digest,length&collapse=digest'
-          note ""
-          note "[C1_WAYBACK_DISCOVERY]"
-          note "url=$cdx"
-          if curl -fL --retry 2 --connect-timeout 20 --max-time 120 -A 'Mozilla/5.0' "$cdx" -o acquisition/diag/wayback_o2_air.json; then
-            note "wayback_status=downloaded"
-            python3 -c "import json; d=json.load(open('acquisition/diag/wayback_o2_air.json',encoding='utf-8')); h=d[0] if d else []; rows=[dict(zip(h,r)) for r in d[1:]] if d else []; [print('\t'.join(str(x.get(k,'')) for k in h)) for x in rows if x.get('timestamp','')[:4] in {'2016','2017','2018','2019','2020'} or any(y in x.get('original','') for y in ('2016','2018','2019'))]" > acquisition/diag/wayback_o2_air_candidates.txt || true
-            cat acquisition/diag/wayback_o2_air_candidates.txt | tee -a acquisition/MANIFEST.txt || true
-          else
-            note "wayback_status=failed"
-          fi
-
-          note ""
-          note "[FINAL_FILE_HASHES]"
-          if find acquisition/files -maxdepth 1 -type f | grep -q .; then
-            find acquisition/files -maxdepth 1 -type f -print0 | sort -z | while IFS= read -r -d '' f; do
-              note "$(basename "$f") bytes=$(wc -c < "$f") sha256=$(sha256sum "$f" | awk '{print $1}')"
-            done
-          else
-            note "no_files_acquired"
-          fi
-
+          note ""; note "[FINAL_FILE_HASHES]"
+          find acquisition/files -maxdepth 1 -type f -print0 | sort -z | while IFS= read -r -d '' f; do note "$(basename "$f") bytes=$(wc -c < "$f") sha256=$(sha256sum "$f"|awk '{print $1}')"; done
           cat acquisition/MANIFEST.txt
-
       - name: Upload acquisition evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: m4d-source-acquisition-evidence
+          name: m4d-source-acquisition-evidence-v2
           path: acquisition/
-          if-no-files-found: error
           retention-days: 7
