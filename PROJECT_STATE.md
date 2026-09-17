@@ -11,7 +11,7 @@ This repository develops a reproducible time-dependent mesospheric ozone and O2(
 - Future full system: 255 ODEs.
 - Algebraic/QSSA species: O(1D), OH, HO2, H2O2, B0 = O2(b1Sigma_g+, v=0), and B1 = O2(b1Sigma_g+, v=1).
 - Prescribed fields: T, M, O2, N2, CO2, H2O, and H2.
-- First temporal version: no vertical transport; BDF as the main solver; Radau as an independent verification; repeated diurnal cycles to periodic convergence.
+- First temporal version: no vertical transport; BDF main solver; Radau independent verification; repeated diurnal cycles to periodic convergence.
 - Delta remains dynamic: `dDelta/dt = P_Delta - L_Delta*Delta`.
 
 These statements describe the accepted architecture and provisional continuation. They do not mean M4D or the later temporal solver has been implemented.
@@ -20,84 +20,301 @@ These statements describe the accepted architecture and provisional continuation
 
 | Milestone | Status | Artifact | SHA-256 | Package version |
 | --- | --- | --- | --- | --- |
-| M1-R2 | CLOSED / ACCEPTED | `tfm-photochem-milestone1-r2.zip` | `46c88ec344de1569d06dff76c36c991edb19777497146ff5183756b54cba6f3d` | 0.1.0, documented in inherited audit/build evidence |
-| M2-R2 | CLOSED / ACCEPTED | `tfm-photochem-milestone2-r2.zip` | `ffb179c9f2c7fdb71ad5af8990490ae0040cf729f7209e1ae90a25fa0021f47f` | 0.2.0, documented in the inherited M2 report |
+| M1-R2 | CLOSED / ACCEPTED | `tfm-photochem-milestone1-r2.zip` | `46c88ec344de1569d06dff76c36c991edb19777497146ff5183756b54cba6f3d` | 0.1.0 |
+| M2-R2 | CLOSED / ACCEPTED | `tfm-photochem-milestone2-r2.zip` | `ffb179c9f2c7fdb71ad5af8990490ae0040cf729f7209e1ae90a25fa0021f47f` | 0.2.0 |
 | M3 | CLOSED / ACCEPTED | `tfm-photochem-milestone3.zip` | `d5dac9f3d160b0d53a1fdc16b23b4c72b918c271466dfbe58d99c5a54a9d89ef` | 0.3.0 |
 | M4A | CLOSED / ACCEPTED | `tfm-photochem-milestone4a.zip` | `d1a68e6344710cd8ae6543f12081cde55355f23849ea73b9724d9e49156fbc12` | 0.4.0 |
 | M4B-R2 | CLOSED / ACCEPTED | `tfm-photochem-milestone4b-r2.zip` | `87fe1d585efa6f42231fc6d9898ca37c5afa51d1b4baa6325015caaee03530c8` | 0.4.2 |
 | M4C-R2 | CLOSED / ACCEPTED; current implemented baseline | `tfm-photochem-milestone4c-r2.zip` | `2944c8a8e0899b320c69c45192ee6f03b9001114c4120a9db8c67a3f1bb8f1fe` | 0.5.1 |
 
-The immutable current artifact is stored at `artifacts/accepted/m4c-r2/tfm-photochem-milestone4c-r2.zip`. Accepted baseline details live in that artifact and in `docs/handoffs/TFM2_ProjectReset_PreM4D_Context.md`.
+The immutable current artifact is `artifacts/accepted/m4c-r2/tfm-photochem-milestone4c-r2.zip`. Accepted M4C behavior is not modified by M4D design work.
 
 ## Current next milestone
 
-M4D is **NOT IMPLEMENTED / DESIGN NOT FROZEN**. Doppler-only is rejected over the required spherical twilight domain. The per-band historical profile families are now substantially identified: A iso-1 uses the HITRAN2016/Drouin advanced SDV + line-mixing lineage, A iso-2/3 use the Long/HITRAN2012 Galatry + Dicke-narrowing lineage unless a HITRAN2016 supersession is found, B uses classic HITRAN2016 Voigt as baseline candidate with corrected qSDV sensitivity, and IRA uses classic HITRAN2016 Voigt as monomer baseline candidate with a required historical CIA twilight sensitivity. Coding is not authorized.
+M4D is **NOT IMPLEMENTED / DESIGN NOT FROZEN**. It must provide `gA`, `gB`, and `gIRA` without starting M5.
 
-M4D must supply the remaining physical forcing arrays `gA`, `gB`, and `gIRA` without starting M5.
+The historical A-band source-discovery and byte-materialization blockers have now been substantially closed through reproducible public-source acquisition. The remaining gates are executable profile semantics, local HITRAN2016 continuity, one historical CIA asset, and numerical convergence.
 
-### M4D spectroscopy/source gates
+## Frozen source / transition gates
 
-- **HITRAN2016 target-line source: PASS for transition/intensity provenance.** The manually acquired SpectralCalc export was produced with the browser UI explicitly set to HITRAN2016/O2 and was hashed as `6b4acbc01cb649891f2d8597875c9cd8e4805cfdd4d3b7841c2d18cbf718de12`. Although the export is not a complete full-range HITRAN2016 O2 database, forensic comparison supports the target A/B/IRA systems as historical HITRAN2016 transition sources. Frozen semantic subsets are `a(0)-X(0)` = 835 lines, `b(0)-X(0)` = 430 lines, and `b(1)-X(0)` = 320 lines, each with deterministic subset hashes documented in `docs/m4d_spectralcalc_export_forensics.md`. This PASS does **not** imply that classic 160-character records contain complete advanced/auxiliary A-band profile parameters.
-- **TIPS-2017: PASS.** Use official historical `hitranonline/hapi@f41d9911f2631eed51b96d6c617b4f27786ad477`, `hapi/hapi.py`, Git blob `caeab1bfaa278b5420adef7efe7ab566991ba763`, HAPI `1.1.0.8.2`.
-- **Solar source: PASS.** Wehrli (1985) WMO/WRC extraterrestrial irradiance is selected with deterministic wavelength interpolation and photon-flux conversion.
-- **Doppler-only: REJECTED FOR FULL DOMAIN.** Local chemistry-level width ratios do not bound illuminated twilight rays through denser air below 50 km. The pressure-broadening sensitivity exceeded the `0.1%` adequacy criterion for A even for rates above `1e-10 s^-1` and produced much larger differences in selected post-90-degree cases.
-- **A iso-1 line shape: SOURCE MATERIALIZATION / PARAMETER-MAPPING BLOCKER.** HITRAN2016 points to Drouin et al. for an advanced speed-dependent + collisional-line-mixing treatment, transformed to HITRAN-facing Rosenkranz parameters. The exact public supplement identity is known (`NIHMS804415-supplement-supplement_1.pdf`, reported 94.8 kB), but its bytes/SHA-256 and executable mapping are not frozen.
-- **A iso-2/iso-3 line shape: HISTORICAL PROFILE FAMILY IDENTIFIED / BYTE+MAPPING BLOCKER.** HITRAN2012 and Long et al. document Galatry profiles with Dicke narrowing for the rare A-band isotopologues. The surviving Harvard/CfA archive identifies `07_A-band_SDF.dat` and `07_hit12_0.76mic_Galatry.par`. The rare lines contribute approximately `0.4674%` of total accepted A integrated strength at 296 K, so they cannot simply be omitted against the `0.1%` gate. Exact bytes/hash, deterministic line mapping, and a HITRAN2016 continuity check remain required.
-- **B-band line shape: BASELINE CANDIDATE SELECTED.** Use complete classic isolated Voigt from the accepted HITRAN2016 records. Do not reproduce the known defective/partial advanced B qSDV values silently. A source-corrected qSDV sensitivity on covered principal-isotopologue lines is required; if any validated B rate changes by more than `0.1%`, reopen the baseline before freeze.
-- **IRA monomer line shape: BASELINE CANDIDATE SELECTED.** Use classic isolated Voigt with accepted HITRAN2016 `gamma_air`, `gamma_self`, `n_air`, and `delta_air`, pending final consistent target+attenuation convergence.
-- **Classic B/IRA pressure broadening: SELECTED.** Use `gamma_L=(296/T)^n_air * [gamma_air*(p-p_O2)+gamma_self*p_O2]` with pressures in atm. `gamma_air` is already the HITRAN air-broadening coefficient; do not multiply by another N2/O2 mixture factor.
-- **Classic B/IRA pressure shift: SELECTED CANDIDATE.** Use `nu_shifted=nu0+delta_air*p` with shell-local total pressure and no invented temperature dependence. A full-path shift sensitivity remains required. A follows its recovered historical profile conventions.
-- **Geometry: PASS.** Retain M4C spherical-ray equations, Earth radius, radiative top and physical shadow semantics. M4D NIR path integration uses deterministic `0.125 km` atmospheric sub-stratification derived from accepted one-kilometre profiles and checks against `0.0625 km`; M4C-R2 production behavior remains untouched.
-- **Shellwise transfer: PASS as a design requirement.** O2 optical depth is evaluated shell by shell with local temperature and pressure/profile parameters. Target-temperature cross section times total column is rejected.
-- **B/IRA attenuation-wing strategy: CANDIDATE SELECTED.** At each target quadrature node evaluate attenuation from all accepted absorber lines in the band rather than imposing a `+/-10` or `+/-20 cm^-1` absorber cutoff. Target support/order are converged separately.
-- **IRA CIA baseline scope: PASS / CLOSURE SENSITIVITY REQUIRED.** Historical `gIRA` remains monomer first-order excitation. HITRAN2016 identifies Maté et al. (1999), DOI `10.1029/1999JD900824`, as the revised 1.27-micron CIA source; pure O2 maps to `O2-O2`, 21:79 O2:N2 to `O2-Air`, and the two must not be double counted. The cold-shell design policy is now frozen for the sensitivity: linearly interpolate within `253-296 K`; below/above that measured range clamp to the nearest endpoint and propagate an envelope defined by the three measured Maté temperature sets. This is explicitly a historical-source-limited sensitivity convention, not physical extrapolation. Exact historical CIA bytes/hash and the numerical twilight sensitivity remain open.
-- **Numerical spectroscopy specification: PARTIAL / NOT FROZEN.** Standard HITRAN scaling, historical TIPS interpolation, Wehrli forcing, unattenuated `g0(T)` anchors, shellwise transfer, M4D path sub-stratification, B/IRA classic-profile candidates, and the IRA CIA cold-shell sensitivity policy are selected. Final A auxiliary materialization plus the full profile/convergence/sensitivity runs remain open.
+### Accepted HITRAN2016 target-line export
 
-Current live HITRAN/HAPI data are not used as a silent historical substitute. The remaining source problem is now byte materialization and deterministic mapping of identified historical auxiliary sources, not an undefined choice of spectroscopy.
+The manually acquired SpectralCalc O2 export remains the transition/intensity source:
 
-### M4D primary design documents
+```text
+raw export SHA-256: 6b4acbc01cb649891f2d8597875c9cd8e4805cfdd4d3b7841c2d18cbf718de12
+records:               14085
+```
+
+Frozen target subsets:
+
+```text
+gA    b(0)-X(0): 430 lines
+gB    b(1)-X(0): 320 lines
+gIRA  a(0)-X(0): 835 lines
+```
+
+The raw export is intentionally not committed. Classic 160-character records freeze transition/intensity provenance but do not contain all advanced A-band relation parameters.
+
+### TIPS-2017
+
+**PASS.** Historical numerical source:
+
+```text
+hitranonline/hapi@f41d9911f2631eed51b96d6c617b4f27786ad477
+hapi/hapi.py
+Git blob caeab1bfaa278b5420adef7efe7ab566991ba763
+HAPI 1.1.0.8.2
+```
+
+### Solar source
+
+**PASS.** Wehrli (1985) WMO/WRC extraterrestrial irradiance with the frozen interpolation/Jacobian convention.
+
+## M4D geometry / transfer gates
+
+- **Doppler-only: REJECTED FOR FULL DOMAIN.** Illuminated twilight rays can sample dense atmosphere well below the 50-km chemistry target.
+- **Geometry: PASS.** Retain the accepted M4C spherical geometry, Earth radius `6370 km`, radiative top `150 km`, physical Earth shadow and tangent semantics.
+- **Path sub-stratification: SELECTED.** M4D NIR transfer uses `0.125 km`, checked against `0.0625 km`.
+- **Shellwise spectroscopy: REQUIRED.** Target-temperature cross section times total column is rejected.
+- **No arbitrary Voigt attenuation wing:** for classic B/IRA candidates, evaluate all accepted absorber lines at each target quadrature node and converge target support/order separately.
+
+## Corrected HITRAN air-diluent semantics
+
+A previous candidate expression mixed an already air-defined coefficient with an extra O2 self fraction. That is superseded.
+
+For the terrestrial atmospheric baseline an HITRAN `air` coefficient is a **diluent coefficient** applied to shell atmospheric pressure:
+
+```text
+gamma_L = gamma_air * p * (296/T)^n_air
+nu_shifted = nu0 + delta_air * p
+```
+
+Do not apply `gamma_air*(p-p_O2)+gamma_self*p_O2` when `gamma_air` is already the HITRAN air-diluent coefficient. `self` is a separate diluent choice for explicitly self/O2-rich conditions.
+
+For the O2 A band this interpretation is independently reinforced by HITRAN2016: Drouin foreign parameters were converted to air using the N2:O2 `0.79:0.21` mixture before the HITRAN-facing representation was produced.
+
+## A-band principal isotopologue
+
+### Source materialization: PASS
+
+Official Drouin publisher supplement:
+
+```text
+https://ars.els-cdn.com/content/image/1-s2.0-S0022407316301108-mmc1.pdf
+bytes:   89406
+SHA-256: 12e621d3b5d17e7648d140ea16134e3c04096bd7e47e2c1bb0e2084adeccbb51
+pages:   12
+```
+
+Structured PMC manuscript:
+
+```text
+PMC5103325 XML via NCBI E-utilities
+bytes:   310708
+SHA-256: 935fd09d5f619f7eb3f7fac5347e80fa81bc23d3158dc9c519874bb161c364fe
+```
+
+### Transition classification / mapping: PASS as historical source audit
+
+The principal-isotopologue target set contains:
+
+```text
+91 magnetic-dipole d lines
+59 electric-quadrupole q lines
+```
+
+Drouin Tables 4/5 contain exactly `91` magnetic-dipole rows and map `91/91`, with zero unmatched/ambiguous labels, to the historical d-line set.
+
+Drouin supplement Table 22 supplies first-order air Rosenkranz `Y` values at `200, 250, 296, 340 K` for `70/91` d lines. The remaining 21 high-J d lines are explicitly identified and account for about `0.0131464%` of historical iso-1 integrated A strength. The 59 q lines account for about `0.00079353%`.
+
+### Selected candidate profile split
+
+```text
+91 d lines:
+    Drouin/HITRAN2016 SDV
+
+70/91 d lines:
+    + first-order Rosenkranz line mixing Y(T)
+
+21/91 d lines without Table-22 Y:
+    SDV retained; no LM coefficient invented
+    final Y=0/source interpretation + numerical sensitivity OPEN
+
+59 q lines:
+    accepted target-edition classic profile candidate
+    no Drouin advanced parameters copied onto them
+```
+
+### Still open
+
+- exact executable SDV evaluator / mapping of Drouin `S` into the chosen historical representation;
+- exact historical temperature evaluation semantics for Table-22 Y values;
+- 21 no-Y d-line sensitivity;
+- 59 q-line sensitivity;
+- local accepted-HITRAN2016 `91/91` continuity mapping;
+- final A spectral/path convergence.
+
+See `docs/m4d_a_band_drouin_materialization_audit.md`.
+
+## A-band rare isotopologues
+
+### Historical source bytes: PASS
+
+```text
+07_A-band_SDF.dat
+bytes 6229
+SHA-256 7cfefb8040a89cb0e4948c2811a6766b793181646d8188ebfa4d646e063dbd26
+
+07_hit12_0.76mic_Galatry.par
+bytes 47231
+SHA-256 69c9fd181b5aba8aa818dc906bdc216aaa8cf038eb5687dd4da8f2bb9bf42dab
+
+07_hit12.par audit witness
+bytes 2263950
+SHA-256 ad2cadf91cb985bec4074ce0bf47cdcfa7aab627ea15de2ac85de731873417a4
+```
+
+### Historical mapping: PASS
+
+`07_hit12_0.76mic_Galatry.par` contains `489` records, with target A-band composition `150 + 140 + 140 = 430`. The mapping to historical `07_hit12.par` is `430/430`, zero unmatched and zero ambiguous. All `280` rare target lines have historical air/self Dicke coefficients.
+
+The rare isotopologues contribute about `0.4674%` of accepted A integrated strength and cannot simply be dropped against the `0.1%` gate.
+
+### Frozen precedence
+
+```text
+ordinary line fields:
+    accepted target-edition HITRAN record
+
+Dicke/Galatry narrowing fields:
+    quantum-identity-matched historical auxiliary record
+```
+
+Do not overwrite target-edition broadening/shift fields with redundant auxiliary copies.
+
+### Still open
+
+- local accepted-HITRAN2016 `280/280`, zero-ambiguity continuity mapping;
+- Galatry target+attenuation numerical convergence.
+
+See `docs/m4d_a_band_auxiliary_mapping_audit.md`.
+
+## B band
+
+**BASELINE CANDIDATE SELECTED.** Use classic HITRAN2016 Voigt with atmospheric `air` coefficients under the corrected diluent semantics above.
+
+The known partial/defective historical qSDV data are not silently reproduced. A source-corrected qSDV sensitivity on covered principal-isotopologue lines is required; if any scientifically retained B rate changes by more than `0.1%`, reopen the baseline candidate.
+
+## IRA monomer
+
+**BASELINE CANDIDATE SELECTED.** Use classic HITRAN2016 Voigt with atmospheric `air` coefficients under the corrected diluent semantics above, pending final full-domain convergence.
+
+## IRA CIA Option B
+
+The historical monomer baseline excludes CIA as a production process and baseline opacity, but M4D closure requires a twilight attenuation sensitivity.
+
+HITRAN2016 identifies Maté et al. (1999), DOI `10.1029/1999JD900824`, as the revised 1.27-micron CIA source. The relevant atmospheric product is `O2-Air`; do not separately add O2-O2 for the same mixture.
+
+Frozen cold-shell sensitivity policy:
+
+```text
+253..296 K: linear interpolation among measured Maté spectra
+T < 253 K:  nominal clamp to 253-K endpoint
+T > 296 K: nominal clamp to 296-K endpoint
+outside source range: also propagate min/max envelope of the three measured spectra
+```
+
+Do not silently substitute the post-2016 theoretical temperature extension.
+
+**Still open:** exact historical HITRAN2016 machine-readable Maté `O2-Air` bytes/hash and the resulting twilight sensitivity.
+
+## Numerical closure gate
+
+For final selected profiles, validate all 51 target altitudes for at least:
+
+```text
+SZA = 0, 60, 85, 89, 89.9, 95, 99 deg
+```
+
+plus an illuminated tangent and immediately-shadowed boundary case.
+
+Current gate:
+
+```text
+max relative difference <= 0.1%
+```
+
+for rates above `1e-15 s^-1`. Below that floor report absolute differences and require finite/nonnegative results.
+
+Required sensitivities/refinements include:
+
+- spectral support/order;
+- `0.125 -> 0.0625 km` path refinement;
+- pressure shifts on/off;
+- A LM/no-LM high-J treatment;
+- A q-line contribution;
+- B corrected qSDV;
+- IRA historical CIA nominal/envelope.
+
+No empirical normalization is allowed.
+
+## Unattenuated regression anchors
+
+| T (K) | `gA0` (s^-1) | `gB0` (s^-1) | `gIRA0` (s^-1) |
+| ---: | ---: | ---: | ---: |
+| 180 | `6.1914394520e-9` | `3.5752856768e-10` | `1.4549983481e-10` |
+| 200 | `6.1963256585e-9` | `3.5805572358e-10` | `1.4573674701e-10` |
+| 220 | `6.1999597393e-9` | `3.5852735538e-10` | `1.4593873602e-10` |
+| 240 | `6.2025842093e-9` | `3.5895153697e-10` | `1.4611114500e-10` |
+| 260 | `6.2043175651e-9` | `3.5933010076e-10` | `1.4625641629e-10` |
+| 280 | `6.2051968875e-9` | `3.5966103384e-10` | `1.4637502395e-10` |
+| 296 | `6.2052846913e-9` | `3.5988913888e-10` | `1.4645036484e-10` |
+
+These are regression anchors, not forced final answers.
+
+## Primary M4D design documents
 
 - `docs/m4d_spectralcalc_export_forensics.md`
 - `docs/m4d_tips2017_provenance_recovery.md`
 - `docs/m4d_solar_forcing_freeze.md`
 - `docs/m4d_broadening_and_geometry_freeze.md`
-- `docs/m4d_ira_cia_scope_freeze.md`
 - `docs/m4d_numerical_specification.md`
-- `docs/m4d_final_design_review.md`
 - `docs/m4d_pressure_broadening_provenance_followup.md`
 - `docs/m4d_a_band_auxiliary_source_recovery.md`
+- `docs/m4d_a_band_auxiliary_mapping_audit.md`
+- `docs/m4d_a_band_drouin_materialization_audit.md`
+- `docs/m4d_ira_cia_scope_freeze.md`
 - `docs/m4d_ira_cia_historical_source_recovery.md`
+- `docs/m4d_source_materialization_gate.md`
+- `docs/m4d_final_design_review.md`
 
-Earlier research/forensics notes remain supporting evidence and are not superseded as provenance records.
+Earlier forensics/research notes remain provenance evidence even where their old candidate conclusions are superseded.
 
-### Immediate next gate
+## Immediate next gate
 
-1. Freeze `NIHMS804415-supplement-supplement_1.pdf` bytes/hash and executable Drouin/HITRAN2016 mapping for A iso-1.
-2. Freeze `07_A-band_SDF.dat` and `07_hit12_0.76mic_Galatry.par` bytes/hash, map accepted A iso-2/iso-3 transitions, and verify HITRAN2016 continuity.
-3. Freeze the exact historical HITRAN2016 Maté `O2-Air` CIA asset. The cold-shell sensitivity policy is already selected and must not be reopened without a concrete scientific error.
-4. Run B and IRA classic-Voigt target excitation and shell attenuation consistently using all accepted absorber lines at target quadrature nodes; quantify pressure-shift sensitivity and corrected B qSDV sensitivity.
-5. Run A iso-1 advanced and A iso-2/3 Galatry representations consistently once materialized.
-6. Validate all 51 altitudes at `SZA = 0, 60, 85, 89, 89.9, 95, 99 deg` plus illuminated-tangent/immediately-shadowed boundary cases and demonstrate `<=0.1%` convergence above the declared `1e-15 s^-1` floor.
-7. Execute the historical IRA CIA twilight sensitivity with the frozen endpoint-clamp + measured-source-envelope policy.
+1. Close the A iso-1 SDV/Rosenkranz executable semantics and Table-22 temperature rule.
+2. Run local accepted-HITRAN2016 continuity maps: `91/91` Drouin d and `280/280` rare Galatry.
+3. Recover/freeze the exact historical Maté `O2-Air` CIA machine-readable asset.
+4. Execute consistent A/B/IRA target+attenuation calculations and declared sensitivities.
+5. Pass the full altitude/SZA/tangent convergence gate.
 
-Only after these gates pass may `docs/m4d_final_design_specification.md` be created and implementation authorized.
+Only then may `docs/m4d_final_design_specification.md` be created and production implementation authorized.
 
 ## Known bootstrap reproducibility finding
 
-During repository bootstrap, the optional M4A background regeneration was attempted with `pymsis==0.12.0` on Windows / Python 3.14. The three regenerated background outputs were not byte-identical to the accepted frozen M4A assets.
-
-The accepted frozen assets themselves were **not** modified: their accepted hashes and repository validators pass. This is currently classified as an environment/reproducibility finding, not as evidence of a scientific defect in M4A. M4A remains **CLOSED / ACCEPTED**. Future work must not replace the accepted frozen backgrounds based solely on this cross-environment regeneration result; reproducing the original generation environment may be investigated separately.
+During repository bootstrap, optional M4A background regeneration with `pymsis==0.12.0` on Windows/Python 3.14 was not byte-identical to the accepted frozen M4A assets. The accepted assets and validators were not modified, so M4A remains CLOSED / ACCEPTED. Do not replace accepted backgrounds solely from that cross-environment result.
 
 ## Documented source-identity discrepancy
 
-The external file `references/scientific/JPL_Publication_15-10_compressed.pdf` has SHA-256 `a5c57b2a8435760bc4dd43da328a9dd34768865c022e965326f3eccaaf0cd3c8`. The accepted package documents other hashes for JPL Evaluation 18 source copies, including `149a4bab985402c67419e02ff8ca80202d1ba55f5383fbf69692e2184b68da08` in the M4C asset generator and `ddf6e0b4454d5076ec128dafce498c2070c63b4ad166edbca84d22b12cd51796` for a later official repository download. Bibliographic similarity is not treated as file identity.
+`references/scientific/JPL_Publication_15-10_compressed.pdf` has SHA-256 `a5c57b2a8435760bc4dd43da328a9dd34768865c022e965326f3eccaaf0cd3c8`. Other accepted documentation records different byte identities for other JPL Evaluation-18 source copies. Bibliographic equivalence is not treated as byte identity.
 
 ## Provisional roadmap after M4D
 
 1. M5A: performance-ready 51-level chemistry kernel.
 2. M5B: 255-state RHS with BDF/Radau integration.
 3. M6: diurnal cycle and periodic convergence.
-4. M7: scientific validation and sensitivity work not already required for M4D closure.
+4. M7: scientific validation and sensitivities not already required for M4D closure.
 5. M8: Odin/retrieval/application work, if still in scope.
 
-At M4D closure, reconsider explicitly whether M5A and M5B should remain separate. Before any M5 optimization, preserve the M3 scalar closure as the golden scientific reference.
+Before any M5 optimization, preserve the M3 scalar closure as the golden scientific reference.
