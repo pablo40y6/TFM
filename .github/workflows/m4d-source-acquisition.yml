@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Recover HITRAN2012 O2-N2 CIA data
+      - name: Recover HITRAN2012 O2-O2 CIA data
         shell: bash
         run: |
           set -u
@@ -24,34 +24,33 @@ jobs:
           note "access_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
           root='https://lweb.cfa.harvard.edu/HITRAN/HITRAN2012/CIA/'
-          get CIA_ROOT "$root" acquisition/diag/cia_root.html || true
-          get O2N2_DIR "${root}Main-Folder/O2-N2/" acquisition/diag/o2n2_index.html || true
-
-          if [ -f acquisition/diag/o2n2_index.html ]; then
-            grep -Eoi 'href="[^"]+"' acquisition/diag/o2n2_index.html | sed 's/^href="//;s/"$//' | grep -Ei 'O2.*N2|\.cia$|\.dat$|\.txt$' | sort -u > acquisition/diag/o2n2_links.txt || true
-            note ""; note "[O2N2_LINKS]"; cat acquisition/diag/o2n2_links.txt | tee -a acquisition/MANIFEST.txt || true
+          get O2O2_DIR "${root}Main-Folder/O2-O2/" acquisition/diag/o2o2_index.html || true
+          if [ -f acquisition/diag/o2o2_index.html ]; then
+            grep -Eoi 'href="[^"]+"' acquisition/diag/o2o2_index.html | sed 's/^href="//;s/"$//' | grep -Ei 'O2.*O2|\.cia$|\.dat$|\.txt$' | sort -u > acquisition/diag/o2o2_links.txt || true
+            note ""; note "[O2O2_LINKS]"; cat acquisition/diag/o2o2_links.txt | tee -a acquisition/MANIFEST.txt || true
             while IFS= read -r href; do
               [ -n "$href" ] || continue
               case "$href" in
                 http*) url="$href" ;;
                 /*) url="https://lweb.cfa.harvard.edu${href}" ;;
-                *) url="${root}Main-Folder/O2-N2/${href}" ;;
+                *) url="${root}Main-Folder/O2-O2/${href}" ;;
               esac
               base="$(basename "$href")"
-              get "O2N2_$base" "$url" "acquisition/files/$base" || true
-            done < acquisition/diag/o2n2_links.txt
+              get "O2O2_$base" "$url" "acquisition/files/$base" || true
+            done < acquisition/diag/o2o2_links.txt
           fi
 
-          note ""; note "[CONTENT_HITS]"
+          note ""; note "[HEADERS_AND_HITS]"
           for f in acquisition/files/*; do
             [ -f "$f" ] || continue
             note "$(basename "$f") bytes=$(wc -c < "$f") sha256=$(sha256sum "$f" | awk '{print $1}')"
-            grep -n -Ei 'Mate|1999|7450|7480|7500|8000|8350|8480|253|273|296' "$f" | head -n 80 > "acquisition/diag/$(basename "$f").hits.txt" || true
+            python3 -c "from pathlib import Path; p=Path('$f'); ls=p.read_text(errors='replace').splitlines(); [print(f'{i+1}:{x}') for i,x in enumerate(ls) if 'O2-O2' in x[:35]][:80]" > "acquisition/diag/$(basename "$f").headers.txt" || true
+            grep -n -Ei 'Mate|1999|7450|7480|7500|8000|8350|8480|253|273|296|21%O2|79%N2|Air' "$f" | head -n 160 > "acquisition/diag/$(basename "$f").hits.txt" || true
           done
           cat acquisition/MANIFEST.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: m4d-hitran2012-o2n2-cia
+          name: m4d-hitran2012-o2o2-cia
           path: acquisition/
           retention-days: 7
