@@ -13,22 +13,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Acquire Boulet 2014 Niro-renormalization witness
+      - name: Acquire Drouin publisher main PDF
         shell: bash
         run: |
           set -eu
           mkdir -p acquisition/files
-          url='https://ntrs.nasa.gov/api/citations/20140017696/downloads/20140017696.pdf?attachment=true'
-          curl -fL --retry 3 --connect-timeout 20 --max-time 240 -A 'Mozilla/5.0' "$url" -o acquisition/files/boulet_ma_thibault_2014.pdf
-          {
-            printf 'url=%s\n' "$url"
-            printf 'bytes=%s\n' "$(wc -c < acquisition/files/boulet_ma_thibault_2014.pdf)"
-            printf 'sha256=%s\n' "$(sha256sum acquisition/files/boulet_ma_thibault_2014.pdf | awk '{print $1}')"
-            file acquisition/files/boulet_ma_thibault_2014.pdf
-          } > acquisition/MANIFEST.txt
+          pii='S0022407316301108'
+          : > acquisition/MANIFEST.txt
+          found=''
+          for suffix in main.pdf main_1.pdf; do
+            url="https://ars.els-cdn.com/content/image/1-s2.0-${pii}-${suffix}"
+            out="acquisition/files/1-s2.0-${pii}-${suffix}"
+            printf 'probe=%s\n' "$url" >> acquisition/MANIFEST.txt
+            if curl -fL --retry 2 --connect-timeout 20 --max-time 240 -A 'Mozilla/5.0' -e 'https://www.sciencedirect.com/' "$url" -o "$out"; then
+              printf 'bytes=%s\n' "$(wc -c < "$out")" >> acquisition/MANIFEST.txt
+              printf 'sha256=%s\n' "$(sha256sum "$out" | awk '{print $1}')" >> acquisition/MANIFEST.txt
+              file "$out" >> acquisition/MANIFEST.txt
+              if file "$out" | grep -qi PDF; then
+                cp "$out" acquisition/files/drouin_2017_main.pdf
+                found="$url"
+                break
+              fi
+            fi
+          done
+          printf 'selected=%s\n' "$found" >> acquisition/MANIFEST.txt
           cat acquisition/MANIFEST.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: m4d-boulet-2014-renormalization
+          name: m4d-drouin-main-pdf
           path: acquisition/
           retention-days: 7
