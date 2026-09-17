@@ -1,16 +1,14 @@
-# M4D spectroscopy numerical specification
+# M4D spectroscopy numerical specification — partial / not frozen
 
-Status: **DRAFT SUPERSEDED BY FINAL DESIGN REVIEW / NOT READY FOR IMPLEMENTATION**
+Status: **PARTIAL SPECIFICATION ONLY / LINE-SHAPE SOURCE BLOCKER / NOT READY FOR IMPLEMENTATION**
 
 Branch: `milestone/m4d-design`
 
-> **Review result:** `docs/m4d_final_design_review.md` found that Doppler-only and the one-kilometre path discretization do not satisfy the proposed full-domain `0.1%` gate. The converged Doppler quadrature and source conventions below remain evidence, but the line-shape/wing rules are not frozen and this document does not authorize implementation.
+> This document is not the final M4D implementation specification. The earlier Doppler-only prescription is superseded by `docs/m4d_final_design_review.md` and `docs/m4d_pressure_broadening_provenance_followup.md`. Only the source, scaling, solar-forcing, geometry and convergence conventions explicitly marked retained below may be carried forward.
 
-This document consolidates the numerical rules for the three M4D O2 solar-excitation coefficients after the independent source investigation. It is an implementation specification, not an implementation commit.
+## 1. Required outputs — retained
 
-## 1. Required outputs
-
-For any supplied solar zenith angle, M4D must produce 51-element arrays on the accepted chemistry grid `50..100 km`:
+For any supplied solar zenith angle, M4D must eventually produce 51-element arrays on the accepted chemistry grid `50..100 km`:
 
 ```text
 gA(z)    [s^-1]
@@ -18,7 +16,7 @@ gB(z)    [s^-1]
 gIRA(z)  [s^-1]
 ```
 
-with the accepted target-state semantics:
+with target-state semantics:
 
 ```text
 gA   : O2 X(v''=0) -> b(v'=0)
@@ -26,15 +24,13 @@ gB   : O2 X(v''=0) -> b(v'=1)
 gIRA : O2 X(v''=0) -> a(v'=0)
 ```
 
-No M5 time integration is part of this milestone.
+No M5 time integration belongs to M4D.
 
-## 2. Frozen source chain
+## 2. Frozen source chain — retained
 
 ### HITRAN2016 target transitions
 
-Use only the already accepted/fingerprinted target subsets derived from the untouched SpectralCalc HITRAN2016 export.
-
-Canonical all-isotopologue subset hashes:
+Use only the accepted/fingerprinted target subsets derived from the untouched SpectralCalc HITRAN2016 export:
 
 ```text
 gIRA  835 lines  SHA256 8d06f322aa4058ab03150a705bf9765fe356a2c7ecd06df98379c46062d295ad
@@ -42,17 +38,17 @@ gA    430 lines  SHA256 176a6c21ee37b1244bd11ef7047f6e31f7cada7edff2c3498f31f8d1
 gB    320 lines  SHA256 bb5f8b26a2ad3c9dc31870506c3c05bcdb115b7c5b06d7141c9660c952d83c2d
 ```
 
-The raw source itself is not redistributed automatically; deterministic extraction/provenance must reproduce these fingerprints.
+This freezes transition identity/intensity provenance only. It does **not** establish that the classic 160-character records contain every advanced HITRAN2016 line-shape/line-mixing parameter needed by the final M4D calculation.
 
 ### TIPS-2017
 
-Use the historical official HAPI source pinned at:
+Use the pinned historical source:
 
 ```text
 hitranonline/hapi
 commit f41d9911f2631eed51b96d6c617b4f27786ad477
-hapi/hapi.py
-Git blob ca... = caeab1bfaa278b5420adef7efe7ab566991ba763
+path hapi/hapi.py
+Git blob caeab1bfaa278b5420adef7efe7ab566991ba763
 HAPI version 1.1.0.8.2
 ```
 
@@ -62,9 +58,9 @@ for O2 local isotopologues 1-3.
 
 Use the Wehrli 1985 WMO/WRC extraterrestrial spectrum and the convention frozen in `docs/m4d_solar_forcing_freeze.md`.
 
-## 3. HITRAN line-strength temperature scaling
+## 3. HITRAN line-strength temperature scaling — retained
 
-For every source line, use the standard HITRAN expression at target/shell temperature `T`:
+For every source line:
 
 ```text
 S(T) = S(296)
@@ -74,49 +70,37 @@ S(T) = S(296)
          / [1 - exp(-c2*nu0/296)]
 ```
 
-where
+with
 
 ```text
-c2 = h*c/k_B expressed in cm K
-   = 1.4387768775039336 cm K using exact SI h, c and k_B
+c2 = h*c/k_B = 1.4387768775039336 cm K
 ```
 
-and `nu0`, `E''` are in `cm^-1`.
+and `nu0`, `E''` in `cm^-1`.
 
-Do not add another terrestrial-isotopic-abundance factor: standard HITRAN `sw` already contains it.
+Do not apply terrestrial isotopic abundance a second time: standard HITRAN `sw` already includes it.
 
-### TIPS interpolation
+The partition sum for each line is selected by local isotopologue and evaluated with the interpolation semantics of the pinned historical HAPI/TIPS-2017 implementation.
 
-To preserve the historical TIPS implementation semantics, use the interpolation convention of the pinned HAPI source rather than inventing a new one. Its `AtoB` routine is explicitly a **3-/4-point Lagrange interpolation** over the historical TIPS-2017 temperature/Q arrays.
+Any project-local reimplementation must reproduce the pinned source to numerical roundoff at regression temperatures and must not depend on current mutable HAPI at runtime.
 
-The project implementation may reimplement this narrow interpolation locally, but it must reproduce the pinned HAPI values to numerical roundoff at test temperatures. It must not import a mutable current HAPI installation at runtime.
+## 4. Line shape — NOT FROZEN
 
-## 4. Frozen line shape
+There is no single authorized M4D line-shape formula yet.
 
-Use the normalized Doppler-only Gaussian frozen in `docs/m4d_broadening_and_geometry_freeze.md`.
+The previous normalized Doppler prescription is retained only as a diagnostic/reference calculation. It failed the full-path adequacy gate because post-90-degree rays can traverse substantially denser air below the chemistry boundary.
 
-For each line/isotopologue:
+Current per-band status:
 
-```text
-gamma_D = nu0 * sqrt(2*k_B*T*ln(2) / (m*c^2))
+- **A band:** historical HITRAN2016 principal-isotopologue representation requires recovery of the advanced Drouin-era speed-dependent/line-mixing parameterization before a final profile can be frozen. Classic isolated Voigt is not automatically an acceptable historical substitute.
+- **B band:** advanced historical parameters require source recovery and an explicit policy for the later-documented HITRAN2016 FWHM/HWHM interpretation defect.
+- **IRA:** isolated Voigt remains a defensible historical candidate for the monomer discrete lines, but it still requires a consistent target+attenuation full-domain convergence run before freeze.
 
-g_D(nu) = sqrt(ln(2)/pi) / gamma_D
-          * exp[-ln(2)*((nu-nu0)/gamma_D)^2]
-```
+See `docs/m4d_pressure_broadening_provenance_followup.md`.
 
-so that
+## 5. Solar spectral photon flux — retained
 
-```text
-integral g_D(nu) dnu = 1
-sigma_line(nu,T) = S(T) * g_D(nu)
-integral sigma_line dnu = S(T)
-```
-
-Use isotopologue-specific molecular masses from a pinned source/constants table. Pressure broadening is excluded from baseline and checked separately as a sensitivity.
-
-## 5. Solar spectral photon flux
-
-For each spectral point, evaluate the Wehrli irradiance through linear interpolation in wavelength:
+For each spectral point evaluate Wehrli irradiance by linear interpolation in wavelength:
 
 ```text
 lambda_nm = 1e7 / nu_cm1
@@ -128,139 +112,192 @@ and convert `I_lambda [W m^-2 nm^-1]` to
 Phi_sun(nu) [photons cm^-2 s^-1 (cm^-1)^-1]
 ```
 
-with the wavelength-to-wavenumber Jacobian exactly as frozen in `docs/m4d_solar_forcing_freeze.md`.
+using the frozen wavelength-to-wavenumber Jacobian in `docs/m4d_solar_forcing_freeze.md`.
 
-No arbitrary bandwidth factor is applied to a HITRAN line strength; integration is explicitly over wavenumber.
+No arbitrary bandwidth factor is applied to HITRAN line strength.
 
-## 6. Solar-path optical depth
+## 6. Solar-path geometry and atmospheric discretization — retained with M4D refinement
 
-Reuse the accepted M4C exact spherical path matrix and shadow mask.
+Retain the accepted M4C spherical geometry semantics:
 
-For each target altitude, SZA and spectral point:
+- Earth radius `6370 km`;
+- radiative top `150 km`;
+- exact spherical ray intersections;
+- physical solid-Earth shadow mask;
+- tangent-ray illumination convention.
+
+Do **not** use a separate plane-parallel geometry.
+
+For M4D NIR transfer, the one-kilometre atmospheric representation was not sufficiently converged in twilight cases. The current design-forensics rule is:
+
+- piecewise-linear interpolation of accepted one-kilometre atmospheric node profiles;
+- exact spherical intersections evaluated on deterministic `0.125 km` sub-shells;
+- `0.0625 km` retained as convergence reference.
+
+This refines the M4D path integral only; it does not modify the accepted M4C-R2 UV implementation.
+
+## 7. Shellwise optical depth — retained
+
+The required physical structure is
 
 ```text
 tau(nu,z,SZA)
-  = sum_shell n_O2_shell * dl_shell_cm * sigma_band(nu,T_shell)
+  = sum_shell sigma_band(nu,T_shell,p_shell,...) 
+              * n_O2,shell * dl_shell_cm.
 ```
 
-with:
+A target-temperature cross section multiplied by total O2 slant column is rejected.
 
-- M4C one-km shells from 0 to 150 km;
-- endpoint-mean O2 shell density convention inherited unchanged from M4C;
-- accepted radiative-background shell temperatures;
-- shell-local temperature-scaled line strengths and Doppler widths;
-- exactly zero direct beam for shadowed target/SZA pairs.
+The final selected profile must be evaluated shellwise with its required temperature, pressure, broadening, shift and line-mixing state.
 
-The target-level cross section in the excitation integral is evaluated at the target temperature.
+For shadowed targets the direct beam is exactly zero only because of the physical Earth-shadow mask.
 
-## 7. Excitation integral
+## 8. Excitation integral — retained in structure
 
 For each band:
 
 ```text
 g_band(z,SZA)
- = integral sigma_band(nu,T_target)
-            * Phi_sun(nu)
-            * exp[-tau(nu,z,SZA)] dnu
+  = integral sigma_band(nu,T_target,p_target,...)
+             * Phi_sun(nu)
+             * exp[-tau(nu,z,SZA)] dnu.
 ```
 
 Units must close to `s^-1`.
 
-`tau=0` must recover the unattenuated integral. Do not inherit the legacy `tau==0 -> g=0` behavior.
+At zero absorber column the result must recover the unattenuated integral. Do not reproduce the legacy `tau == 0 -> g = 0` behavior.
 
-## 8. Deterministic spectral quadrature
+The target and attenuation calculations must use the **same selected physical profile semantics for that band**. The mixed Doppler-source/Voigt-attenuation experiment from the independent review was diagnostic only.
 
-The Doppler-only spectrum permits a compact line-local mesh rather than an enormous full-band uniform mesh.
+## 9. Doppler quadrature evidence — retained as a diagnostic, not final production algorithm
 
-For each band:
+The independent review tested line-centred Gauss-Legendre integration for the Doppler diagnostic.
 
-1. For every target line, determine the maximum Doppler HWHM over all accepted radiative/target temperatures used by the calculation.
-2. Define that line's support as `nu0 +/- 8*gamma_D,max`.
-3. Merge overlapping support intervals; regions outside the merged intervals contribute zero under the numerical Doppler truncation.
-4. Let `gamma_D,min` be the minimum Doppler HWHM over all target lines and accepted temperatures.
-5. Start with a deterministic maximum mesh step
-   `h0 = gamma_D,min / 4` inside every merged interval.
-6. Include interval boundaries and exact line centers in the mesh.
-7. Evaluate the integral with deterministic trapezoidal quadrature on the sorted unique mesh.
-8. Refine by halving the maximum step until the convergence gate below passes.
-
-The `+/-8 HWHM` Gaussian support makes the omitted single-line tail far below the required numerical tolerance; nevertheless a `+/-10 HWHM` support comparison is mandatory as a separate convergence check.
-
-The chosen/final resolved mesh and its hash/metadata must be recorded in the generated M4D asset/evidence rather than hidden in code.
-
-## 9. Numerical convergence gate
-
-Convergence is checked across all 51 chemistry altitudes for at least the SZA set already used in accepted M4C scientific validation:
+Against a `+/-10 HWHM`, 128-point reference over representative altitude/SZA cases, `+/-8 HWHM` with 64 points produced maximum relative differences of approximately:
 
 ```text
-0, 60, 85, 89.9, 95, 99 degrees
+A     0.07584%
+B     0.04164%
+IRA   0.00120%
 ```
 
-plus any altitude-specific near-shadow cases needed to exercise an illuminated tangent ray and an immediately shadowed ray.
-
-For each of `gA`, `gB`, `gIRA`, compare successive step refinement and `8 -> 10 HWHM` support expansion.
-
-Required criterion for values above an absolute diagnostic floor of `1e-15 s^-1`:
+At 128 points, `8 -> 10 HWHM` changed the tested results by at most approximately:
 
 ```text
-max relative difference <= 1e-3   # 0.1%
+A     0.00127%
+B     0.000188%
+IRA   0.000047%
 ```
 
-Below that floor use absolute differences and require no artificial negative/nonfinite rates.
+This closes the numerical Doppler reference calculation. It does **not** define the final quadrature/support rule for an SDV, line-mixed, or Voigt production model.
 
-If the criterion is not met, continue refinement; do not loosen the tolerance silently.
+The older fixed-trapezoid Doppler mesh prescription in the pre-review draft is superseded and must not be implemented as a frozen requirement.
 
-## 10. Historical unattenuated validation anchors
+## 10. Final profile/wing convergence gate — NOT YET CLOSED
 
-Yankovsky & Manuilova (2006), Table 1, reports top-of-atmosphere direct photoexcitation rates:
+For the eventual selected historical profile, convergence must be demonstrated over all 51 target altitudes for at least:
 
 ```text
-A / 762 nm   5.35e-9  s^-1
-B / 689 nm   2.94e-10 s^-1
-IRA / 1.27um 1.54e-10 s^-1
+SZA = 0, 60, 85, 89, 89.9, 95, 99 deg
 ```
 
-The M4D reconstruction uses newer HITRAN2016 spectroscopy and the frozen Wehrli/WMO spectrum, so these are independent **scale/regression anchors**, not numbers to force by renormalization.
+plus illuminated tangent and immediately shadowed boundary cases.
 
-At 296 K, an unattenuated all-isotopologue calculation must be reported for direct comparison. A discrepancy larger than 30% for any band is a STOP/INVESTIGATE condition before milestone closure. No empirical scale factor may be introduced merely to hit the historical values.
+The current numerical target remains:
 
-The pre-implementation summed-strength/band-center estimates already give the correct order of magnitude (`~6.23e-9`, `~3.60e-10`, `~1.46e-10 s^-1`).
+```text
+max relative difference <= 1e-3    # 0.1%
+```
 
-## 11. Physical invariants
+for values above the declared diagnostic floor `1e-15 s^-1`.
 
-Tests must enforce at least:
+The previous isolated-Voigt `+/-10 -> +/-20 cm^-1` sensitivity did not satisfy this criterion for weak A/B twilight cases. No universal `+/-N cm^-1` cutoff is frozen.
 
-- all `g` values finite and nonnegative;
-- shadowed direct-beam values exactly zero;
-- at zero O2 slant column, attenuated = unattenuated;
-- adding O2 column cannot increase a direct-beam g-factor at fixed target state;
-- `S(T)` equals source `sw` at exactly 296 K;
-- Doppler profiles integrate to the temperature-scaled line strengths within numerical tolerance;
-- TIPS local isotope selection is correct for every line;
-- natural abundance is not applied twice;
-- spectral integration result is invariant to source-line ordering;
-- target-subset hashes are verified before generation.
+The physical historical profile must be selected first; its appropriate computational support/convergence variables are then to be tested.
 
-## 12. Baseline CIA scope
+Do not loosen the floor or tolerance silently.
 
-Follow `docs/m4d_ira_cia_scope_freeze.md`: `gIRA` baseline uses monomer `a(0)-X(0)` lines only. CIA is not added to production or baseline attenuation; it is a documented later twilight sensitivity.
+## 11. Pressure-shift gate — OPEN
 
-## 13. Required evidence before M4D closure
+The accepted classic records include `delta_air`, and the problematic twilight rays traverse lower-pressure-altitude shells than the chemistry target.
 
-The implementation task must produce:
+The final specification must state, per selected band/profile:
 
-- frozen compact HITRAN target-line assets or a licence-compatible deterministic derivative plus provenance manifest;
-- frozen O2 TIPS-2017 asset + extraction script + SHA-256;
-- frozen Wehrli-derived solar asset + provenance + SHA-256;
-- spectral mesh/convergence evidence;
-- 296-K unattenuated validation table against historical A/B/IRA anchors;
-- altitude/SZA diagnostic tables including twilight/shadow cases;
-- Doppler-vs-Voigt sensitivity at representative 50-km/high-pressure conditions;
-- all inherited M1-M4C-R2 tests still passing;
-- new M4D tests/validator passing.
+- pressure-shift parameter source;
+- air/self convention;
+- temperature dependence where historically defined;
+- shell-local shifted center evaluation;
+- behavior when a required historical self-shift or advanced shift is unavailable.
 
-## 14. Implementation boundary
+A full-path sensitivity is required once the final profile source is recovered.
 
-The final independent review did not pass. M4D remains **DESIGN NOT FROZEN / NOT IMPLEMENTED** pending a historically justified pressure-broadening/line-mixing and far-wing rule that meets the numerical convergence gate. The shellwise path calculation must also use the converged sub-stratification recorded in `docs/m4d_final_design_review.md`.
+## 12. Historical unattenuated validation anchors — retained
 
-M4D implementation is not authorized. Any later implementation must not alter M1-M4C-R2 accepted scientific behavior, start the 255-ODE solver, or advance to M5.
+The deterministic Wehrli + HITRAN2016 + TIPS calculation from the final design review gave:
+
+| T (K) | `gA0` (s^-1) | `gB0` (s^-1) | `gIRA0` (s^-1) |
+| ---: | ---: | ---: | ---: |
+| 180 | `6.1914394520e-9` | `3.5752856768e-10` | `1.4549983481e-10` |
+| 200 | `6.1963256585e-9` | `3.5805572358e-10` | `1.4573674701e-10` |
+| 220 | `6.1999597393e-9` | `3.5852735538e-10` | `1.4593873602e-10` |
+| 240 | `6.2025842093e-9` | `3.5895153697e-10` | `1.4611114500e-10` |
+| 260 | `6.2043175651e-9` | `3.5933010076e-10` | `1.4625641629e-10` |
+| 280 | `6.2051968875e-9` | `3.5966103384e-10` | `1.4637502395e-10` |
+| 296 | `6.2052846913e-9` | `3.5988913888e-10` | `1.4645036484e-10` |
+
+Historical comparison anchors remain approximate scale/regression checks, not calibration targets:
+
+```text
+A      ~5.35e-9 s^-1
+B      ~2.94e-10 s^-1
+IRA    ~1.54e-10 s^-1
+A+B    ~5.56e-9 s^-1  (independent combined historical scale)
+```
+
+No empirical factor may be introduced merely to force agreement.
+
+## 13. Physical/numerical invariants — retained and generalized
+
+The eventual implementation must enforce at least:
+
+- all final `g` values finite and nonnegative;
+- shadowed direct beam exactly zero;
+- zero absorber column recovers the unattenuated value;
+- increasing absorber column cannot increase direct-beam excitation at fixed target state;
+- `S(296)` equals source `sw` to numerical roundoff;
+- correct TIPS isotopologue selection;
+- no second natural-abundance multiplier;
+- deterministic source-order invariance;
+- accepted target-subset hashes verified before generation.
+
+For isolated non-mixing profiles, integrated line-profile strength closure must reproduce the temperature-scaled line strength.
+
+If line mixing is selected, do not require every algebraic per-line mixing contribution to be individually nonnegative. Instead test the total physical band absorption for finiteness/non-negativity and enforce the normalization/conservation rule of the recovered historical formalism.
+
+## 14. IRA CIA scope — retained as Option B
+
+The historical baseline `gIRA` source is monomer `a(0)-X(0)` excitation. CIA is not silently added to the baseline monomer source or baseline attenuation.
+
+The prior design selected **Option B**, not Option C: CIA remains a required documented twilight sensitivity/limitation. The eventual final M4D specification must state the exact closure evidence expected for that sensitivity and its historical source/provenance; it must not silently substitute current HITRAN CIA data.
+
+## 15. Required evidence before design freeze
+
+Before `docs/m4d_final_design_specification.md` may be created, the design phase must supply:
+
+- frozen executable historical A-band advanced line-shape/line-mixing source and parameter mapping;
+- an explicit, approved B-band policy for the documented HITRAN2016 width interpretation defect, with frozen parameter provenance;
+- a final per-band/per-isotopologue profile table;
+- pressure-shift treatment;
+- consistent target+attenuation calculation with the selected profile;
+- final profile/wing convergence evidence over the complete validation domain;
+- IRA isolated-Voigt full-profile convergence if that remains the chosen historical monomer treatment;
+- explicit closure rule for the Option-B CIA twilight sensitivity;
+- retained unattenuated `g0(T)` regression table and source-chain checks.
+
+## 16. Implementation boundary
+
+**M4D DESIGN IS NOT FROZEN / M4D IS NOT IMPLEMENTED.**
+
+The blocker is now specifically historical advanced line-shape provenance and the associated per-band scientific decision, followed by final numerical convergence.
+
+No production M4D implementation, implementation PR, M5 work, or modification of accepted M1-M4C-R2 behavior is authorized.
