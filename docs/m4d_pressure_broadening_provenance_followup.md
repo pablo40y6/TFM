@@ -1,203 +1,240 @@
 # M4D pressure-broadening and line-shape provenance follow-up
 
-Status: **A-BAND BYTE/MAPPING BLOCKER / B+IRA BASELINE CANDIDATES SELECTED / DESIGN NOT FROZEN**
+Status: **A SOURCES MATERIALIZED / AIR-DILUENT SEMANTICS CORRECTED / DESIGN NOT FROZEN**
 
 Branch: `milestone/m4d-design`
 
-This note follows `docs/m4d_final_design_review.md`. It does not implement M4D, change the accepted M4C-R2 baseline, or authorize M5. It narrows the remaining pressure-broadening / line-shape gate using the historical HITRAN2016-era evidence. Detailed A auxiliary provenance is in `docs/m4d_a_band_auxiliary_source_recovery.md`; detailed IRA CIA provenance is in `docs/m4d_ira_cia_historical_source_recovery.md`.
+This note records the current pressure-broadening and profile decisions after direct historical-source acquisition. It does not implement M4D, alter M4C-R2, or authorize M5.
 
 ## 1. Accepted starting point
 
-The previous numerical review remains accepted:
+The previous numerical conclusions remain:
 
-- Doppler-only is not adequate over the full required altitude/SZA domain because illuminated twilight rays can traverse substantially denser atmosphere below the 50 km chemistry boundary.
-- The accepted M4C spherical geometry remains valid.
-- Shell-local temperature scaling is mandatory.
-- Deterministic atmospheric/path sub-stratification at `0.125 km`, checked against `0.0625 km`, is the current converged M4D path rule.
-- The mixed Doppler-target/Voigt-attenuation experiment was sufficient to reject Doppler-only, but it was not a final pressure-broadened calculation.
-- Plain Voigt attenuation windows `+/-10 -> +/-20 cm^-1` did not close the declared `0.1%` gate for weak A/B twilight rates.
+- Doppler-only is rejected over the complete spherical twilight domain.
+- M4C spherical geometry is retained.
+- Shell-local temperature/profile evaluation is mandatory.
+- M4D NIR path integration uses `0.125 km` atmospheric sub-stratification and checks against `0.0625 km`.
+- Target-temperature cross section multiplied by total slant column is rejected.
+- The previous mixed Doppler-target/Voigt-attenuation calculation was a diagnostic, not a final model.
+- No arbitrary `+/-10` or `+/-20 cm^-1` absorber truncation is frozen.
 
-## 2. A band principal isotopologue: historical representation identified
+## 2. A-band source status
 
-Gordon et al. (2017), HITRAN2016 Section 2.7.2, identifies Drouin et al. (2017), DOI `10.1016/j.jqsrt.2016.03.037`, as the update source for principal-isotopologue A-band magnetic-dipole transitions.
+### Principal isotopologue
 
-The intended representation is not plain isolated Voigt. HITRAN2016/Drouin establish:
-
-- speed-dependent Voigt broadening;
-- collisional line mixing;
-- a full W-matrix treatment in the native Drouin model;
-- conversion of foreign-broadening quantities to air with the atmospheric N2/O2 mixture;
-- HITRAN-facing first-order Rosenkranz line-mixing parameters derived from scaled W matrices at standard temperatures;
-- pressure-shift and temperature-dependent line-shape information;
-- CIA represented separately rather than as an arbitrary resonant far wing.
-
-The public Drouin manuscript is `PMC5103325`; its exact identified supplement is:
+The official Drouin publisher supplement is now materialized:
 
 ```text
-NIHMS804415-supplement-supplement_1.pdf
-reported size: 94.8 kB
+publisher URL:
+https://ars.els-cdn.com/content/image/1-s2.0-S0022407316301108-mmc1.pdf
+
+bytes:   89406
+SHA-256: 12e621d3b5d17e7648d140ea16134e3c04096bd7e47e2c1bb0e2084adeccbb51
+pages:   12
 ```
 
-The source states that the supplement contains modified line-mixing matrices and temperature-dependent `Y` values, with retained `PP`/`RR` `18 x 18` and `PQ`/`RQ` `17 x 17` submatrices.
+The NCBI structured manuscript is also frozen as an acquisition witness:
 
-Therefore the source family is known. The principal-isotopologue blocker is now **byte materialization + exact executable Drouin-to-HITRAN/Rosenkranz mapping**, not source discovery.
+```text
+PMC5103325 XML
+bytes:   310708
+SHA-256: 935fd09d5f619f7eb3f7fac5347e80fa81bc23d3158dc9c519874bb161c364fe
+```
 
-## 3. A band rare isotopologues: historical Galatry lineage recovered
+Tables 4/5 contain all `91` principal-isotopologue magnetic-dipole line-by-line Drouin parameters. They map `91/91`, with zero unmatched or ambiguous labels, to the historical A-band magnetic-dipole set. Table 22 supplies first-order air Rosenkranz `Y` factors for `70` of those lines at `200, 250, 296, 340 K`.
 
-The rare A-band isotopologues are no longer an unspecified-profile problem.
+The remaining principal-isotopologue classification is:
 
-HITRAN2012 Section 2.7.3 and Long et al. (2011), DOI `10.1016/j.jqsrt.2011.07.002`, document A-band fits for `16O2`, `16O18O`, and `16O17O` with **Galatry profiles**, including Doppler broadening, pressure broadening and Dicke narrowing. The auxiliary files carry the required collisional-narrowing information.
+```text
+91 magnetic-dipole d lines:
+    Drouin SDV source available
 
-The surviving Harvard/CfA HITRAN2012 archive identifies:
+70/91 d lines:
+    Table-22 first-order line mixing available
+
+21/91 d lines:
+    no Table-22 Y value; high-J set explicitly identified
+
+59 electric-quadrupole q lines:
+    not part of the Drouin magnetic-dipole update
+```
+
+The 21 no-Y d lines contribute about `0.0131464%` of historical iso-1 integrated A strength and the 59 q lines about `0.00079353%`. Neither class is silently deleted; their treatment must be numerically tested.
+
+See `docs/m4d_a_band_drouin_materialization_audit.md`.
+
+### Rare isotopologues
+
+The historical Long/HITRAN2012 Galatry sources are now byte-materialized:
 
 ```text
 07_A-band_SDF.dat
-last modified 20-May-2013 10:51
-index size 6.1K
+bytes 6229
+SHA-256 7cfefb8040a89cb0e4948c2811a6766b793181646d8188ebfa4d646e063dbd26
 
 07_hit12_0.76mic_Galatry.par
-last modified 20-May-2013 10:51
-index size 46K
+bytes 47231
+SHA-256 69c9fd181b5aba8aa818dc906bdc216aaa8cf038eb5687dd4da8f2bb9bf42dab
 ```
 
-HITRAN2016 describes its Drouin replacement specifically for the principal isotopologue; no equivalent replacement of the rare-isotopologue Long/Galatry source is documented in the accepted evidence.
+The Galatry auxiliary maps `430/430` to the historical HITRAN2012 A system, including complete Dicke coefficients for all `140 + 140` rare-isotopologue lines. The accepted HITRAN2016 target record remains authoritative for the ordinary line fields; the historical auxiliary supplies the Dicke coefficients.
 
-The accepted A-band 296-K summed strengths are:
+See `docs/m4d_a_band_auxiliary_mapping_audit.md`.
+
+## 3. Important correction: HITRAN `air` is a diluent coefficient
+
+An earlier candidate formula in this project wrote, for atmospheric O2,
 
 ```text
-iso 1 = 2.24412333089e-22
-iso 2 = 8.7675965e-25
-iso 3 = 1.77109027e-25
-total = 2.25466201766e-22
+gamma_air * (p - p_O2) + gamma_self * p_O2
 ```
 
-so iso-2 + iso-3 contribute approximately `0.4674176%` of total A integrated strength. This exceeds the project `0.1%` design tolerance and rules out simply omitting the rare isotopologues.
+while simultaneously treating `gamma_air` as an already air-averaged O2 coefficient. Those two interpretations cannot both be used.
 
-**A rare-isotopologue baseline candidate: historical Long/HITRAN2012 Galatry + Dicke-narrowing parameters, pending exact auxiliary-file bytes/hash, line mapping, and a continuity check that HITRAN2016 did not supersede those relations.**
+HITRAN defines `air` and `self` as separate broadening/diluent choices. HAPI likewise represents the diluent as a composition dictionary and defaults atmospheric calculations to `{'air': 1.0}`. For the O2 A-band specifically, HITRAN2016 states that Drouin foreign-broadening parameters were converted to **air-broadening** parameters using the binary air ratio `[N2]:[O2] = 0.79:0.21`.
 
-## 4. B band: classic HITRAN2016 Voigt selected as baseline candidate
+Therefore, for the historical terrestrial atmospheric baseline:
 
-The B-band advanced qSDV history is partial, principally self-broadened, and version-sensitive; HITRAN2020 later documents a FWHM/HWHM interpretation defect in the HITRAN2016-era advanced values.
+```text
+an HITRAN air-broadened parameter is applied to the shell air pressure
+```
 
-The `historical_2020` baseline candidate is therefore the complete classic isolated Voigt representation carried by the accepted HITRAN2016 160-character B records.
+and must **not** then be combined with another 21% self term as though `gamma_air` meant N2-only broadening.
 
-For every B line:
+`gamma_self` remains relevant for an explicitly self/O2 diluent condition, not as an additional atmospheric 21% correction on top of an already air-defined parameter.
+
+This correction applies to the B/IRA classic candidates and to any HITRAN-facing A parameterization expressed as `air`.
+
+## 4. Corrected classic B/IRA atmospheric candidate
+
+For the M4D atmospheric baseline, classic B/IRA lines use the historical HITRAN2016 **air** coefficient at shell total pressure:
 
 ```text
 gamma_L(p,T)
-  = (296/T)^n_air
-    * [gamma_air * (p - p_O2) + gamma_self * p_O2]
+  = gamma_air(296) * p * (296/T)^n_air
 
-nu_shifted = nu0 + delta_air * p
+nu_shifted(p)
+  = nu0 + delta_air * p
 ```
 
-with pressures in atm and Lorentz HWHM coefficients in `cm^-1 atm^-1`.
+where `p` is the shell atmospheric pressure in atm.
 
-`gamma_air` is already the HITRAN air-broadening coefficient. Do not convert it again with another `0.79/0.21` mixture.
+Do not add a second `gamma_self * p_O2` term to this atmospheric-air calculation.
 
-A source-corrected qSDV sensitivity on the historically covered principal-isotopologue lines is mandatory. If it changes any accepted B-band M4D rate by more than `0.1%`, reopen the classic-Voigt candidate before freeze.
+If a sensitivity deliberately models a different diluent composition, that calculation must state the diluent explicitly and use the corresponding historical coefficients; it must not be conflated with the terrestrial baseline.
 
-## 5. IRA / 1.27 micron: classic HITRAN2016 Voigt selected as monomer baseline candidate
+### B
 
-The HITRAN2016 discrete 1.27-micron monomer parameters remain historically close to HITRAN2012 apart from important position updates, and the earlier discrete-line analysis used Voigt profiles. Later beyond-Voigt studies are valuable sensitivity evidence but are not a complete historical HITRAN2016 replacement.
+Classic HITRAN2016 Voigt remains the baseline candidate. The historically partial/defective qSDV B data are not reproduced silently. A source-corrected qSDV sensitivity on the covered principal-isotopologue lines remains required; a `>0.1%` effect on retained B rates reopens the candidate.
 
-The selected monomer baseline candidate is therefore classic isolated Voigt using the accepted HITRAN2016 `gamma_air`, `gamma_self`, `n_air`, and `delta_air` fields with the same standard width/shift equations used for B.
+### IRA
 
-This remains conditional on the final consistent target+attenuation convergence run.
+Classic HITRAN2016 Voigt remains the monomer baseline candidate, pending final full-domain target+attenuation convergence.
 
-## 6. Pressure shifts
+## 5. A principal-isotopologue foreign/self versus HITRAN-air semantics
 
-For classic B/IRA profiles, use the historical classic candidate rule
+Drouin Tables 4/5 give native foreign/self quantities. The paper combines the total Lorentz width and shifted frequency from those components before applying the speed-dependent profile.
+
+HITRAN2016 then makes an Earth-atmosphere-facing transformation:
+
+- foreign-broadening line-shape quantities are converted to air-broadening quantities using `0.79:0.21` N2:O2;
+- full foreign/self line-mixing matrices are evaluated for one atmosphere of air at four standard temperatures;
+- the resulting relation is tabulated as first-order Rosenkranz parameters.
+
+M4D must pick **one coherent representation** for A and use it identically for target and attenuation. It must not mix a native N2 coefficient with a HITRAN air coefficient or apply the 0.79/0.21 combination twice.
+
+The preferred historical target is the HITRAN2016-facing air representation because M4D is reconstructing the HITRAN2016 forcing source. The exact SDV/Y evaluator and temperature rule remain to be frozen.
+
+## 6. A rare-isotopologue precedence
+
+For iso-2/iso-3:
+
+```text
+nu, S, E'', gamma_air, gamma_self, n_air, delta_air:
+    accepted target-edition HITRAN line record
+
+Galatry/Dicke beta_air, beta_self:
+    quantum-identity-matched historical auxiliary record
+```
+
+The historical auxiliary contains a small number of stale/swapped redundant classic fields; therefore those repeated fields are not used to override the target-edition line record.
+
+For the atmospheric baseline, use the target-edition **air** Galatry/Dicke coefficients under the same air-diluent semantics. Do not re-mix an air coefficient with 21% self unless explicitly modelling a non-air diluent.
+
+## 7. Pressure shifts
+
+For classic B/IRA and classic fallback components:
 
 ```text
 nu_shifted = nu0 + delta_air * p
 ```
 
-with shell-local total pressure and no invented temperature dependence.
+with shell-local atmospheric pressure and no invented temperature dependence.
 
-For A iso-1, follow the recovered advanced historical shift parameterization. For rare A isotopologues, follow the recovered Galatry auxiliary representation and do not invent missing shift/narrowing behavior.
+For Drouin A magnetic-dipole lines, Tables 4/5 include foreign/self shifts and linear temperature-shift coefficients. The final HITRAN-facing advanced evaluator must reproduce the historically selected air representation rather than force the classic shift rule onto it.
 
-A full-path pressure-shift sensitivity remains required because the critical twilight rays sample dense shells well below the chemistry target.
+A full-path pressure-shift sensitivity remains required.
 
-## 7. Far-wing / quadrature policy
+## 8. Line mixing and profile invariants
 
-No universal fixed `+/-N cm^-1` physical cutoff is frozen.
+For A line mixing, physical tests apply to the total absorption, not blindly to each algebraic mixing term. Required checks include:
 
-For classic Voigt B/IRA candidates, the preferred numerical strategy is:
+- finite total absorption;
+- physically nonnegative total band absorption over the validation grid;
+- zero-column unattenuated limit;
+- finite/nonnegative final excitation rates;
+- source-order invariance;
+- normalization/conservation consistent with the selected Rosenkranz/Drouin formalism;
+- same per-transition profile semantics in target excitation and shell attenuation.
 
-1. integrate target/source contributions on deterministic line-centred quadrature;
-2. at every target quadrature node, evaluate attenuation from **all accepted absorber lines in that band** rather than discarding absorbers outside an arbitrary `+/-10` or `+/-20 cm^-1` window;
-3. converge target support and quadrature order independently against stricter references;
-4. verify the complete altitude/SZA domain.
+For classic Voigt/Galatry components, integrated normalized profile strength must recover `S(T)` within the declared numerical tolerance.
 
-For A, the support/convergence strategy must follow the recovered SDV+line-mixing and Galatry representations rather than isolated-Voigt tails.
+## 9. Far-wing / support strategy
 
-## 8. IRA CIA Option B: source identity recovered, exact asset still pending
+No universal physical `+/-N cm^-1` cutoff is frozen.
 
-The baseline remains monomer-only, but the historical CIA twilight attenuation sensitivity is mandatory before M4D closure.
+For B/IRA classic profiles, the selected numerical candidate is to evaluate attenuation from **all accepted absorber lines in the band** at each target quadrature node, while converging target integration support/order independently.
 
-HITRAN2016 identifies Maté et al. (1999), DOI `10.1029/1999JD900824`, as the revised 1.27-micron CIA source.
+For A, support and quadrature must be validated for the final SDV+Rosenkranz and Galatry components rather than borrowing an isolated-Voigt wing rule.
 
-The historical semantics are:
+## 10. IRA CIA
 
-- pure O2 -> `O2-O2`;
-- 21:79 O2:N2 mixture -> `O2-Air`;
-- do not add O2-O2 on top of O2-Air for the same atmospheric mixture.
+The monomer baseline still excludes CIA. The required Option-B twilight sensitivity uses historical Maté `O2-Air` semantics without separately adding O2-O2.
 
-For the atmospheric sensitivity the candidate optical depth is:
+The cold-shell policy is now frozen in `docs/m4d_ira_cia_historical_source_recovery.md`:
 
-```text
-tau_CIA(nu)
-  = sum_shell k_O2-Air(nu,T_shell)
-              * n_O2,shell * n_air,shell * ds_shell
-```
+- linear interpolation at `253..296 K`;
+- endpoint-clamped nominal sensitivity outside the measured range;
+- measured-three-spectrum min/max envelope as historical-source uncertainty;
+- no post-2016 temperature extension silently substituted.
 
-with `k` in `cm^5 molecule^-2`.
+The exact historical machine-readable Maté `O2-Air` asset is still pending.
 
-Maté measurements were made at `253`, `273`, and `296 K`; the M4D column contains colder shells. No below-range extrapolation policy is frozen yet. The exact historical HITRAN2016 CIA bytes/hash also remain pending. See `docs/m4d_ira_cia_historical_source_recovery.md`.
-
-## 9. Line-mixing / profile invariants
-
-For A line mixing, apply physical invariants to the **total band absorption**, not blindly to every algebraic mixing contribution.
-
-Required final invariants include:
-
-- total physical absorption finite and nonnegative;
-- zero absorber column recovers unattenuated excitation;
-- final excitation rates finite and nonnegative;
-- deterministic source-order invariance;
-- normalization/conservation consistent with the recovered historical formalism;
-- identical selected profile semantics in target excitation and shell attenuation.
-
-For isolated Voigt/Galatry components, integrated normalized profile strength must recover `S(T)` to the declared numerical tolerance.
-
-## 10. Current gate decision
+## 11. Current gate
 
 **M4D DESIGN REMAINS NOT FROZEN.**
 
-### Source/materialization blockers
+Closed since the previous follow-up:
 
-- Freeze `NIHMS804415-supplement-supplement_1.pdf` exact bytes/SHA-256 and executable Drouin/HITRAN2016 mapping for A iso-1.
-- Freeze `07_A-band_SDF.dat` and `07_hit12_0.76mic_Galatry.par` bytes/SHA-256, verify their mapping to the accepted A iso-2/iso-3 lines, and confirm HITRAN2016 continuity.
-- Freeze the exact historical HITRAN2016 Maté `O2-Air` CIA asset used for the required IRA sensitivity.
+```text
+A1 Drouin publisher source bytes:        PASS
+A Tables 4/5 91-line mapping:            PASS
+A Table-22 70-line LM source:            PASS
+A2/A3 historical auxiliary bytes:        PASS
+A rare historical mapping:              430/430 PASS
+A rare Dicke coverage:                  280/280 PASS
+B/IRA atmospheric air semantics:        CORRECTED
+CIA cold-shell sensitivity policy:       FROZEN
+```
 
-### Scientific-design status
+Still open:
 
-- A iso-1: Drouin/HITRAN2016 advanced SDV + line mixing selected in principle; executable materialization pending.
-- A iso-2/iso-3: Long/HITRAN2012 Galatry + Dicke narrowing selected as historical candidate; byte/mapping continuity check pending.
-- B: classic HITRAN2016 Voigt baseline candidate selected; corrected qSDV sensitivity required.
-- IRA: classic HITRAN2016 Voigt monomer baseline candidate selected; historical CIA attenuation remains a separate closure sensitivity.
+1. final executable SDV/Rosenkranz temperature semantics for A iso-1;
+2. source-supported/numerically validated treatment of the 21 no-Y d lines and 59 q lines;
+3. accepted local HITRAN2016 continuity maps (`91/91` Drouin d and `280/280` rare Galatry);
+4. exact historical Maté `O2-Air` CIA machine-readable bytes;
+5. corrected B qSDV sensitivity;
+6. pressure-shift sensitivity;
+7. complete target+attenuation numerical convergence across the required altitude/SZA/tangent domain.
 
-### Numerical-convergence blockers
-
-After the required source bytes are locally available:
-
-- apply each selected profile consistently to target excitation and shell attenuation;
-- quantify pressure-shift impact;
-- test all-absorber-lines attenuation for B/IRA;
-- converge A advanced/Galatry evaluations with physically appropriate support rules;
-- repeat all 51 target altitudes at `SZA = 0, 60, 85, 89, 89.9, 95, 99 deg` plus illuminated-tangent and immediately-shadowed boundary cases;
-- demonstrate `<=0.1%` numerical convergence above the current `1e-15 s^-1` floor or independently justify a revised floor before implementation authorization;
-- execute the historical IRA CIA twilight sensitivity with an explicit cold-shell policy.
-
-Do not create `docs/m4d_final_design_specification.md` and do not authorize production M4D implementation until these items close.
+Do not create `docs/m4d_final_design_specification.md` and do not authorize production M4D implementation until these gates close.
