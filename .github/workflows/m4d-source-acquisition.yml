@@ -42,7 +42,7 @@ jobs:
               note "file=$(file -b "$out")"
               if file "$out" | grep -qi text; then
                 note "lines=$(wc -l < "$out")"
-                { head -n 5 "$out" || true; } > "acquisition/diag/$(basename "$out").head.txt"
+                head -n 5 "$out" > "acquisition/diag/$(basename "$out").head.txt" || true
               fi
               return 0
             fi
@@ -54,32 +54,18 @@ jobs:
           note "access_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           note "runner=$(uname -a)"
 
-          # A2/A3: exact Harvard/CfA HITRAN2012 auxiliary identities.
           base='https://lweb.cfa.harvard.edu/HITRAN/HITRAN2012/HITRAN2012/By-Molecule/Uncompressed-files'
           fetch_url A2 "$base/07_A-band_SDF.dat" acquisition/files/07_A-band_SDF.dat || true
           fetch_url A3 "$base/07_hit12_0.76mic_Galatry.par" acquisition/files/07_hit12_0.76mic_Galatry.par || true
 
-          # A1: use the official NCBI PMC Open Access package metadata instead of guessing a bin URL.
           oa_xml='acquisition/diag/PMC5103325_oa.xml'
           note ""
           note "[A1_PMC_OA_PACKAGE]"
           if curl -fL --retry 2 --connect-timeout 20 --max-time 120 -A 'Mozilla/5.0' \
             'https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id=PMC5103325' -o "$oa_xml"; then
             note "oa_metadata_status=downloaded"
-            cat "$oa_xml" >> acquisition/diag/PMC5103325_oa_raw.txt
-            python3 - <<'PY' > acquisition/diag/PMC5103325_oa_tgz_url.txt
-import xml.etree.ElementTree as ET
-p='acquisition/diag/PMC5103325_oa.xml'
-root=ET.parse(p).getroot()
-for link in root.findall('.//link'):
-    href=link.attrib.get('href','')
-    fmt=link.attrib.get('format','')
-    if fmt == 'tgz' or href.endswith('.tar.gz'):
-        if href.startswith('ftp://ftp.ncbi.nlm.nih.gov/'):
-            href='https://ftp.ncbi.nlm.nih.gov/' + href[len('ftp://ftp.ncbi.nlm.nih.gov/'):]
-        print(href)
-        break
-PY
+            cp "$oa_xml" acquisition/diag/PMC5103325_oa_raw.txt
+            python3 -c "import xml.etree.ElementTree as ET; root=ET.parse('$oa_xml').getroot(); links=[x.attrib.get('href','') for x in root.findall('.//link') if x.attrib.get('format','')=='tgz' or x.attrib.get('href','').endswith('.tar.gz')]; print((links[0].replace('ftp://ftp.ncbi.nlm.nih.gov/','https://ftp.ncbi.nlm.nih.gov/',1) if links else ''))" > acquisition/diag/PMC5103325_oa_tgz_url.txt || true
             tgz_url="$(head -n 1 acquisition/diag/PMC5103325_oa_tgz_url.txt || true)"
             note "oa_tgz_url=$tgz_url"
             if [ -n "$tgz_url" ] && curl -fL --retry 2 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' "$tgz_url" -o acquisition/PMC5103325.tar.gz; then
@@ -98,12 +84,8 @@ PY
                 note "supplement_bytes=$(wc -c < acquisition/files/NIHMS804415-supplement-supplement_1.pdf)"
                 note "supplement_sha256=$(sha256sum acquisition/files/NIHMS804415-supplement-supplement_1.pdf | awk '{print $1}')"
                 note "supplement_file=$(file -b acquisition/files/NIHMS804415-supplement-supplement_1.pdf)"
-                if command -v pdfinfo >/dev/null 2>&1; then
-                  pdfinfo acquisition/files/NIHMS804415-supplement-supplement_1.pdf > acquisition/diag/drouin_pdfinfo.txt || true
-                fi
-                if command -v pdftotext >/dev/null 2>&1; then
-                  pdftotext -layout acquisition/files/NIHMS804415-supplement-supplement_1.pdf acquisition/diag/drouin_supplement.txt || true
-                fi
+                pdfinfo acquisition/files/NIHMS804415-supplement-supplement_1.pdf > acquisition/diag/drouin_pdfinfo.txt 2>&1 || true
+                pdftotext -layout acquisition/files/NIHMS804415-supplement-supplement_1.pdf acquisition/diag/drouin_supplement.txt 2>/dev/null || true
               else
                 note "supplement_status=not_found_in_package"
               fi
@@ -114,41 +96,21 @@ PY
             note "oa_metadata_status=failed"
           fi
 
-          # C1: probe plausible legacy HITRAN filenames but never accept one by name alone.
           for fname in O2-Air_2016.cia O2-air_2016.cia O2-Air_2018.cia O2-air_2018.cia O2-Air_2019.cia O2-air_2019.cia; do
             fetch_url "C1_candidate_$fname" "https://hitran.org/data/CIA/$fname" "acquisition/files/$fname" || true
           done
 
-          # Known 2016 alternate is a useful negative control: it is the A-band CIA, not the 1.27 um Maté block.
           fetch_url C1_negative_control \
             'https://hitran.org/data/CIA/alternate/O2-Air_altern_2016.cia' \
             acquisition/files/O2-Air_altern_2016.cia || true
 
-          # Discover archived HITRAN CIA filenames/snapshots without assuming a filename.
           cdx='https://web.archive.org/cdx/search/cdx?url=hitran.org/data/CIA/*O2*Air*.cia&output=json&filter=statuscode:200&fl=timestamp,original,digest,length&collapse=digest'
           note ""
           note "[C1_WAYBACK_DISCOVERY]"
           note "url=$cdx"
           if curl -fL --retry 2 --connect-timeout 20 --max-time 120 -A 'Mozilla/5.0' "$cdx" -o acquisition/diag/wayback_o2_air.json; then
             note "wayback_status=downloaded"
-            python3 - <<'PY' > acquisition/diag/wayback_o2_air_candidates.txt
-import json
-p='acquisition/diag/wayback_o2_air.json'
-try:
-    data=json.load(open(p, encoding='utf-8'))
-except Exception as e:
-    print('parse_error', repr(e))
-    raise SystemExit
-if not data:
-    raise SystemExit
-header=data[0]
-for row in data[1:]:
-    rec=dict(zip(header,row))
-    ts=rec.get('timestamp','')
-    original=rec.get('original','')
-    if ts[:4] in {'2016','2017','2018','2019','2020'} or '2016' in original or '2018' in original or '2019' in original:
-        print('\t'.join(str(rec.get(k,'')) for k in header))
-PY
+            python3 -c "import json; d=json.load(open('acquisition/diag/wayback_o2_air.json',encoding='utf-8')); h=d[0] if d else []; rows=[dict(zip(h,r)) for r in d[1:]] if d else []; [print('\t'.join(str(x.get(k,'')) for k in h)) for x in rows if x.get('timestamp','')[:4] in {'2016','2017','2018','2019','2020'} or any(y in x.get('original','') for y in ('2016','2018','2019'))]" > acquisition/diag/wayback_o2_air_candidates.txt || true
             cat acquisition/diag/wayback_o2_air_candidates.txt | tee -a acquisition/MANIFEST.txt || true
           else
             note "wayback_status=failed"
