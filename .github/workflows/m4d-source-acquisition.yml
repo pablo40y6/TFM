@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Acquire Drouin structured article and inspect CIA source links
+      - name: Recover O2-Air CIA history
         shell: bash
         run: |
           set -u
@@ -23,27 +23,64 @@ jobs:
           fetch(){ label="$1"; url="$2"; out="$3"; note ""; note "[$label]"; note "url=$url"; if curl -fL --retry 2 --connect-timeout 20 --max-time 240 -A 'Mozilla/5.0' "$url" -o "$out"; then note "status=downloaded"; note "bytes=$(wc -c < "$out")"; note "sha256=$(sha256sum "$out"|awk '{print $1}')"; note "type=$(file -b "$out")"; return 0; else rm -f "$out"; note "status=failed"; return 1; fi; }
           note "access_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-          fetch A1_ARTICLE_XML 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=5103325' acquisition/files/PMC5103325.xml || true
-          if [ -f acquisition/files/PMC5103325.xml ]; then
-            python3 -c "import xml.etree.ElementTree as ET; r=ET.parse('acquisition/files/PMC5103325.xml').getroot(); print(r.tag); print('tables',len(r.findall('.//table-wrap'))); [print((tw.findtext('label') or ''),(tw.findtext('caption/title') or '')) for tw in r.findall('.//table-wrap')]" > acquisition/diag/article_table_index.txt || true
-            python3 -c "import xml.etree.ElementTree as ET; r=ET.parse('acquisition/files/PMC5103325.xml').getroot(); tw=[x for x in r.findall('.//table-wrap') if (x.findtext('label') or '').strip() in ('Table 4','Table 5')]; open('acquisition/diag/drouin_tables_4_5.txt','w',encoding='utf-8').write('\\n\\n'.join('### '+((x.findtext('label') or '').strip())+'\\n'+''.join(x.itertext()) for x in tw))" || true
+          fetch CURRENT 'https://hitran.org/data/CIA/main/O2-air_2024.cia' acquisition/files/O2-air_2024.cia || true
+          if [ -f acquisition/files/O2-air_2024.cia ]; then
+            grep -n -E '(^|[[:space:]])(7450|74[5-9][0-9]|7[5-9][0-9][0-9]|8[0-4][0-9][0-9])' acquisition/files/O2-air_2024.cia | head -n 300 > acquisition/diag/current_1270_excerpt.txt || true
+            grep -n -Ei 'Mate|Mat[eé]|1999|7450|8480|1\.27|1270' acquisition/files/O2-air_2024.cia > acquisition/diag/current_mate_hits.txt || true
           fi
 
-          fetch HITRAN_CIA_PAGE 'https://hitran.org/cia/' acquisition/diag/hitran_cia.html || true
-          if [ -f acquisition/diag/hitran_cia.html ]; then
-            grep -Eoi 'href=["'"'][^"'"']*O2[^"'"']*Air[^"'"']*\.cia[^"'"']*["'"']' acquisition/diag/hitran_cia.html > acquisition/diag/o2_air_links.txt || true
-            cat acquisition/diag/o2_air_links.txt | tee -a acquisition/MANIFEST.txt || true
-          fi
+          # Query several historically plausible paths. CDX may return the old filename/path even when current hosting changed.
+          : > acquisition/diag/cdx_all.txt
+          for target in \
+            'hitran.org/data/CIA/O2-Air.cia' \
+            'hitran.org/data/CIA/O2-air.cia' \
+            'hitran.org/data/CIA/main/O2-Air.cia' \
+            'hitran.org/data/CIA/main/O2-air.cia' \
+            'hitran.org/data/CIA/O2-Air_2016.cia' \
+            'hitran.org/data/CIA/O2-air_2016.cia' \
+            'hitran.org/data/CIA/*O2*Air*.cia'; do
+            enc="$(python3 -c 'import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1],safe=""))' "$target")"
+            url="https://web.archive.org/cdx/search/cdx?url=$enc&output=json&filter=statuscode:200&fl=timestamp,original,digest,length&filter=timestamp:201[5-9]&collapse=digest"
+            note "CDX $target"
+            curl -fL --retry 1 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' "$url" >> acquisition/diag/cdx_all.txt 2>/dev/null || true
+            printf '\n' >> acquisition/diag/cdx_all.txt
+          done
 
-          fetch HITRAN_CIA_INDEX 'https://hitran.org/data/CIA/' acquisition/diag/hitran_cia_index.html || true
-          if [ -f acquisition/diag/hitran_cia_index.html ]; then
-            grep -Eoi 'href=["'"'][^"'"']*O2[^"'"']*Air[^"'"']*\.cia[^"'"']*["'"']' acquisition/diag/hitran_cia_index.html > acquisition/diag/o2_air_index_links.txt || true
-            cat acquisition/diag/o2_air_index_links.txt | tee -a acquisition/MANIFEST.txt || true
-          fi
+          python3 -c "import re,pathlib; s=pathlib.Path('acquisition/diag/cdx_all.txt').read_text(errors='replace'); rows=[]
+for m in re.finditer(r'\[\"(201[5-9][0-9]{10})\",\"([^\"]+)\",\"([^\"]*)\",\"([^\"]*)\"\]',s): rows.append(m.groups())
+seen=set(); out=[]
+for r in sorted(rows):
+ if r not in seen: seen.add(r); out.append(r)
+pathlib.Path('acquisition/diag/cdx_candidates.tsv').write_text(''.join('\\t'.join(r)+'\\n' for r in out))" || true
+          cat acquisition/diag/cdx_candidates.tsv | tee -a acquisition/MANIFEST.txt || true
+
+          # Try each unique 2016-2017 snapshot until a text CIA payload is recovered.
+          while IFS=$'\t' read -r ts original digest length; do
+            [ -n "$ts" ] || continue
+            year="${ts:0:4}"
+            if [ "$year" = 2016 ] || [ "$year" = 2017 ]; then
+              snap="https://web.archive.org/web/${ts}id_/${original}"
+              out="acquisition/diag/snapshot_${ts}.cia"
+              if curl -fL --retry 1 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' "$snap" -o "$out"; then
+                note "snapshot=$ts original=$original bytes=$(wc -c < "$out") sha256=$(sha256sum "$out"|awk '{print $1}') type=$(file -b "$out")"
+                if file "$out" | grep -qi 'text'; then
+                  if grep -q -E '7450|7500|8000|8480' "$out"; then
+                    cp "$out" acquisition/files/O2-Air_historical_candidate.cia
+                    note "selected_snapshot=$ts"
+                    note "selected_original=$original"
+                    break
+                  fi
+                fi
+              fi
+            fi
+          done < acquisition/diag/cdx_candidates.tsv
+
+          note ""; note "[FINAL]"
+          find acquisition/files -maxdepth 1 -type f -print0 | sort -z | while IFS= read -r -d '' f; do note "$(basename "$f") bytes=$(wc -c < "$f") sha256=$(sha256sum "$f"|awk '{print $1}')"; done
           cat acquisition/MANIFEST.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: m4d-structured-source-probe
+          name: m4d-cia-history-probe
           path: acquisition/
           retention-days: 7
