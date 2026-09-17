@@ -1,12 +1,12 @@
 # M4D broadening and solar-path geometry review
 
-Status: **GEOMETRY RETAINED / B+IRA PROFILE CANDIDATES SELECTED / A-BAND SOURCE MATERIALIZATION BLOCKER**
+Status: **GEOMETRY RETAINED / B+IRA PROFILE CANDIDATES SELECTED / A-BAND AUXILIARY BYTES+MAPPING BLOCKER**
 
 Branch: `milestone/m4d-design`
 
-> The earlier Doppler-only freeze is superseded by `docs/m4d_final_design_review.md` and `docs/m4d_pressure_broadening_provenance_followup.md`. The local-width calculation remains useful evidence, but it is not a valid full-domain line-shape decision.
+> The earlier Doppler-only freeze is superseded by `docs/m4d_final_design_review.md`, `docs/m4d_pressure_broadening_provenance_followup.md`, and `docs/m4d_a_band_auxiliary_source_recovery.md`. The local-width calculation remains useful evidence, but it is not a valid full-domain line-shape decision.
 
-This note separates the retained spherical geometry from the per-band spectroscopy decision.
+This note separates the retained spherical geometry from the per-band/per-isotopologue spectroscopy decision.
 
 ## 1. Doppler-only decision is superseded
 
@@ -14,13 +14,7 @@ The earlier design proposed normalized Gaussian Doppler profiles for all three O
 
 The independent full-path review showed that illuminated twilight rays to 50-100 km targets can pass through much denser atmosphere below the chemistry boundary. Therefore pressure broadening cannot be bounded by the pressure at the target altitude.
 
-Doppler-only remains useful as:
-
-- a legacy-method comparison;
-- an optically thin/profile-normalization check;
-- a converged numerical reference calculation.
-
-It is not an authorized final M4D profile.
+Doppler-only remains useful as a legacy-method comparison, optically thin/profile-normalization check, and converged numerical reference calculation. It is not an authorized final M4D profile.
 
 ## 2. Local-width evidence retained
 
@@ -55,23 +49,48 @@ Therefore:
 
 **Doppler-only is rejected over the complete M4D altitude/SZA domain.**
 
-## 4. Per-band line-shape status
+## 4. Per-band / per-isotopologue line-shape status
 
-### 4.1 A band
+### 4.1 A band, iso 1 / 16O2
 
-For the principal isotopologue, HITRAN2016 Section 2.7.2 points to Drouin et al. (2017) and an advanced representation containing speed-dependent Voigt behavior and collisional line mixing. HITRAN transformed scaled W-matrix information to first-order Rosenkranz line-mixing parameters at standard temperatures. This representation is not recoverable from the classic 160-character records alone.
+HITRAN2016 Section 2.7.2 points to Drouin et al. (2017) and an advanced principal-isotopologue representation containing speed-dependent line shape and collisional line mixing. HITRAN transformed scaled W-matrix information to first-order Rosenkranz line-mixing parameters at standard temperatures.
 
-The exact source family is now identified, including the public Drouin supplement `NIHMS804415-supplement-supplement_1.pdf`, but its bytes, hash and executable parameter mapping have not yet been frozen by the project.
+The exact source family and public supplement identity are known:
 
-The accepted A subset also contains rare isotopologues. The principal-isotopologue Drouin treatment must not be copied to them without source support.
+```text
+PMC5103325
+NIHMS804415-supplement-supplement_1.pdf
+reported size 94.8 kB
+```
+
+but the bytes/hash and executable Drouin-to-HITRAN/Rosenkranz mapping are not yet frozen.
 
 Current status:
 
-**A principal isotopologue: advanced SDV + line mixing required; source materialization/parameter mapping still blocks freeze.**
+**A iso 1: advanced SDV + line mixing selected in principle / source materialization and parameter mapping still block freeze.**
 
-**A rare isotopologues: historical profile or quantitatively bounded classic-profile fallback still required.**
+### 4.2 A band, iso 2/3 / rare isotopologues
 
-### 4.2 B band
+Historical evidence now identifies the rare-isotopologue profile family rather than leaving it unspecified.
+
+HITRAN2012 and Long et al. document `16O18O` and `16O17O` A-band analyses using **Galatry profiles** with Doppler broadening, pressure broadening and Dicke narrowing. The surviving HITRAN2012 archive identifies the auxiliary files:
+
+```text
+07_A-band_SDF.dat
+07_hit12_0.76mic_Galatry.par
+```
+
+HITRAN2016 documents the Drouin replacement specifically for the principal isotopologue and does not document an equivalent replacement of the rare-isotopologue Long/Galatry treatment.
+
+The rare isotopologues contribute approximately `0.4674%` of total accepted A-band integrated strength at 296 K, above the `0.1%` project tolerance, so they cannot simply be omitted.
+
+Current status:
+
+**A iso 2/3: historical Long/HITRAN2012 Galatry + Dicke-narrowing baseline candidate selected / auxiliary bytes+hash, transition mapping and HITRAN2016 continuity check pending.**
+
+See `docs/m4d_a_band_auxiliary_source_recovery.md`.
+
+### 4.3 B band
 
 The advanced B-band qSDV history is partial, principally self-broadened, and affected by a later-documented FWHM/HWHM interpretation defect in the HITRAN2016-era advanced values.
 
@@ -101,7 +120,7 @@ Current status:
 
 **B classic Voigt: BASELINE CANDIDATE SELECTED / NUMERICAL VALIDATION PENDING.**
 
-### 4.3 IRA / 1.27 micron
+### 4.4 IRA / 1.27 micron
 
 HITRAN2016 discrete 1.27-micron monomer lines are historically close to the HITRAN2012 compilation apart from important line-position updates; the earlier discrete parameters were based on Voigt analyses. Later spectroscopy demonstrates beyond-Voigt effects for high-accuracy terrestrial retrievals, but does not establish a complete historical HITRAN2016 advanced monomer parameterization analogous to the A band.
 
@@ -111,9 +130,9 @@ Current status:
 
 **IRA classic Voigt: BASELINE CANDIDATE SELECTED / NUMERICAL VALIDATION PENDING.**
 
-CIA remains outside the monomer baseline and is handled separately as the already selected Option-B twilight sensitivity.
+CIA remains outside the monomer baseline and is a required M4D closure sensitivity, documented in `docs/m4d_ira_cia_historical_source_recovery.md`.
 
-## 5. Pressure shifts
+## 5. Pressure shifts and narrowing
 
 For classic B/IRA profiles the candidate rule is:
 
@@ -123,7 +142,7 @@ nu_shifted = nu0 + delta_air * p
 
 with shell-local total pressure and no invented temperature dependence of the classic `delta_air` field.
 
-For A, the recovered advanced historical representation must supply the applicable shift convention rather than forcing the classic rule onto the Drouin/Rosenkranz model.
+For A iso 1, the recovered advanced historical representation must supply the applicable shift convention. For A iso 2/3, the historical Galatry/Dicke auxiliary representation must be followed rather than inventing principal-isotopologue SDV parameters.
 
 A full-path pressure-shift sensitivity remains required before freeze because twilight rays sample much denser shells than the chemistry target.
 
@@ -179,7 +198,7 @@ g_band(z,SZA)
              * exp[-tau(nu,z,SZA)] dnu.
 ```
 
-For each band the same selected physical profile semantics must be used for target excitation and shell attenuation. The earlier mixed Doppler-source/Voigt-attenuation calculation was a diagnostic only.
+Within each isotopologue/profile family, the same selected physical profile semantics must be used for target excitation and shell attenuation. The earlier mixed Doppler-source/Voigt-attenuation calculation was a diagnostic only.
 
 ## 10. Far-wing/convergence direction
 
@@ -192,9 +211,7 @@ For classic B/IRA candidates, the preferred numerical route is:
 3. converge target support/order independently against a stricter reference;
 4. validate all 51 target altitudes and the final SZA set.
 
-This removes the artificial absorber-wing truncation responsible for the previous `+/-10 -> +/-20 cm^-1` failure. It remains a candidate until the full run passes.
-
-For A, support/convergence must be defined from the recovered SDV + line-mixing representation.
+For A iso 1, support/convergence must be defined from the recovered SDV + line-mixing representation. For A iso 2/3, it must be appropriate to the recovered Galatry representation.
 
 ## 11. Gate decision
 
@@ -206,17 +223,19 @@ Retained/resolved:
 - shell-local transfer;
 - `0.125 km` M4D sub-stratification with `0.0625 km` convergence reference;
 - rejection of Doppler-only;
+- A iso-1 historical advanced profile family identified;
+- A iso-2/3 historical Galatry/Dicke profile family identified;
 - B classic HITRAN2016 Voigt baseline candidate;
 - IRA classic HITRAN2016 Voigt monomer baseline candidate;
 - standard classic B/IRA broadening/shift equations.
 
 Still blocking:
 
-- A-band supplement byte identity and executable Drouin/HITRAN2016 parameter mapping;
-- A rare-isotopologue line-shape resolution or `<=0.1%` fallback bound;
-- final target+attenuation convergence for B/IRA using all-band absorber evaluation;
+- A iso-1 supplement byte identity and executable Drouin/HITRAN2016 parameter mapping;
+- A iso-2/3 auxiliary file bytes/hash, mapping and HITRAN2016 continuity verification;
+- final target+attenuation convergence for all selected profiles;
 - pressure-shift sensitivity;
 - corrected qSDV B sensitivity;
-- historical IRA CIA twilight sensitivity.
+- historical IRA CIA byte materialization and twilight sensitivity.
 
 No M4D implementation is authorized.
