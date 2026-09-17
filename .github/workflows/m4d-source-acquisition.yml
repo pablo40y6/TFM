@@ -13,44 +13,41 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Recover HITRAN2012 O2-O2 CIA data
+      - name: Acquire Niro 2004 renormalization source
         shell: bash
         run: |
           set -u
           mkdir -p acquisition/files acquisition/diag
           : > acquisition/MANIFEST.txt
           note(){ printf '%s\n' "$*" | tee -a acquisition/MANIFEST.txt; }
-          get(){ label="$1"; url="$2"; out="$3"; note ""; note "[$label]"; note "url=$url"; if curl -fL --retry 2 --connect-timeout 20 --max-time 240 -A 'Mozilla/5.0' "$url" -o "$out"; then note "status=downloaded"; note "bytes=$(wc -c < "$out")"; note "sha256=$(sha256sum "$out" | awk '{print $1}')"; note "type=$(file -b "$out")"; return 0; else rm -f "$out"; note "status=failed"; return 1; fi; }
           note "access_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-
-          root='https://lweb.cfa.harvard.edu/HITRAN/HITRAN2012/CIA/'
-          get O2O2_DIR "${root}Main-Folder/O2-O2/" acquisition/diag/o2o2_index.html || true
-          if [ -f acquisition/diag/o2o2_index.html ]; then
-            grep -Eoi 'href="[^"]+"' acquisition/diag/o2o2_index.html | sed 's/^href="//;s/"$//' | grep -Ei 'O2.*O2|\.cia$|\.dat$|\.txt$' | sort -u > acquisition/diag/o2o2_links.txt || true
-            note ""; note "[O2O2_LINKS]"; cat acquisition/diag/o2o2_links.txt | tee -a acquisition/MANIFEST.txt || true
-            while IFS= read -r href; do
-              [ -n "$href" ] || continue
-              case "$href" in
-                http*) url="$href" ;;
-                /*) url="https://lweb.cfa.harvard.edu${href}" ;;
-                *) url="${root}Main-Folder/O2-O2/${href}" ;;
-              esac
-              base="$(basename "$href")"
-              get "O2O2_$base" "$url" "acquisition/files/$base" || true
-            done < acquisition/diag/o2o2_links.txt
+          page='https://arts.mi.uni-hamburg.de/publications/all.php?keyword=linemixing&tagcloud=on'
+          curl -fL --retry 2 --connect-timeout 20 --max-time 120 -A 'Mozilla/5.0' "$page" -o acquisition/diag/arts_publications.html || true
+          python3 -c "import re,html; s=open('acquisition/diag/arts_publications.html',encoding='utf-8',errors='replace').read(); m=re.search(r'href=[\"\x27]([^\"\x27]*niro04_spectra_i_jqsrt\.pdf)[\"\x27]',s,re.I); print(html.unescape(m.group(1)) if m else '')" > acquisition/diag/niro_href.txt || true
+          href="$(head -n1 acquisition/diag/niro_href.txt || true)"
+          note "discovered_href=$href"
+          if [ -n "$href" ]; then
+            python3 -c "from urllib.parse import urljoin; print(urljoin('$page','$href'))" > acquisition/diag/niro_url.txt
+            url="$(head -n1 acquisition/diag/niro_url.txt)"
+            note "resolved_url=$url"
+            if curl -fL --retry 2 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' "$url" -o acquisition/files/niro04_spectra_i_jqsrt.pdf; then
+              note "status=downloaded"
+              note "bytes=$(wc -c < acquisition/files/niro04_spectra_i_jqsrt.pdf)"
+              note "sha256=$(sha256sum acquisition/files/niro04_spectra_i_jqsrt.pdf | awk '{print $1}')"
+              note "type=$(file -b acquisition/files/niro04_spectra_i_jqsrt.pdf)"
+              pdfinfo acquisition/files/niro04_spectra_i_jqsrt.pdf > acquisition/diag/niro_pdfinfo.txt 2>&1 || true
+              pdftotext -layout acquisition/files/niro04_spectra_i_jqsrt.pdf acquisition/diag/niro.txt 2>/dev/null || true
+              grep -Ein -A45 -B20 'renorm|sum rule|sum-rule' acquisition/diag/niro.txt > acquisition/diag/niro_renorm_context.txt || true
+            else
+              note "status=download_failed"
+            fi
+          else
+            note "status=href_not_found"
           fi
-
-          note ""; note "[HEADERS_AND_HITS]"
-          for f in acquisition/files/*; do
-            [ -f "$f" ] || continue
-            note "$(basename "$f") bytes=$(wc -c < "$f") sha256=$(sha256sum "$f" | awk '{print $1}')"
-            python3 -c "from pathlib import Path; p=Path('$f'); ls=p.read_text(errors='replace').splitlines(); [print(f'{i+1}:{x}') for i,x in enumerate(ls) if 'O2-O2' in x[:35]][:80]" > "acquisition/diag/$(basename "$f").headers.txt" || true
-            grep -n -Ei 'Mate|1999|7450|7480|7500|8000|8350|8480|253|273|296|21%O2|79%N2|Air' "$f" | head -n 160 > "acquisition/diag/$(basename "$f").hits.txt" || true
-          done
           cat acquisition/MANIFEST.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: m4d-hitran2012-o2o2-cia
+          name: m4d-niro-renormalization-source
           path: acquisition/
           retention-days: 7
