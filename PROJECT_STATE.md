@@ -31,23 +31,26 @@ The immutable current artifact is stored at `artifacts/accepted/m4c-r2/tfm-photo
 
 ## Current next milestone
 
-M4D is **NOT IMPLEMENTED / DESIGN NOT FROZEN**. The final independent numerical review has been performed and did not pass: source, TIPS, solar, CIA-scope, Doppler quadrature and refined spherical-path decisions are substantially resolved, but the full-domain pressure-broadening/line-wing treatment remains blocked. Coding is not authorized.
+M4D is **NOT IMPLEMENTED / DESIGN NOT FROZEN**. The independent numerical review rejected Doppler-only over the required spherical twilight domain, and the follow-up historical spectroscopy audit has now narrowed the remaining blocker to advanced line-shape provenance plus one explicit B-band historical-policy decision. Coding is not authorized.
 
 M4D must supply the remaining physical forcing arrays `gA`, `gB`, and `gIRA` without starting M5.
 
 ### M4D spectroscopy/source gates
 
-The previous historical spectroscopy provenance risk has been resolved for the target systems rather than bypassed with modern data:
-
-- **HITRAN2016 target-line source: PASS.** The manually acquired SpectralCalc export was produced with the browser UI explicitly set to HITRAN2016/O2 and was hashed as `6b4acbc01cb649891f2d8597875c9cd8e4805cfdd4d3b7841c2d18cbf718de12`. Although the export is not a complete full-range HITRAN2016 O2 database, forensic comparison supports its target A/B/IRA systems as the historical HITRAN2016 source. Frozen semantic subsets are `a(0)-X(0)` = 835 lines, `b(0)-X(0)` = 430 lines, and `b(1)-X(0)` = 320 lines, each with deterministic subset hashes documented in `docs/m4d_spectralcalc_export_forensics.md`.
+- **HITRAN2016 target-line source: PASS for transition/intensity provenance.** The manually acquired SpectralCalc export was produced with the browser UI explicitly set to HITRAN2016/O2 and was hashed as `6b4acbc01cb649891f2d8597875c9cd8e4805cfdd4d3b7841c2d18cbf718de12`. Although the export is not a complete full-range HITRAN2016 O2 database, forensic comparison supports the target A/B/IRA systems as historical HITRAN2016 transition sources. Frozen semantic subsets are `a(0)-X(0)` = 835 lines, `b(0)-X(0)` = 430 lines, and `b(1)-X(0)` = 320 lines, each with deterministic subset hashes documented in `docs/m4d_spectralcalc_export_forensics.md`. This PASS does **not** imply that the classic 160-character records contain all advanced line-shape/line-mixing parameters.
 - **TIPS-2017: PASS.** The selected historical numerical source is official `hitranonline/hapi@f41d9911f2631eed51b96d6c617b4f27786ad477`, `hapi/hapi.py`, Git blob `caeab1bfaa278b5420adef7efe7ab566991ba763`, HAPI `1.1.0.8.2`. O2 partition-sum table anchors are frozen; project-local derived-asset SHA-256 remains an implementation materialization step.
 - **Solar source: PASS.** Wehrli (1985) WMO/WRC extraterrestrial irradiance is selected, with deterministic wavelength interpolation and conversion to photon flux per wavenumber documented in `docs/m4d_solar_forcing_freeze.md`.
-- **Line shape: BLOCKED AFTER INDEPENDENT REVIEW.** The local chemistry-level ratios remain numerically correct, but they do not bound spherical twilight rays that traverse denser air below 50 km. Full-band Voigt-attenuation sensitivity reaches 0.4725% for an A-band case above `1e-10 s^-1` and tens of percent for selected post-90-degree rates. A/B far-wing convergence is not closed at the declared `1e-15 s^-1` floor.
-- **Geometry: PASS.** M4D reuses the accepted M4C exact spherical-shell solar path matrix, Earth shadow, 0-150 km radiative column, and endpoint-mean shell-density convention. O2 optical depth is temperature resolved by shell.
-- **IRA CIA scope: PASS for baseline definition.** Historical `gIRA` is monomer `a(0)-X(0)` resonance absorption. O2 CIA is physically real but is not injected into the first historical implementation; near-twilight CIA attenuation is explicitly deferred as a documented sensitivity/limitation.
-- **Numerical spectroscopy specification: NOT FROZEN.** Standard HITRAN scaling, historical TIPS interpolation, Wehrli forcing and line-centred Doppler quadrature pass review. Shellwise transfer is mandatory and requires deterministic `0.125 km` sub-stratification of the accepted one-kilometre profiles, checked against `0.0625 km`. The pressure-broadened profile/wing rule remains the closing blocker.
+- **Doppler-only: REJECTED FOR FULL DOMAIN.** The local 50-km pressure/Doppler ratios remain useful diagnostics but do not bound illuminated twilight rays that traverse denser air below 50 km. The previous full-band Voigt sensitivity exceeded the `0.1%` adequacy criterion for A even above `1e-10 s^-1` and produced much larger differences in selected post-90-degree cases.
+- **A-band advanced line shape: SOURCE/PROVENANCE BLOCKER.** HITRAN2016 documents a Drouin-era speed-dependent Voigt + line-mixing representation for the principal isotopologue, transformed to HITRAN-facing first-order Rosenkranz parameters. The accepted classic line export does not by itself provide the complete executable advanced parameterization. Exact historical parameters, mapping, temperature dependence and shift conventions must be recovered and frozen before A-band design can close.
+- **B-band advanced line shape: SOURCE/PROVENANCE + SCIENTIFIC-DESIGN BLOCKER.** HITRAN2020 documents that speed-dependent Voigt B-band broadening parameters adopted in HITRAN2016 were treated as half-widths although the source publications apparently reported full widths. The project must explicitly approve whether `historical_2020` reproduces the released HITRAN2016 values literally or applies the later documented correction, and must freeze the executable historical parameter source.
+- **IRA monomer line shape: CANDIDATE, NOT FROZEN.** The historical discrete 1.27-micron line set supports isolated Voigt as a defensible HITRAN2016-era monomer candidate, but a final consistent target+attenuation full-domain convergence run is still required. Later beyond-Voigt work is evidence/sensitivity, not an automatic historical substitution.
+- **Geometry: PASS.** M4D retains the accepted M4C exact spherical-ray equations, Earth radius, radiative top and physical shadow semantics. M4D NIR path integration uses deterministic `0.125 km` atmospheric sub-stratification derived from the accepted one-kilometre profiles and checks it against `0.0625 km`; this does not modify M4C-R2 production behavior.
+- **Shellwise transfer: PASS as a design requirement.** O2 optical depth is temperature resolved shell by shell. A target-temperature cross section multiplied by total O2 column is rejected.
+- **Pressure shifts: OPEN.** The final selected profile must state shell-local pressure-shift behavior (`delta_air` and any advanced/self-shift convention) and demonstrate whether it materially affects the low-tangent twilight domain.
+- **IRA CIA scope: PASS for baseline definition / REQUIRED SENSITIVITY.** Historical `gIRA` remains monomer `a(0)-X(0)` resonance excitation. CIA is not silently added to the baseline source or attenuation. The selected Option-B policy retains a documented historical CIA twilight sensitivity/limitation as required closure evidence; it must not be silently converted to a later unspecified milestone or implemented with current HITRAN CIA data.
+- **Numerical spectroscopy specification: PARTIAL / NOT FROZEN.** Standard HITRAN scaling, historical TIPS interpolation, Wehrli forcing, unattenuated `g0(T)` anchors, shellwise transfer and M4D path sub-stratification are retained. The Doppler quadrature is closed only as a diagnostic. The final pressure-broadened/line-mixed spectral support and convergence rule remains open until the historical per-band profile source is recovered.
 
-Current live HITRAN/HAPI data are not used as a silent historical substitute. The earlier SOURCE BLOCKER risk has therefore been overcome for the M4D target spectroscopy, but implementation remains gated on final independent review of the frozen design.
+Current live HITRAN/HAPI data are not used as a silent historical substitute. The target transition source gate is closed, but advanced line-shape provenance is a distinct unresolved source gate.
 
 ### M4D primary design documents
 
@@ -57,14 +60,20 @@ Current live HITRAN/HAPI data are not used as a silent historical substitute. Th
 - `docs/m4d_broadening_and_geometry_freeze.md`
 - `docs/m4d_ira_cia_scope_freeze.md`
 - `docs/m4d_numerical_specification.md`
+- `docs/m4d_final_design_review.md`
+- `docs/m4d_pressure_broadening_provenance_followup.md`
 
 Earlier research/forensics notes remain supporting evidence and are not superseded as provenance records.
 
 ### Immediate next gate
 
-Resolve the blockers identified by the completed independent review in `docs/m4d_final_design_review.md`: select a historically justified pressure-broadened/line-mixing and far-wing treatment, then demonstrate full-domain convergence to the declared tolerance.
+1. Recover and freeze the executable historical HITRAN2016-era A-band advanced SDV/line-mixing parameterization and its pressure/temperature/shift conventions.
+2. Recover the historical B-band advanced parameter source and explicitly resolve the documented HITRAN2016 FWHM/HWHM defect for the `historical_2020` branch.
+3. Define the final per-band/per-isotopologue profile semantics.
+4. Re-run target excitation and shell attenuation consistently with those selected profiles, including pressure shifts, over all 51 altitudes and the declared SZA/tangent/shadow validation domain.
+5. Demonstrate final profile/wing convergence to `<=0.1%` before creating `docs/m4d_final_design_specification.md`.
 
-Only after that follow-up review passes may a final implementation handoff be frozen and M4D coding be authorized on a separate implementation branch/PR.
+Only after that gate passes may M4D design be marked frozen and an implementation handoff be authorized.
 
 ## Known bootstrap reproducibility finding
 
@@ -81,7 +90,7 @@ The external file `references/scientific/JPL_Publication_15-10_compressed.pdf` h
 1. M5A: performance-ready 51-level chemistry kernel.
 2. M5B: 255-state RHS with BDF/Radau integration.
 3. M6: diurnal cycle and periodic convergence.
-4. M7: scientific validation and sensitivity work, including deferred CIA/twilight and accepted shell-discretization sensitivities.
+4. M7: scientific validation and sensitivity work not already required for M4D closure.
 5. M8: Odin/retrieval/application work, if still in scope.
 
 At M4D closure, reconsider explicitly whether M5A and M5B should remain separate. Before any M5 optimization, preserve the M3 scalar closure as the golden scientific reference.
