@@ -50,8 +50,8 @@ M4D must supply the remaining physical forcing arrays `gA`, `gB`, and `gIRA` wit
 - **Geometry: PASS.** Retain M4C spherical-ray equations, Earth radius, radiative top and physical shadow semantics. M4D NIR path integration uses deterministic `0.125 km` atmospheric sub-stratification derived from accepted one-kilometre profiles and checks against `0.0625 km`; M4C-R2 production behavior remains untouched.
 - **Shellwise transfer: PASS as a design requirement.** O2 optical depth is evaluated shell by shell with local temperature and pressure/profile parameters. Target-temperature cross section times total column is rejected.
 - **B/IRA attenuation-wing strategy: CANDIDATE SELECTED.** At each target quadrature node evaluate attenuation from all accepted absorber lines in the band rather than imposing a `+/-10` or `+/-20 cm^-1` absorber cutoff. Target support/order are converged separately.
-- **IRA CIA baseline scope: PASS / CLOSURE SENSITIVITY REQUIRED.** Historical `gIRA` remains monomer first-order excitation. HITRAN2016 identifies Maté et al. (1999), DOI `10.1029/1999JD900824`, as the revised 1.27-micron CIA source; pure O2 maps to `O2-O2`, 21:79 O2:N2 to `O2-Air`, and the two must not be double counted. Exact historical CIA bytes/hash and a cold-shell policy below the Maté measurement temperatures (`253`, `273`, `296 K`) remain open before the required twilight sensitivity can run.
-- **Numerical spectroscopy specification: PARTIAL / NOT FROZEN.** Standard HITRAN scaling, historical TIPS interpolation, Wehrli forcing, unattenuated `g0(T)` anchors, shellwise transfer, M4D path sub-stratification, and B/IRA classic-profile candidates are selected. Final A auxiliary materialization plus the full profile/convergence/sensitivity runs remain open.
+- **IRA CIA baseline scope: PASS / CLOSURE SENSITIVITY REQUIRED.** Historical `gIRA` remains monomer first-order excitation. HITRAN2016 identifies Maté et al. (1999), DOI `10.1029/1999JD900824`, as the revised 1.27-micron CIA source; pure O2 maps to `O2-O2`, 21:79 O2:N2 to `O2-Air`, and the two must not be double counted. The cold-shell design policy is now frozen for the sensitivity: linearly interpolate within `253-296 K`; below/above that measured range clamp to the nearest endpoint and propagate an envelope defined by the three measured Maté temperature sets. This is explicitly a historical-source-limited sensitivity convention, not physical extrapolation. Exact historical CIA bytes/hash and the numerical twilight sensitivity remain open.
+- **Numerical spectroscopy specification: PARTIAL / NOT FROZEN.** Standard HITRAN scaling, historical TIPS interpolation, Wehrli forcing, unattenuated `g0(T)` anchors, shellwise transfer, M4D path sub-stratification, B/IRA classic-profile candidates, and the IRA CIA cold-shell sensitivity policy are selected. Final A auxiliary materialization plus the full profile/convergence/sensitivity runs remain open.
 
 Current live HITRAN/HAPI data are not used as a silent historical substitute. The remaining source problem is now byte materialization and deterministic mapping of identified historical auxiliary sources, not an undefined choice of spectroscopy.
 
@@ -74,11 +74,11 @@ Earlier research/forensics notes remain supporting evidence and are not supersed
 
 1. Freeze `NIHMS804415-supplement-supplement_1.pdf` bytes/hash and executable Drouin/HITRAN2016 mapping for A iso-1.
 2. Freeze `07_A-band_SDF.dat` and `07_hit12_0.76mic_Galatry.par` bytes/hash, map accepted A iso-2/iso-3 transitions, and verify HITRAN2016 continuity.
-3. Freeze the exact historical HITRAN2016 Maté `O2-Air` CIA asset and select an explicit cold-shell policy below 253 K.
+3. Freeze the exact historical HITRAN2016 Maté `O2-Air` CIA asset. The cold-shell sensitivity policy is already selected and must not be reopened without a concrete scientific error.
 4. Run B and IRA classic-Voigt target excitation and shell attenuation consistently using all accepted absorber lines at target quadrature nodes; quantify pressure-shift sensitivity and corrected B qSDV sensitivity.
 5. Run A iso-1 advanced and A iso-2/3 Galatry representations consistently once materialized.
 6. Validate all 51 altitudes at `SZA = 0, 60, 85, 89, 89.9, 95, 99 deg` plus illuminated-tangent/immediately-shadowed boundary cases and demonstrate `<=0.1%` convergence above the declared `1e-15 s^-1` floor.
-7. Execute the historical IRA CIA twilight sensitivity.
+7. Execute the historical IRA CIA twilight sensitivity with the frozen endpoint-clamp + measured-source-envelope policy.
 
 Only after these gates pass may `docs/m4d_final_design_specification.md` be created and implementation authorized.
 
