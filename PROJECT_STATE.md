@@ -25,36 +25,46 @@ These statements describe the accepted architecture and provisional continuation
 | M3 | CLOSED / ACCEPTED | `tfm-photochem-milestone3.zip` | `d5dac9f3d160b0d53a1fdc16b23b4c72b918c271466dfbe58d99c5a54a9d89ef` | 0.3.0 |
 | M4A | CLOSED / ACCEPTED | `tfm-photochem-milestone4a.zip` | `d1a68e6344710cd8ae6543f12081cde55355f23849ea73b9724d9e49156fbc12` | 0.4.0 |
 | M4B-R2 | CLOSED / ACCEPTED | `tfm-photochem-milestone4b-r2.zip` | `87fe1d585efa6f42231fc6d9898ca37c5afa51d1b4baa6325015caaee03530c8` | 0.4.2 |
-| M4C-R2 | CLOSED / ACCEPTED; current baseline | `tfm-photochem-milestone4c-r2.zip` | `2944c8a8e0899b320c69c45192ee6f03b9001114c4120a9db8c67a3f1bb8f1fe` | 0.5.1 |
+| M4C-R2 | CLOSED / ACCEPTED; current implemented baseline | `tfm-photochem-milestone4c-r2.zip` | `2944c8a8e0899b320c69c45192ee6f03b9001114c4120a9db8c67a3f1bb8f1fe` | 0.5.1 |
 
 The immutable current artifact is stored at `artifacts/accepted/m4c-r2/tfm-photochem-milestone4c-r2.zip`. Accepted baseline details live in that artifact and in `docs/handoffs/TFM2_ProjectReset_PreM4D_Context.md`.
 
 ## Current next milestone
 
-M4D is **NOT IMPLEMENTED / DESIGN NOT FROZEN**. Its intended outputs are the remaining `gA`, `gB`, and `gIRA` physical forcings. M1-M4C-R2 remain closed and must not be reopened during this design investigation.
+M4D is **NOT IMPLEMENTED**. Its independent design has advanced from open source investigation to a substantially frozen implementation specification, but it remains **PENDING FINAL INDEPENDENT DESIGN REVIEW** before coding is authorized.
 
-The historical spectroscopy investigation has progressed substantially:
+M4D must supply the remaining physical forcing arrays `gA`, `gB`, and `gIRA` without starting M5.
 
-- The physical target systems are now constrained to `b(v'=0) <- X(v''=0)` for `gA`, `b(v'=1) <- X(v''=0)` for `gB`, and `a(v'=0) <- X(v''=0)` for `gIRA`, with final subsets to be selected from HITRAN quantum labels rather than arbitrary wavelength windows.
-- Standard HITRAN line intensity `sw` is treated under its terrestrial natural-isotopic-abundance convention; an extra isotopic-abundance multiplier must not be applied silently.
-- A strong historical TIPS-2017 freeze candidate has been identified at `sergio66/UMBC_LBL@2cde4f679a1398403d6bd5ced4b130be7055d33f`, path `Global_Data_HITRAN2016/ORIG/BD_TIPS_2017_v1p0.for`. TIPS-2017 provenance is therefore considered **recovered with freeze candidate identified**, while local SHA-256 and numerical O2 `Q(T)` cross-checks are still pending.
-- SpectralCalc is the primary practical acquisition candidate for the historical HITRAN2016 O2 transition list. Its own history records HITRAN2016 support from 2018, and a peer-reviewed 2024 RFM study independently records using SpectralCalc for HITRAN2016.
-- The correct HITRAN2016 O2 Table-3 fingerprints are: local iso 1 / `16O2` = 15,263 transitions over `0-57,028 cm^-1`; local iso 2 / `16O18O` = 2,965 transitions over `1-56,670 cm^-1`; local iso 3 / `16O17O` = 11,313 transitions over `0-14,537 cm^-1`.
+### M4D spectroscopy/source gates
 
-The remaining decisive source gate is now operational rather than open-ended: obtain an untouched **SpectralCalc HITRAN2016 O2 transition-level export**, preserve its original bytes, compute SHA-256, verify the published fingerprints where full coverage is available, and derive A/B/IRA subsets semantically from the quantum labels. The exact browser procedure and chunked fallbacks are frozen as an acquisition protocol in `docs/m4d_spectralcalc_manual_acquisition.md`.
+The previous historical spectroscopy provenance risk has been resolved for the target systems rather than bypassed with modern data:
 
-Current live HITRANonline data correspond to a newer HITRAN edition and must not be substituted silently. If the historical export cannot be obtained with adequate provenance, the project must stop with **SOURCE BLOCKER** rather than replace it with modern data.
+- **HITRAN2016 target-line source: PASS.** The manually acquired SpectralCalc export was produced with the browser UI explicitly set to HITRAN2016/O2 and was hashed as `6b4acbc01cb649891f2d8597875c9cd8e4805cfdd4d3b7841c2d18cbf718de12`. Although the export is not a complete full-range HITRAN2016 O2 database, forensic comparison supports its target A/B/IRA systems as the historical HITRAN2016 source. Frozen semantic subsets are `a(0)-X(0)` = 835 lines, `b(0)-X(0)` = 430 lines, and `b(1)-X(0)` = 320 lines, each with deterministic subset hashes documented in `docs/m4d_spectralcalc_export_forensics.md`.
+- **TIPS-2017: PASS.** The selected historical numerical source is official `hitranonline/hapi@f41d9911f2631eed51b96d6c617b4f27786ad477`, `hapi/hapi.py`, Git blob `caeab1bfaa278b5420adef7efe7ab566991ba763`, HAPI `1.1.0.8.2`. O2 partition-sum table anchors are frozen; project-local derived-asset SHA-256 remains an implementation materialization step.
+- **Solar source: PASS.** Wehrli (1985) WMO/WRC extraterrestrial irradiance is selected, with deterministic wavelength interpolation and conversion to photon flux per wavenumber documented in `docs/m4d_solar_forcing_freeze.md`.
+- **Line shape: PASS.** Doppler-only is the historical baseline. At the densest chemistry level (50 km), the maximum Lorentz/Doppler HWHM ratios across every target line are only 0.6088% (IRA), 0.3854% (A), and 0.3342% (B); they decrease upward. A Voigt sensitivity remains required as validation evidence.
+- **Geometry: PASS.** M4D reuses the accepted M4C exact spherical-shell solar path matrix, Earth shadow, 0-150 km radiative column, and endpoint-mean shell-density convention. O2 optical depth is temperature resolved by shell.
+- **IRA CIA scope: PASS for baseline definition.** Historical `gIRA` is monomer `a(0)-X(0)` resonance absorption. O2 CIA is physically real but is not injected into the first historical implementation; near-twilight CIA attenuation is explicitly deferred as a documented sensitivity/limitation.
+- **Numerical spectroscopy specification: FROZEN FOR REVIEW.** Standard HITRAN temperature scaling, historical TIPS 3/4-point Lagrange interpolation, Doppler normalization, line-local converged spectral quadrature, validation anchors and tolerances are specified in `docs/m4d_numerical_specification.md`.
 
-Current supporting M4D evidence is consolidated across:
+Current live HITRAN/HAPI data are not used as a silent historical substitute. The earlier SOURCE BLOCKER risk has therefore been overcome for the M4D target spectroscopy, but implementation remains gated on final independent review of the frozen design.
 
-- `docs/m4d_hitran2016_acquisition_and_band_selection.md`;
-- `docs/m4d_hitran2016_line_source_recovery.md`;
-- `docs/m4d_spectralcalc_2024_reproduction_witness.md`;
-- `docs/m4d_tips2017_provenance_recovery.md`;
-- `docs/m4d_mats_aband_forensics.md`;
-- `docs/m4d_spectralcalc_manual_acquisition.md`.
+### M4D primary design documents
 
-Until that acquisition/forensic gate passes, no M4D implementation and no M5 work are authorized.
+- `docs/m4d_spectralcalc_export_forensics.md`
+- `docs/m4d_tips2017_provenance_recovery.md`
+- `docs/m4d_solar_forcing_freeze.md`
+- `docs/m4d_broadening_and_geometry_freeze.md`
+- `docs/m4d_ira_cia_scope_freeze.md`
+- `docs/m4d_numerical_specification.md`
+
+Earlier research/forensics notes remain supporting evidence and are not superseded as provenance records.
+
+### Immediate next gate
+
+Perform an **independent design audit** against the primary/historical sources and the accepted M4C-R2 contracts. The audit must check equations, units, source identities, line-selection semantics, temperature scaling, geometry, numerical convergence criteria and milestone boundaries.
+
+Only if that audit passes should an implementation handoff be frozen and Codex be authorized to implement M4D on a separate implementation branch/PR.
 
 ## Known bootstrap reproducibility finding
 
@@ -71,7 +81,7 @@ The external file `references/scientific/JPL_Publication_15-10_compressed.pdf` h
 1. M5A: performance-ready 51-level chemistry kernel.
 2. M5B: 255-state RHS with BDF/Radau integration.
 3. M6: diurnal cycle and periodic convergence.
-4. M7: scientific validation and sensitivity work.
+4. M7: scientific validation and sensitivity work, including deferred CIA/twilight and accepted shell-discretization sensitivities.
 5. M8: Odin/retrieval/application work, if still in scope.
 
 At M4D closure, reconsider explicitly whether M5A and M5B should remain separate. Before any M5 optimization, preserve the M3 scalar closure as the golden scientific reference.
