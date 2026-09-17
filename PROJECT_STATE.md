@@ -33,7 +33,13 @@ The immutable current artifact is stored at `artifacts/accepted/m4c-r2/tfm-photo
 
 M4D is **NOT IMPLEMENTED / DESIGN NOT FROZEN**. Its intended outputs are the remaining `gA`, `gB`, and `gIRA` physical forcings. The design must be reconstructed independently from primary and historical sources before implementation.
 
-There is a known provenance risk concerning historical O2 spectroscopy, including the exact historical HITRAN2016 line dataset and TIPS2017 partition-function provenance. Modern HITRAN, HAPI, or HITRANonline data must not be substituted silently. NASA/JPL Evaluation 20 is corroborative material only.
+There is a known unresolved provenance risk concerning historical O2 spectroscopy, including the exact historical HITRAN2016 line dataset and TIPS2017 partition-function provenance. Modern HITRAN, HAPI, or HITRANonline data must not be substituted silently. NASA/JPL Evaluation 20 is corroborative material only. If the required historical inputs cannot be verified during the independent M4D source investigation, the project must stop with **SOURCE BLOCKER** rather than silently substitute modern data.
+
+## Known bootstrap reproducibility finding
+
+During repository bootstrap, the optional M4A background regeneration was attempted with `pymsis==0.12.0` on Windows / Python 3.14. The three regenerated background outputs were not byte-identical to the accepted frozen M4A assets.
+
+The accepted frozen assets themselves were **not** modified: their accepted hashes and repository validators pass. This is currently classified as an environment/reproducibility finding, not as evidence of a scientific defect in M4A. M4A remains **CLOSED / ACCEPTED**. Future work must not replace the accepted frozen backgrounds based solely on this cross-environment regeneration result; reproducing the original generation environment may be investigated separately.
 
 ## Documented source-identity discrepancy
 
@@ -48,4 +54,3 @@ The external file `references/scientific/JPL_Publication_15-10_compressed.pdf` h
 5. M8: Odin/retrieval/application work, if still in scope.
 
 At M4D closure, reconsider explicitly whether M5A and M5B should remain separate. Before any M5 optimization, preserve the M3 scalar closure as the golden scientific reference.
-

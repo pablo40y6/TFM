@@ -18,5 +18,4 @@ The PDFs in `scientific/` are immutable external source material. Filenames are 
 | `koppers&murtagh.pdf` | `0d89cd56bfd5e16e25560fe2aaea7be9f47857d8c9647683f7a5a7d7f67175eb` | Schumann-Runge parameterization | Koppers and Murtagh (1996), identified by the accepted source inventory; supporting historical-radiation source |
 | `murtaghSR.pdf` | `7c76727641a1cb4f7407471b8d1cb91fbd0313cb3b74cd5bebfa58299b6654f6` | Schumann-Runge cross sections | Murtagh (1989), identified by the accepted source inventory; supporting historical-radiation source |
 
-`NASA_Data_Evaluation_20.pdf` must not be used to replace an exact historical baseline source silently. The historical O2 spectroscopy needed for M4D remains source-blocked pending verifiable HITRAN2016/TIPS2017 provenance.
-
+`NASA_Data_Evaluation_20.pdf` must not be used to replace an exact historical baseline source silently. M4D is **NOT IMPLEMENTED / DESIGN NOT FROZEN**; historical O2 spectroscopy, including HITRAN2016/TIPS2017 provenance, remains an unresolved source/provenance risk for the independent M4D design. If the required historical data cannot be verified, the project must stop with **SOURCE BLOCKER** rather than substitute modern data silently.
