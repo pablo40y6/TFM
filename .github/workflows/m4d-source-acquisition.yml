@@ -13,46 +13,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Acquire Niro 2004 publisher PDF
+      - name: Acquire Boulet 2014 Niro-renormalization witness
         shell: bash
         run: |
-          set -u
+          set -eu
           mkdir -p acquisition/files acquisition/diag
-          : > acquisition/MANIFEST.txt
-          note(){ printf '%s\n' "$*" | tee -a acquisition/MANIFEST.txt; }
-          note "access_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          pii='S0022407304001049'
-          found=''
-          for suffix in main.pdf main_1.pdf main.pdf?download=1; do
-            safe="$(printf '%s' "$suffix" | tr '?=&/' '____')"
-            url="https://ars.els-cdn.com/content/image/1-s2.0-${pii}-${suffix}"
-            out="acquisition/diag/1-s2.0-${pii}-${safe}"
-            note ""
-            note "url=$url"
-            if curl -fL --retry 2 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' -e 'https://www.sciencedirect.com/' "$url" -o "$out"; then
-              note "bytes=$(wc -c < "$out")"
-              note "sha256=$(sha256sum "$out" | awk '{print $1}')"
-              note "type=$(file -b "$out")"
-              if file "$out" | grep -qi PDF; then
-                cp "$out" acquisition/files/niro04_spectra_i_jqsrt.pdf
-                found="$url"
-                break
-              fi
-            fi
-          done
-          note ""
-          note "selected_source_url=$found"
-          if [ -f acquisition/files/niro04_spectra_i_jqsrt.pdf ]; then
-            note "NIRO_bytes=$(wc -c < acquisition/files/niro04_spectra_i_jqsrt.pdf)"
-            note "NIRO_sha256=$(sha256sum acquisition/files/niro04_spectra_i_jqsrt.pdf | awk '{print $1}')"
-            pdfinfo acquisition/files/niro04_spectra_i_jqsrt.pdf > acquisition/diag/niro_pdfinfo.txt 2>&1 || true
-            pdftotext -layout acquisition/files/niro04_spectra_i_jqsrt.pdf acquisition/diag/niro.txt 2>/dev/null || true
-            grep -Ein -A80 -B35 'renorm|sum rule|sum-rule' acquisition/diag/niro.txt > acquisition/diag/niro_renorm_context.txt || true
-          fi
+          url='https://ntrs.nasa.gov/api/citations/20140017696/downloads/20140017696.pdf?attachment=true'
+          curl -fL --retry 3 --connect-timeout 20 --max-time 240 -A 'Mozilla/5.0' "$url" -o acquisition/files/boulet_ma_thibault_2014.pdf
+          printf 'url=%s\n' "$url" > acquisition/MANIFEST.txt
+          printf 'bytes=%s\n' "$(wc -c < acquisition/files/boulet_ma_thibault_2014.pdf)" >> acquisition/MANIFEST.txt
+          printf 'sha256=%s\n' "$(sha256sum acquisition/files/boulet_ma_thibault_2014.pdf | awk '{print $1}')" >> acquisition/MANIFEST.txt
+          file acquisition/files/boulet_ma_thibault_2014.pdf >> acquisition/MANIFEST.txt
+          pdfinfo acquisition/files/boulet_ma_thibault_2014.pdf > acquisition/diag/pdfinfo.txt
+          pdftotext -layout acquisition/files/boulet_ma_thibault_2014.pdf acquisition/diag/boulet.txt
+          grep -Ein -A150 -B30 'IV\. RENORMALIZATION PROCEDURE|renormalization procedure' acquisition/diag/boulet.txt > acquisition/diag/renorm_context.txt || true
           cat acquisition/MANIFEST.txt
       - uses: actions/upload-artifact@v4
-        if: always()
         with:
-          name: m4d-niro-publisher-pdf
+          name: m4d-boulet-2014-renormalization
           path: acquisition/
           retention-days: 7
