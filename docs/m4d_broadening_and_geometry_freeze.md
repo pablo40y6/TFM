@@ -1,8 +1,10 @@
 # M4D broadening and solar-path geometry freeze
 
-Status: **BASELINE PHYSICS SELECTED / NUMERICAL SPECTRAL QUADRATURE STILL OPEN**
+Status: **INDEPENDENT REVIEW FOUND FULL-DOMAIN BROADENING BLOCKER / GEOMETRY RETAINED**
 
 Branch: `milestone/m4d-design`
+
+> **Independent-review update:** the local 50-km width-ratio argument below is valid for chemistry-level pressures but does not bound post-90-degree spherical rays that traverse denser air below 50 km. Full-domain numerical tests in `docs/m4d_final_design_review.md` find material Voigt sensitivity. The geometry decision remains valid; the Doppler-only line-shape decision is reopened by this concrete counterexample.
 
 This note freezes two M4D design choices: the baseline line shape and the direct-beam solar geometry. It does not yet authorize implementation because the spectral integration/convergence specification and the IRA CIA decision remain separate gates.
 
@@ -161,10 +163,6 @@ The exact discrete quadrature/grid used to evaluate this integral remains to be 
 
 ## 8. Gate decision
 
-**PASS — Doppler-only monomer line shape and the accepted M4C exact spherical-shell solar geometry are frozen as the M4D baseline.**
+**PARTIAL PASS / LINE-SHAPE GATE REOPENED.** The accepted M4C exact spherical-shell geometry remains the M4D geometry. Doppler-only is not accepted over the full altitude/SZA domain after the independent numerical review: selected near/post-twilight cases show material Voigt sensitivity, and A/B Voigt far-wing convergence remains unresolved at the declared numerical floor.
 
-Still open before implementation authorization:
-
-- spectral grid/quadrature and line-wing convergence;
-- 1.27-micron CIA/continuum baseline decision;
-- final end-to-end g-factor validation tolerances.
+See `docs/m4d_final_design_review.md` for the quantitative counterexample and exact remaining blockers. No M4D implementation is authorized.

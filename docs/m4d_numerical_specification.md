@@ -1,8 +1,10 @@
 # M4D spectroscopy numerical specification
 
-Status: **DESIGN SPECIFICATION FROZEN FOR IMPLEMENTATION REVIEW / NO CODE YET**
+Status: **DRAFT SUPERSEDED BY FINAL DESIGN REVIEW / NOT READY FOR IMPLEMENTATION**
 
 Branch: `milestone/m4d-design`
+
+> **Review result:** `docs/m4d_final_design_review.md` found that Doppler-only and the one-kilometre path discretization do not satisfy the proposed full-domain `0.1%` gate. The converged Doppler quadrature and source conventions below remain evidence, but the line-shape/wing rules are not frozen and this document does not authorize implementation.
 
 This document consolidates the numerical rules for the three M4D O2 solar-excitation coefficients after the independent source investigation. It is an implementation specification, not an implementation commit.
 
@@ -259,6 +261,6 @@ The implementation task must produce:
 
 ## 14. Implementation boundary
 
-The scientific/numerical design above is sufficiently specified for an implementation task **after a final independent design review**.
+The final independent review did not pass. M4D remains **DESIGN NOT FROZEN / NOT IMPLEMENTED** pending a historically justified pressure-broadening/line-mixing and far-wing rule that meets the numerical convergence gate. The shellwise path calculation must also use the converged sub-stratification recorded in `docs/m4d_final_design_review.md`.
 
-M4D implementation must not alter M1-M4C-R2 accepted scientific behavior, must not start the 255-ODE solver, and must not advance to M5.
+M4D implementation is not authorized. Any later implementation must not alter M1-M4C-R2 accepted scientific behavior, start the 255-ODE solver, or advance to M5.

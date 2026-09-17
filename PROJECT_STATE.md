@@ -31,7 +31,7 @@ The immutable current artifact is stored at `artifacts/accepted/m4c-r2/tfm-photo
 
 ## Current next milestone
 
-M4D is **NOT IMPLEMENTED**. Its independent design has advanced from open source investigation to a substantially frozen implementation specification, but it remains **PENDING FINAL INDEPENDENT DESIGN REVIEW** before coding is authorized.
+M4D is **NOT IMPLEMENTED / DESIGN NOT FROZEN**. The final independent numerical review has been performed and did not pass: source, TIPS, solar, CIA-scope, Doppler quadrature and refined spherical-path decisions are substantially resolved, but the full-domain pressure-broadening/line-wing treatment remains blocked. Coding is not authorized.
 
 M4D must supply the remaining physical forcing arrays `gA`, `gB`, and `gIRA` without starting M5.
 
@@ -42,10 +42,10 @@ The previous historical spectroscopy provenance risk has been resolved for the t
 - **HITRAN2016 target-line source: PASS.** The manually acquired SpectralCalc export was produced with the browser UI explicitly set to HITRAN2016/O2 and was hashed as `6b4acbc01cb649891f2d8597875c9cd8e4805cfdd4d3b7841c2d18cbf718de12`. Although the export is not a complete full-range HITRAN2016 O2 database, forensic comparison supports its target A/B/IRA systems as the historical HITRAN2016 source. Frozen semantic subsets are `a(0)-X(0)` = 835 lines, `b(0)-X(0)` = 430 lines, and `b(1)-X(0)` = 320 lines, each with deterministic subset hashes documented in `docs/m4d_spectralcalc_export_forensics.md`.
 - **TIPS-2017: PASS.** The selected historical numerical source is official `hitranonline/hapi@f41d9911f2631eed51b96d6c617b4f27786ad477`, `hapi/hapi.py`, Git blob `caeab1bfaa278b5420adef7efe7ab566991ba763`, HAPI `1.1.0.8.2`. O2 partition-sum table anchors are frozen; project-local derived-asset SHA-256 remains an implementation materialization step.
 - **Solar source: PASS.** Wehrli (1985) WMO/WRC extraterrestrial irradiance is selected, with deterministic wavelength interpolation and conversion to photon flux per wavenumber documented in `docs/m4d_solar_forcing_freeze.md`.
-- **Line shape: PASS.** Doppler-only is the historical baseline. At the densest chemistry level (50 km), the maximum Lorentz/Doppler HWHM ratios across every target line are only 0.6088% (IRA), 0.3854% (A), and 0.3342% (B); they decrease upward. A Voigt sensitivity remains required as validation evidence.
+- **Line shape: BLOCKED AFTER INDEPENDENT REVIEW.** The local chemistry-level ratios remain numerically correct, but they do not bound spherical twilight rays that traverse denser air below 50 km. Full-band Voigt-attenuation sensitivity reaches 0.4725% for an A-band case above `1e-10 s^-1` and tens of percent for selected post-90-degree rates. A/B far-wing convergence is not closed at the declared `1e-15 s^-1` floor.
 - **Geometry: PASS.** M4D reuses the accepted M4C exact spherical-shell solar path matrix, Earth shadow, 0-150 km radiative column, and endpoint-mean shell-density convention. O2 optical depth is temperature resolved by shell.
 - **IRA CIA scope: PASS for baseline definition.** Historical `gIRA` is monomer `a(0)-X(0)` resonance absorption. O2 CIA is physically real but is not injected into the first historical implementation; near-twilight CIA attenuation is explicitly deferred as a documented sensitivity/limitation.
-- **Numerical spectroscopy specification: FROZEN FOR REVIEW.** Standard HITRAN temperature scaling, historical TIPS 3/4-point Lagrange interpolation, Doppler normalization, line-local converged spectral quadrature, validation anchors and tolerances are specified in `docs/m4d_numerical_specification.md`.
+- **Numerical spectroscopy specification: NOT FROZEN.** Standard HITRAN scaling, historical TIPS interpolation, Wehrli forcing and line-centred Doppler quadrature pass review. Shellwise transfer is mandatory and requires deterministic `0.125 km` sub-stratification of the accepted one-kilometre profiles, checked against `0.0625 km`. The pressure-broadened profile/wing rule remains the closing blocker.
 
 Current live HITRAN/HAPI data are not used as a silent historical substitute. The earlier SOURCE BLOCKER risk has therefore been overcome for the M4D target spectroscopy, but implementation remains gated on final independent review of the frozen design.
 
@@ -62,9 +62,9 @@ Earlier research/forensics notes remain supporting evidence and are not supersed
 
 ### Immediate next gate
 
-Perform an **independent design audit** against the primary/historical sources and the accepted M4C-R2 contracts. The audit must check equations, units, source identities, line-selection semantics, temperature scaling, geometry, numerical convergence criteria and milestone boundaries.
+Resolve the blockers identified by the completed independent review in `docs/m4d_final_design_review.md`: select a historically justified pressure-broadened/line-mixing and far-wing treatment, then demonstrate full-domain convergence to the declared tolerance.
 
-Only if that audit passes should an implementation handoff be frozen and Codex be authorized to implement M4D on a separate implementation branch/PR.
+Only after that follow-up review passes may a final implementation handoff be frozen and M4D coding be authorized on a separate implementation branch/PR.
 
 ## Known bootstrap reproducibility finding
 
