@@ -1,30 +1,28 @@
 # M4D broadening and solar-path geometry review
 
-Status: **GEOMETRY RETAINED / LINE SHAPE NOT FROZEN / HISTORICAL ADVANCED-PARAMETER SOURCE BLOCKER**
+Status: **GEOMETRY RETAINED / B+IRA PROFILE CANDIDATES SELECTED / A-BAND SOURCE MATERIALIZATION BLOCKER**
 
 Branch: `milestone/m4d-design`
 
-> The earlier Doppler-only freeze recorded in this file is superseded by `docs/m4d_final_design_review.md` and `docs/m4d_pressure_broadening_provenance_followup.md`. The local-width calculation remains useful historical evidence, but it is not a valid full-domain line-shape decision.
+> The earlier Doppler-only freeze is superseded by `docs/m4d_final_design_review.md` and `docs/m4d_pressure_broadening_provenance_followup.md`. The local-width calculation remains useful evidence, but it is not a valid full-domain line-shape decision.
 
-This note now separates the part that remains accepted (solar-ray geometry) from the line-shape decision that failed independent review.
+This note separates the retained spherical geometry from the per-band spectroscopy decision.
 
-## 1. Superseded Doppler-only decision
+## 1. Doppler-only decision is superseded
 
-The earlier design proposed normalized Gaussian Doppler profiles for all three monomer O2 systems and treated pressure broadening as a later sensitivity. That proposal was motivated by the recovered Anqi Li A-band method and by the small Lorentz/Doppler width ratio at the lowest chemistry level.
+The earlier design proposed normalized Gaussian Doppler profiles for all three O2 systems and treated pressure broadening as a later sensitivity. That proposal was motivated by the recovered Anqi Li A-band method and by the small Lorentz/Doppler ratio at the lowest chemistry level.
 
-That decision is **not frozen anymore**.
+The independent full-path review showed that illuminated twilight rays to 50-100 km targets can pass through much denser atmosphere below the chemistry boundary. Therefore pressure broadening cannot be bounded by the pressure at the target altitude.
 
-The independent full-path review demonstrated that an illuminated twilight ray to a 50-100 km target can pass through much denser atmosphere below the chemistry boundary. Therefore pressure broadening cannot be bounded by evaluating only the pressure at the target altitude.
+Doppler-only remains useful as:
 
-Doppler-only remains acceptable as:
-
-- a historical legacy reference;
+- a legacy-method comparison;
 - an optically thin/profile-normalization check;
-- a numerical comparison case.
+- a converged numerical reference calculation.
 
-It is not the authorized final M4D line-shape model.
+It is not an authorized final M4D profile.
 
-## 2. Historical local-width calculation retained as evidence
+## 2. Local-width evidence retained
 
 At the accepted M4A 50-km chemistry level:
 
@@ -37,20 +35,7 @@ O2/M = 0.210000...
 p approximately 77.563 Pa = 7.6549e-4 atm
 ```
 
-The earlier diagnostic Lorentz HWHM was
-
-```text
-gamma_L(T,p) = p_atm * [(1-xO2)*gamma_air + xO2*gamma_self]
-               * (296/T)**n_air
-```
-
-and the Doppler HWHM was
-
-```text
-gamma_D = nu0 * sqrt(2*k*T*ln(2)/(m*c**2)).
-```
-
-Across the accepted target subsets, the maximum local 50-km `gamma_L/gamma_D` values were approximately:
+The earlier local diagnostic gave maximum `gamma_L/gamma_D` values of approximately:
 
 | system | maximum local ratio at 50 km |
 | --- | ---: |
@@ -58,92 +43,116 @@ Across the accepted target subsets, the maximum local 50-km `gamma_L/gamma_D` va
 | A `b(0)-X(0)` | `0.3854%` |
 | B `b(1)-X(0)` | `0.3342%` |
 
-These numbers remain valid for the local 50-km state. The error was interpreting them as a bound on the complete spherical solar path.
+These values describe the local 50-km state only. They do not bound a spherical twilight path.
 
-## 3. Full-path counterexample that reopened the gate
+## 3. Full-path counterexample retained
 
-`docs/m4d_final_design_review.md` compared Doppler attenuation with a pressure-broadened Voigt sensitivity using the accepted spherical geometry and shell-local state.
+`docs/m4d_final_design_review.md` found that, with a `+/-20 cm^-1` Voigt attenuation sensitivity, A-band differed from Doppler by approximately `0.4725%` even when restricting to rates above `1e-10 s^-1`, exceeding the declared `0.1%` adequacy criterion.
 
-With a `+/-20 cm^-1` Voigt attenuation window, the maximum A-band full-band difference relative to Doppler remained approximately `0.4725%` even when considering only rates above `1e-10 s^-1`, already exceeding the declared `0.1%` adequacy criterion.
-
-At weaker illuminated post-90-degree cases, differences reached tens of percent. The `+/-10 -> +/-20 cm^-1` isolated-Voigt comparison also failed the `0.1%` gate for weak A/B twilight cases.
+At weaker illuminated post-90-degree cases, differences reached tens of percent. The `+/-10 -> +/-20 cm^-1` isolated-Voigt attenuation comparison also failed the `0.1%` gate for weak A/B twilight rates.
 
 Therefore:
 
-**Doppler-only is rejected as the full-domain M4D baseline.**
+**Doppler-only is rejected over the complete M4D altitude/SZA domain.**
 
-## 4. Historical line-shape evidence after provenance follow-up
+## 4. Per-band line-shape status
 
-The three systems must now be treated separately unless historical evidence supports a common model.
+### 4.1 A band
 
-### A band
+For the principal isotopologue, HITRAN2016 Section 2.7.2 points to Drouin et al. (2017) and an advanced representation containing speed-dependent Voigt behavior and collisional line mixing. HITRAN transformed scaled W-matrix information to first-order Rosenkranz line-mixing parameters at standard temperatures. This representation is not recoverable from the classic 160-character records alone.
 
-HITRAN2016 Section 2.7.2 documents an advanced principal-isotopologue A-band representation derived from Drouin et al. (2017): speed-dependent Voigt behavior together with collisional line mixing, with a HITRAN-facing first-order Rosenkranz representation derived from scaled W matrices. CIA is a separate spectroscopic component.
+The exact source family is now identified, including the public Drouin supplement `NIHMS804415-supplement-supplement_1.pdf`, but its bytes, hash and executable parameter mapping have not yet been frozen by the project.
 
-The accepted 160-character SpectralCalc line records do not contain the complete advanced parameterization required to execute that historical representation.
+The accepted A subset also contains rare isotopologues. The principal-isotopologue Drouin treatment must not be copied to them without source support.
 
-Therefore an arbitrary isolated Voigt model must not be promoted to the historical HITRAN2016 A-band baseline solely to obtain numerical convergence.
+Current status:
 
-Current status: **SOURCE/PROVENANCE BLOCKER** pending recovery and freezing of the exact historical executable advanced parameters and formula mapping.
+**A principal isotopologue: advanced SDV + line mixing required; source materialization/parameter mapping still blocks freeze.**
 
-### B band
+**A rare isotopologues: historical profile or quantitatively bounded classic-profile fallback still required.**
 
-HITRAN2016 incorporated advanced B-band line-shape information from the Domyslawska measurement series. HITRAN2020 later documented that the speed-dependent Voigt broadening values adopted in HITRAN2016 had been interpreted as half-widths although the source papers reported full widths.
+### 4.2 B band
 
-The project must explicitly decide whether `historical_2020` reproduces the released HITRAN2016 advanced values literally or applies the later source-documented correction. Neither choice may be made silently.
+The advanced B-band qSDV history is partial, principally self-broadened, and affected by a later-documented FWHM/HWHM interpretation defect in the HITRAN2016-era advanced values.
 
-Current status: **SOURCE/PROVENANCE + SCIENTIFIC-DESIGN BLOCKER**.
+The selected `historical_2020` baseline candidate is therefore the complete classic HITRAN2016 isolated Voigt representation carried by the accepted 160-character B records.
 
-### IRA / 1.27 micron
+For each line:
 
-The discrete HITRAN2016 `a(0)-X(0)` line set is historically close to the HITRAN2012 monomer compilation, whose relevant line parameters were based on Voigt analyses; HITRAN2016 notably improved line positions. Later work demonstrates measurable beyond-Voigt effects at high terrestrial-spectroscopy accuracy, but the current evidence does not establish an HITRAN2016 advanced parameterization analogous to the principal-isotopologue A-band update.
+```text
+gamma_L(p,T)
+  = (296/T)^n_air
+    * [gamma_air * (p - p_O2) + gamma_self * p_O2]
+```
 
-An isolated Voigt treatment therefore remains a defensible **candidate** historical monomer profile for IRA, but it is not yet frozen. The final candidate must still be evaluated consistently in both target excitation and shell attenuation and must pass the full numerical convergence gate.
+with pressures in atm and HITRAN HWHM coefficients in `cm^-1 atm^-1`.
 
-See `docs/m4d_pressure_broadening_provenance_followup.md` for the detailed source assessment.
+The classic shifted center is
 
-## 5. Pressure shifts are part of the remaining gate
+```text
+nu_shifted = nu0 + delta_air * p.
+```
 
-The accepted classic HITRAN records include `delta_air`. Because the problematic twilight rays traverse lower, denser shells, pressure shifts must be assessed along the full ray rather than only at the target altitude.
+`gamma_air` is already the HITRAN air-broadening coefficient. Do not multiply it by an additional `0.79` or reconstruct it from N2/O2 fractions. The standard partial-pressure expression above already combines the air and absorber-self terms.
 
-The final per-band specification must state:
+A source-corrected qSDV calculation on the historical lines for which it is available is retained as a mandatory sensitivity. If it changes any accepted B-band M4D rate by more than `0.1%`, the classic-Voigt candidate must be reopened before design freeze.
 
-- air and self broadening conventions;
-- pressure-shift parameters used;
-- temperature dependence where defined historically;
-- shell-local line-center evaluation;
-- explicit behavior when a self-shift or advanced shift parameter is not historically available.
+Current status:
 
-No blanket `delta_air = 0` rule is frozen.
+**B classic Voigt: BASELINE CANDIDATE SELECTED / NUMERICAL VALIDATION PENDING.**
+
+### 4.3 IRA / 1.27 micron
+
+HITRAN2016 discrete 1.27-micron monomer lines are historically close to the HITRAN2012 compilation apart from important line-position updates; the earlier discrete parameters were based on Voigt analyses. Later spectroscopy demonstrates beyond-Voigt effects for high-accuracy terrestrial retrievals, but does not establish a complete historical HITRAN2016 advanced monomer parameterization analogous to the A band.
+
+The selected monomer baseline candidate is therefore the complete classic HITRAN2016 isolated Voigt representation in the accepted IRA records, with the same Lorentz-width and pressure-shift equations used for B.
+
+Current status:
+
+**IRA classic Voigt: BASELINE CANDIDATE SELECTED / NUMERICAL VALIDATION PENDING.**
+
+CIA remains outside the monomer baseline and is handled separately as the already selected Option-B twilight sensitivity.
+
+## 5. Pressure shifts
+
+For classic B/IRA profiles the candidate rule is:
+
+```text
+nu_shifted = nu0 + delta_air * p
+```
+
+with shell-local total pressure and no invented temperature dependence of the classic `delta_air` field.
+
+For A, the recovered advanced historical representation must supply the applicable shift convention rather than forcing the classic rule onto the Drouin/Rosenkranz model.
+
+A full-path pressure-shift sensitivity remains required before freeze because twilight rays sample much denser shells than the chemistry target.
 
 ## 6. Solar geometry remains accepted
 
-M4D retains the accepted M4C spherical direct-beam geometry semantics:
+M4D retains the accepted M4C direct-beam spherical geometry semantics:
 
 - Earth radius `6370 km`;
 - radiative top `150 km`;
 - chemistry targets `50..100 km`;
 - exact spherical ray/shell intersections;
 - exact solid-Earth shadowing for `SZA > 90 deg`;
-- illuminated tangent rays at the solid-Earth boundary within numerical tolerance.
+- tangent-ray illumination at the solid-Earth boundary within numerical tolerance.
 
-M4D must not introduce a plane-parallel approximation or a second Earth radius.
-
-The M4C production implementation remains untouched.
+M4D must not introduce a plane-parallel approximation or a second Earth radius. The accepted M4C-R2 production implementation remains untouched.
 
 ## 7. M4D atmospheric/path discretization refinement
 
-The M4C one-kilometre geometry equations and shadow semantics are reused, but the M4D NIR attenuation calculation requires finer deterministic atmospheric sub-stratification to satisfy the proposed numerical tolerance.
+The M4C geometry equations and shadow semantics are reused, but NIR optical-depth integration needs finer atmospheric sub-stratification than the accepted M4C one-kilometre UV calculation.
 
-The accepted design-forensics rule is:
+The design-forensics rule remains:
 
-- derive piecewise-linear atmospheric profiles from the accepted one-kilometre nodes;
-- evaluate exact spherical intersections on `0.125 km` sub-shells for the M4D calculation;
-- retain `0.0625 km` as the convergence reference.
+- piecewise-linear interpolation from the accepted one-kilometre atmospheric nodes;
+- exact spherical intersections on `0.125 km` sub-shells for M4D;
+- `0.0625 km` as convergence reference.
 
-The previous review found maximum `0.125 -> 0.0625 km` differences below approximately `0.034%` for A/B/IRA in the tested domain.
+The previous review found maximum `0.125 -> 0.0625 km` differences below approximately `0.034%` across A/B/IRA in the tested domain.
 
-This is an M4D integration refinement, not a modification of the accepted M4C-R2 UV geometry implementation.
+This is an M4D integration refinement only; it does not change M4C-R2 behavior.
 
 ## 8. Shellwise optical depth remains mandatory
 
@@ -151,16 +160,17 @@ The required structure is
 
 ```text
 tau(nu,z,SZA)
-  = sum_shell sigma_band(nu,T_shell,p_shell,...) * n_O2,shell * dl_shell.
+  = sum_shell sigma_band(nu,T_shell,p_shell,...)
+              * n_O2,shell * dl_shell.
 ```
 
-Using one target-temperature cross section multiplied by a total O2 slant column is rejected because the previous review found multi-percent to tens-of-percent errors in relevant twilight cases.
+A target-temperature cross section multiplied by total O2 slant column is rejected.
 
-For shadowed targets the direct beam remains exactly zero from the physical Earth-shadow mask.
+For shadowed targets the direct beam is exactly zero from the physical Earth-shadow mask.
 
-## 9. Excitation form retained
+## 9. Excitation form and profile consistency
 
-For an illuminated target level:
+For an illuminated target:
 
 ```text
 g_band(z,SZA)
@@ -169,25 +179,44 @@ g_band(z,SZA)
              * exp[-tau(nu,z,SZA)] dnu.
 ```
 
-The **same selected physical line-shape semantics for a band** must be used consistently for target excitation and shell attenuation. The earlier mixed Doppler-source/Voigt-attenuation experiment was a diagnostic sufficient to reject Doppler-only; it is not a final production prescription.
+For each band the same selected physical profile semantics must be used for target excitation and shell attenuation. The earlier mixed Doppler-source/Voigt-attenuation calculation was a diagnostic only.
 
-## 10. Gate decision
+## 10. Far-wing/convergence direction
 
-**PARTIAL PASS / DESIGN NOT FROZEN.**
+No fixed physical `+/-N cm^-1` wing cutoff is frozen.
 
-Frozen/retained:
+For classic B/IRA candidates, the preferred numerical route is:
 
-- accepted M4C spherical geometry semantics;
-- shell-local transfer requirement;
+1. deterministic line-centred target/source quadrature;
+2. evaluate attenuation at each target quadrature node from all accepted absorber lines in that band;
+3. converge target support/order independently against a stricter reference;
+4. validate all 51 target altitudes and the final SZA set.
+
+This removes the artificial absorber-wing truncation responsible for the previous `+/-10 -> +/-20 cm^-1` failure. It remains a candidate until the full run passes.
+
+For A, support/convergence must be defined from the recovered SDV + line-mixing representation.
+
+## 11. Gate decision
+
+**PARTIAL PASS / M4D DESIGN NOT FROZEN.**
+
+Retained/resolved:
+
+- M4C spherical geometry semantics;
+- shell-local transfer;
 - `0.125 km` M4D sub-stratification with `0.0625 km` convergence reference;
-- rejection of Doppler-only over the complete required domain.
+- rejection of Doppler-only;
+- B classic HITRAN2016 Voigt baseline candidate;
+- IRA classic HITRAN2016 Voigt monomer baseline candidate;
+- standard classic B/IRA broadening/shift equations.
 
 Still blocking:
 
-- recover/freeze the historical HITRAN2016 A-band advanced line-shape/line-mixing parameterization;
-- resolve the B-band HITRAN2016 width-interpretation defect and freeze the approved historical policy;
-- evaluate pressure shifts consistently;
-- apply the selected final profile to both target excitation and attenuation;
-- demonstrate final line-wing/profile convergence to the declared tolerance.
+- A-band supplement byte identity and executable Drouin/HITRAN2016 parameter mapping;
+- A rare-isotopologue line-shape resolution or `<=0.1%` fallback bound;
+- final target+attenuation convergence for B/IRA using all-band absorber evaluation;
+- pressure-shift sensitivity;
+- corrected qSDV B sensitivity;
+- historical IRA CIA twilight sensitivity.
 
 No M4D implementation is authorized.
