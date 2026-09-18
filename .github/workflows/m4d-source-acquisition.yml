@@ -15,28 +15,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Extract current O2-Air Maté blocks
+      - name: Extract current O2-Air Mate blocks
         shell: bash
         run: |
           set -eu
           mkdir -p acquisition
-          curl -fL --retry 2 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' \
-            'https://hitran.org/data/CIA/O2-air_2024.cia' \
-            -o acquisition/O2-air_2024.cia
-          wc -c acquisition/O2-air_2024.cia > acquisition/size.txt
-          sha256sum acquisition/O2-air_2024.cia > acquisition/sha256.txt
-          python3 -c "from pathlib import Path
-p=Path('acquisition/O2-air_2024.cia')
-ls=p.read_text(errors='replace').splitlines()
-Path('acquisition/first80.txt').write_text('\n'.join(ls[:80]))
-hits=[]
-for i,x in enumerate(ls):
-    if any(t in x for t in ('7450','7480','8480','8488','253.','273.','296.','Mate','Maté','MATE')):
-        hits.append(str(i+1)+': '+x)
-Path('acquisition/hits.txt').write_text('\n'.join(hits))
-print('lines',len(ls))
-print('\n'.join(hits[:100]))
-"
+          curl -fL --retry 2 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' 'https://hitran.org/data/CIA/O2-air_2024.cia' -o acquisition/O2-air_2024.cia
+          wc -c acquisition/O2-air_2024.cia | tee acquisition/size.txt
+          sha256sum acquisition/O2-air_2024.cia | tee acquisition/sha256.txt
+          head -n 100 acquisition/O2-air_2024.cia > acquisition/first100.txt
+          grep -in -E '7450|8480|8488|253|273|296|Mate|MATE' acquisition/O2-air_2024.cia > acquisition/hits.txt || true
+          head -n 120 acquisition/hits.txt
       - uses: actions/upload-artifact@v4
         with:
           name: m4d-cia-current-mate-blocks
