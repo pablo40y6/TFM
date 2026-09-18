@@ -4,7 +4,7 @@ Status: **OPERATIONAL SOURCE GATE / DESIGN NOT FROZEN / NO IMPLEMENTATION AUTHOR
 
 Branch: `milestone/m4d-design`
 
-This document converts the remaining M4D provenance blockers into a finite acquisition and verification checklist. Scientific source discovery is substantially complete; what remains is exact byte materialization, deterministic parameter mapping, and the final numerical closure runs.
+This document began as the M4D provenance acquisition checklist. A1/A2/A3 have now passed byte materialization and deterministic historical mapping; the only remaining external byte blocker is C1, the historical HITRAN2016 O2-Air 1.27-micron CIA asset. The remaining A/B/IRA work is numerical closure and accepted-HITRAN2016 continuity.
 
 No current HITRAN/HAPI/CIA product may be substituted for a missing historical asset merely to pass this gate.
 
@@ -46,7 +46,7 @@ successful parse/read check
 
 Then derive a deterministic machine-readable transcription without modifying the source PDF. Record the transcription algorithm/version and a hash of the derived parameter table. The source PDF itself need not be committed to the repository.
 
-Gate A1 passes only when an independent rerun can reproduce the derived parameter table from the frozen source bytes.
+Gate A1: **PASS.** The official Elsevier supplement was materialized as `1-s2.0-S0022407316301108-mmc1.pdf`, 89406 bytes, SHA-256 `12e621d3b5d17e7648d140ea16134e3c04096bd7e47e2c1bb0e2084adeccbb51`, 12 pages. The structured PMC manuscript was also frozen from NCBI E-utilities for deterministic Tables 4/5 extraction.
 
 ## 2. Assets A2/A3 — historical rare-isotopologue A-band auxiliaries
 
@@ -93,7 +93,7 @@ Required mapping evidence:
 - report unmatched, duplicate, or ambiguous transitions explicitly;
 - verify that the accepted HITRAN2016 rare-isotopologue line identities remain consistent with this historical auxiliary representation.
 
-Gate A2/A3 passes only with zero silent mapping failures.
+Gate A2/A3: **PASS.** `07_A-band_SDF.dat` and `07_hit12_0.76mic_Galatry.par` were materialized and hashed; the A-band historical mapping is 430/430 with zero unmatched/ambiguous transitions, and all 280 rare target lines carry the auxiliary Dicke fields.
 
 ## 3. Asset C1 — historical HITRAN2016 O2-Air 1.27-micron CIA product
 
@@ -180,7 +180,7 @@ Derived non-redistributive parameter summaries may be committed only if they do 
 
 ## 6. Exact numerical work unlocked by these assets
 
-Once A1/A2/A3/C1 are materialized, execute in this order:
+With A1/A2/A3 materialized, and C1 still outstanding, execute numerical work in this order:
 
 1. **A iso-1:** reconstruct the Drouin/HITRAN2016 advanced profile and line mixing; validate source normalization and total nonnegative physical absorption.
 2. **A iso-2/3:** execute historical Galatry/Dicke treatment and map all accepted rare lines.
@@ -230,13 +230,16 @@ B baseline profile policy             SELECTED, numerical closure pending
 IRA baseline profile policy           SELECTED, numerical closure pending
 IRA CIA cold-shell policy             SELECTED, numerical closure pending
 A profile families                    IDENTIFIED
-A1 exact source bytes                 BLOCKED / not materialized
-A2/A3 exact source bytes              BLOCKED / not materialized
+A1 exact source bytes                 PASS
+A2/A3 exact source bytes              PASS
+A historical deterministic mapping    PASS
+A isolated-line SDV semantics          SELECTED / frozen equations
+A Table-22 Y(T) operational policy     SELECTED / low-T sensitivity pending
 C1 exact historical CIA bytes         BLOCKED / not materialized
-Full final numerical convergence      BLOCKED by source materialization
+Full final numerical convergence      OPEN / C1 blocks CIA sensitivity
 M4D design                             NOT FROZEN
 M4D implementation                    NOT AUTHORIZED
 M5                                    NOT AUTHORIZED
 ```
 
-The next productive action is therefore **source materialization**, not more speculative line-shape design.
+The next productive actions are **C1 source materialization plus numerical closure**. A-band source acquisition itself is no longer a blocker.
