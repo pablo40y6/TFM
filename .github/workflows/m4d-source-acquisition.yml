@@ -1,87 +1,29 @@
 name: M4D source acquisition probe
-
 on:
   push:
     branches: [milestone/m4d-design]
     paths: [.github/workflows/m4d-source-acquisition.yml]
-
 permissions:
   contents: read
-
 jobs:
   acquire:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Acquire Niro 2004 renormalization source
+      - name: Acquire exact Tran equation images
         shell: bash
         run: |
           set -u
-          mkdir -p acquisition/files acquisition/diag
+          mkdir -p acquisition/files
           : > acquisition/MANIFEST.txt
-          note(){ printf '%s\n' "$*" | tee -a acquisition/MANIFEST.txt; }
-          note "access_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-
-          page='https://arts.mi.uni-hamburg.de/publications/all.php?keyword=linemixing&tagcloud=on'
-          if curl -fL --retry 2 --connect-timeout 20 --max-time 120 -A 'Mozilla/5.0' "$page" -o acquisition/diag/hamburg_publications.html; then
-            note "index_status=downloaded"
-            note "index_bytes=$(wc -c < acquisition/diag/hamburg_publications.html)"
-            python3 -c "import re,html; s=open('acquisition/diag/hamburg_publications.html',encoding='utf-8',errors='replace').read(); ms=re.findall(r'href=[\"\x27]([^\"\x27]*niro04_spectra_i_jqsrt\\.pdf[^\"\x27]*)',s,re.I); print('\n'.join(html.unescape(x) for x in ms))" > acquisition/diag/niro_links.txt || true
-            cat acquisition/diag/niro_links.txt | tee -a acquisition/MANIFEST.txt || true
-          else
-            note "index_status=failed"
-          fi
-
-          link="$(head -n 1 acquisition/diag/niro_links.txt 2>/dev/null || true)"
-          if [ -n "$link" ]; then
-            case "$link" in
-              http://*|https://*) url="$link" ;;
-              /*) url="https://arts.mi.uni-hamburg.de$link" ;;
-              *) url="https://arts.mi.uni-hamburg.de/publications/$link" ;;
-            esac
-            note "resolved_url=$url"
-            if curl -fL --retry 2 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' "$url" -o acquisition/files/niro04_spectra_i_jqsrt.pdf; then
-              note "download_status=downloaded"
-              note "bytes=$(wc -c < acquisition/files/niro04_spectra_i_jqsrt.pdf)"
-              note "sha256=$(sha256sum acquisition/files/niro04_spectra_i_jqsrt.pdf | awk '{print $1}')"
-              note "type=$(file -b acquisition/files/niro04_spectra_i_jqsrt.pdf)"
-              pdfinfo acquisition/files/niro04_spectra_i_jqsrt.pdf > acquisition/diag/niro_pdfinfo.txt 2>&1 || true
-              pdftotext -layout acquisition/files/niro04_spectra_i_jqsrt.pdf acquisition/diag/niro.txt 2>/dev/null || true
-              grep -in -A 120 -B 20 'renorm' acquisition/diag/niro.txt > acquisition/diag/niro_renormalization_excerpt.txt || true
-            else
-              note "download_status=failed"
-            fi
-          else
-            note "resolved_url=not_found"
-          fi
-
-          # Fallback direct guesses, only accepted if they are actual PDFs.
-          if [ ! -f acquisition/files/niro04_spectra_i_jqsrt.pdf ]; then
-            for url in \
-              'https://arts.mi.uni-hamburg.de/publications/niro04_spectra_i_jqsrt.pdf' \
-              'https://arts.mi.uni-hamburg.de/publications/externals/niro04_spectra_i_jqsrt.pdf' \
-              'https://arts.mi.uni-hamburg.de/publications/pdf/niro04_spectra_i_jqsrt.pdf' \
-              'https://arts.mi.uni-hamburg.de/publications/external/niro04_spectra_i_jqsrt.pdf'; do
-              note "fallback=$url"
-              if curl -fL --retry 1 --connect-timeout 20 --max-time 120 -A 'Mozilla/5.0' "$url" -o acquisition/files/tmp.pdf; then
-                if file acquisition/files/tmp.pdf | grep -qi PDF; then
-                  mv acquisition/files/tmp.pdf acquisition/files/niro04_spectra_i_jqsrt.pdf
-                  note "fallback_selected=$url"
-                  note "bytes=$(wc -c < acquisition/files/niro04_spectra_i_jqsrt.pdf)"
-                  note "sha256=$(sha256sum acquisition/files/niro04_spectra_i_jqsrt.pdf | awk '{print $1}')"
-                  pdftotext -layout acquisition/files/niro04_spectra_i_jqsrt.pdf acquisition/diag/niro.txt 2>/dev/null || true
-                  grep -in -A 120 -B 20 'renorm' acquisition/diag/niro.txt > acquisition/diag/niro_renormalization_excerpt.txt || true
-                  break
-                fi
-              fi
-              rm -f acquisition/files/tmp.pdf
-            done
-          fi
+          get(){ name="$1"; url="$2"; out="acquisition/files/$name"; echo "$name $url" >> acquisition/MANIFEST.txt; if curl -fL --retry 2 --connect-timeout 20 --max-time 120 -A 'Mozilla/5.0' -e 'https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2005JD006869' "$url" -o "$out"; then echo "bytes=$(wc -c < "$out") sha256=$(sha256sum "$out"|awk '{print $1}') type=$(file -b "$out")" >> acquisition/MANIFEST.txt; else echo failed >> acquisition/MANIFEST.txt; rm -f "$out"; fi; }
+          get eq09.gif 'https://agupubs.onlinelibrary.wiley.com/cms/asset/8790e726-0be2-4733-bc8e-e7f98c20ed61/jgrd12781-math-0016.gif'
+          get eq12.gif 'https://agupubs.onlinelibrary.wiley.com/cms/asset/6c8fbfd3-4d9c-461e-b304-39f5238a8b7c/jgrd12781-math-0019.gif'
+          get eqY.gif 'https://agupubs.onlinelibrary.wiley.com/cms/asset/d8619fc0-4f5d-4aa3-ad61-26674011b4b7c/jgrd12781-math-0031.gif'
           cat acquisition/MANIFEST.txt
-
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: m4d-niro-renormalization-source
+          name: m4d-tran-equation-images
           path: acquisition/
           retention-days: 7
