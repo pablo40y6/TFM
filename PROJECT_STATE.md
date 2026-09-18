@@ -148,14 +148,14 @@ Drouin supplement Table 22 supplies first-order air Rosenkranz `Y` values at `20
 
 ### Still open
 
-- exact executable SDV evaluator / mapping of Drouin `S` into the chosen historical representation;
+- Drouin isolated-line SDV evaluator is now frozen: `Gam2 = S*Gam0`, `Shift2 = 0`, `anuVC = 0`, `eta = 0`, with shell-local Drouin Eqs. 6-7 for width/shift;
 - exact historical temperature evaluation semantics for Table-22 Y values;
 - 21 no-Y d-line sensitivity;
 - 59 q-line sensitivity;
 - local accepted-HITRAN2016 `91/91` continuity mapping;
 - final A spectral/path convergence.
 
-See `docs/m4d_a_band_drouin_materialization_audit.md`.
+See `docs/m4d_a_band_drouin_materialization_audit.md` and `docs/m4d_a_band_sdv_semantics_freeze.md`.
 
 ## A-band rare isotopologues
 
@@ -284,6 +284,7 @@ These are regression anchors, not forced final answers.
 - `docs/m4d_a_band_auxiliary_source_recovery.md`
 - `docs/m4d_a_band_auxiliary_mapping_audit.md`
 - `docs/m4d_a_band_drouin_materialization_audit.md`
+- `docs/m4d_a_band_sdv_semantics_freeze.md`
 - `docs/m4d_ira_cia_scope_freeze.md`
 - `docs/m4d_ira_cia_historical_source_recovery.md`
 - `docs/m4d_source_materialization_gate.md`
@@ -293,7 +294,7 @@ Earlier forensics/research notes remain provenance evidence even where their old
 
 ## Immediate next gate
 
-1. Close the A iso-1 SDV/Rosenkranz executable semantics and Table-22 temperature rule.
+1. Close the A iso-1 Rosenkranz/Table-22 continuous-temperature rule; isolated-line SDV semantics are frozen.
 2. Run local accepted-HITRAN2016 continuity maps: `91/91` Drouin d and `280/280` rare Galatry.
 3. Recover/freeze the exact historical Maté `O2-Air` CIA machine-readable asset.
 4. Execute consistent A/B/IRA target+attenuation calculations and declared sensitivities.
