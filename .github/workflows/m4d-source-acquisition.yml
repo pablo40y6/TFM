@@ -1,101 +1,54 @@
 name: M4D source acquisition probe
+
 on:
   push:
-    branches: [milestone/m4d-design]
-    paths: [.github/workflows/m4d-source-acquisition.yml]
+    branches:
+      - milestone/m4d-design
+    paths:
+      - .github/workflows/m4d-source-acquisition.yml
+
 permissions:
   contents: read
+
 jobs:
   acquire:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Forensic recovery of historical O2-Air CIA
+
+      - name: Acquire current CIA and Wayback indexes
         shell: bash
         run: |
           set -u
           mkdir -p acquisition/files acquisition/diag
-          : > acquisition/MANIFEST.txt
-          note(){ printf '%s\n' "$*" | tee -a acquisition/MANIFEST.txt; }
-          fetch(){ label="$1"; url="$2"; out="$3"; note ""; note "[$label]"; note "url=$url"; if curl -fL --retry 2 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' "$url" -o "$out"; then note "status=downloaded"; note "bytes=$(wc -c < "$out")"; note "sha256=$(sha256sum "$out"|awk '{print $1}')"; note "type=$(file -b "$out")"; return 0; else note "status=failed"; rm -f "$out"; return 1; fi; }
-          note "access_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          fetch CURRENT 'https://hitran.org/data/CIA/O2-air_2024.cia' acquisition/files/O2-air_2024.cia || true
-          fetch CIA_PAGE 'https://hitran.org/cia/' acquisition/diag/cia_page.html || true
+          curl -fL --retry 2 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' \
+            'https://hitran.org/data/CIA/O2-air_2024.cia' \
+            -o acquisition/files/O2-air_2024.cia || true
           if [ -f acquisition/files/O2-air_2024.cia ]; then
-            python3 -c "from pathlib import Path
-p=Path('acquisition/files/O2-air_2024.cia')
-lines=p.read_text(errors='replace').splitlines()
-out=[]
-for i,line in enumerate(lines):
-    if any(x in line for x in ('7450','7480','8480','8488','Mate','Maté','MATE')) and len(line)<300:
-        out.append(str(i+1)+': '+line)
-Path('acquisition/diag/current_candidate_headers.txt').write_text('\n'.join(out))
-" || true
-            cat acquisition/diag/current_candidate_headers.txt | tee -a acquisition/MANIFEST.txt || true
+            wc -c acquisition/files/O2-air_2024.cia > acquisition/diag/current_size.txt
+            sha256sum acquisition/files/O2-air_2024.cia > acquisition/diag/current_sha256.txt
+            grep -in -E '7450|8480|8488|Mate|Mat[eé]' acquisition/files/O2-air_2024.cia \
+              > acquisition/diag/current_matches.txt || true
           fi
-          : > acquisition/diag/cdx_all.txt
-          for pattern in \
-            'http://hitran.org/data/CIA/O2-Air*.cia' \
-            'https://hitran.org/data/CIA/O2-Air*.cia' \
-            'http://hitran.org/data/CIA/O2-air*.cia' \
-            'https://hitran.org/data/CIA/O2-air*.cia' \
-            'http://www.hitran.org/data/CIA/O2-Air*.cia' \
-            'https://www.hitran.org/data/CIA/O2-Air*.cia' \
-            'http://www.hitran.org/data/CIA/O2-air*.cia' \
-            'https://www.hitran.org/data/CIA/O2-air*.cia'; do
-            enc="$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1],safe=''))" "$pattern")"
-            url="https://web.archive.org/cdx/search/cdx?url=$enc&output=json&filter=statuscode:200&fl=timestamp,original,digest,length&collapse=digest"
-            note ""
-            note "[CDX]"
-            note "pattern=$pattern"
-            if curl -fL --retry 2 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' "$url" -o acquisition/diag/cdx_tmp.json; then
-              python3 -c "import json
-try:
- d=json.load(open('acquisition/diag/cdx_tmp.json'))
-except Exception:
- d=[]
-if d:
- h=d[0]
- for r in d[1:]:
-  x=dict(zip(h,r))
-  print('\t'.join(str(x.get(k,'')) for k in h))
-" >> acquisition/diag/cdx_all.txt || true
-            fi
-          done
-          sort -u acquisition/diag/cdx_all.txt > acquisition/diag/cdx_unique.txt || true
-          cat acquisition/diag/cdx_unique.txt | tee -a acquisition/MANIFEST.txt || true
-          python3 -c "from pathlib import Path
-rows=[]
-for l in Path('acquisition/diag/cdx_unique.txt').read_text().splitlines():
- p=l.split('\t')
- if len(p)>=2 and p[0][:4] in {'2016','2017','2018'}:
-  rows.append((p[0],p[1]))
-for ts,url in rows[:30]:
- print(ts+'\t'+url)
-" > acquisition/diag/archive_candidates.txt || true
-          n=0
-          while IFS=$'\t' read -r ts original; do
-            [ -z "$ts" ] && continue
-            n=$((n+1))
-            out="acquisition/files/archive_$n-$ts.cia"
-            snap="https://web.archive.org/web/$ts""id_/$original"
-            note ""
-            note "[ARCHIVE_$n]"
-            note "snapshot=$snap"
-            if curl -fL --retry 1 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' "$snap" -o "$out"; then
-              note "bytes=$(wc -c < "$out")"
-              note "sha256=$(sha256sum "$out"|awk '{print $1}')"
-              note "type=$(file -b "$out")"
-              head -n 8 "$out" > "acquisition/diag/archive_$n.head.txt" || true
-            else
-              rm -f "$out"
-              note "status=failed"
-            fi
-          done < acquisition/diag/archive_candidates.txt
-          cat acquisition/MANIFEST.txt
+
+          curl -fL --retry 2 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' \
+            'https://web.archive.org/cdx/search/cdx?url=hitran.org%2Fdata%2FCIA%2FO2-Air%2A.cia&output=json&filter=statuscode%3A200&fl=timestamp%2Coriginal%2Cdigest%2Clength&collapse=digest' \
+            -o acquisition/diag/cdx_O2-Air.json || true
+          curl -fL --retry 2 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' \
+            'https://web.archive.org/cdx/search/cdx?url=hitran.org%2Fdata%2FCIA%2FO2-air%2A.cia&output=json&filter=statuscode%3A200&fl=timestamp%2Coriginal%2Cdigest%2Clength&collapse=digest' \
+            -o acquisition/diag/cdx_O2-air.json || true
+          curl -fL --retry 2 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' \
+            'https://web.archive.org/cdx/search/cdx?url=www.hitran.org%2Fdata%2FCIA%2FO2-Air%2A.cia&output=json&filter=statuscode%3A200&fl=timestamp%2Coriginal%2Cdigest%2Clength&collapse=digest' \
+            -o acquisition/diag/cdx_www_O2-Air.json || true
+          curl -fL --retry 2 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' \
+            'https://web.archive.org/cdx/search/cdx?url=www.hitran.org%2Fdata%2FCIA%2FO2-air%2A.cia&output=json&filter=statuscode%3A200&fl=timestamp%2Coriginal%2Cdigest%2Clength&collapse=digest' \
+            -o acquisition/diag/cdx_www_O2-air.json || true
+
+          ls -l acquisition/files acquisition/diag
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: m4d-cia-historical-forensics
+          name: m4d-cia-index-probe
           path: acquisition/
           retention-days: 7
