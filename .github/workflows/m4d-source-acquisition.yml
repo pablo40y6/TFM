@@ -15,40 +15,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Acquire current CIA and Wayback indexes
+      - name: Extract current O2-Air Maté blocks
         shell: bash
         run: |
-          set -u
-          mkdir -p acquisition/files acquisition/diag
+          set -eu
+          mkdir -p acquisition
           curl -fL --retry 2 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' \
             'https://hitran.org/data/CIA/O2-air_2024.cia' \
-            -o acquisition/files/O2-air_2024.cia || true
-          if [ -f acquisition/files/O2-air_2024.cia ]; then
-            wc -c acquisition/files/O2-air_2024.cia > acquisition/diag/current_size.txt
-            sha256sum acquisition/files/O2-air_2024.cia > acquisition/diag/current_sha256.txt
-            grep -in -E '7450|8480|8488|Mate|Mat[eé]' acquisition/files/O2-air_2024.cia \
-              > acquisition/diag/current_matches.txt || true
-          fi
-
-          curl -fL --retry 2 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' \
-            'https://web.archive.org/cdx/search/cdx?url=hitran.org%2Fdata%2FCIA%2FO2-Air%2A.cia&output=json&filter=statuscode%3A200&fl=timestamp%2Coriginal%2Cdigest%2Clength&collapse=digest' \
-            -o acquisition/diag/cdx_O2-Air.json || true
-          curl -fL --retry 2 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' \
-            'https://web.archive.org/cdx/search/cdx?url=hitran.org%2Fdata%2FCIA%2FO2-air%2A.cia&output=json&filter=statuscode%3A200&fl=timestamp%2Coriginal%2Cdigest%2Clength&collapse=digest' \
-            -o acquisition/diag/cdx_O2-air.json || true
-          curl -fL --retry 2 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' \
-            'https://web.archive.org/cdx/search/cdx?url=www.hitran.org%2Fdata%2FCIA%2FO2-Air%2A.cia&output=json&filter=statuscode%3A200&fl=timestamp%2Coriginal%2Cdigest%2Clength&collapse=digest' \
-            -o acquisition/diag/cdx_www_O2-Air.json || true
-          curl -fL --retry 2 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' \
-            'https://web.archive.org/cdx/search/cdx?url=www.hitran.org%2Fdata%2FCIA%2FO2-air%2A.cia&output=json&filter=statuscode%3A200&fl=timestamp%2Coriginal%2Cdigest%2Clength&collapse=digest' \
-            -o acquisition/diag/cdx_www_O2-air.json || true
-
-          ls -l acquisition/files acquisition/diag
-
+            -o acquisition/O2-air_2024.cia
+          wc -c acquisition/O2-air_2024.cia > acquisition/size.txt
+          sha256sum acquisition/O2-air_2024.cia > acquisition/sha256.txt
+          python3 -c "from pathlib import Path
+p=Path('acquisition/O2-air_2024.cia')
+ls=p.read_text(errors='replace').splitlines()
+Path('acquisition/first80.txt').write_text('\n'.join(ls[:80]))
+hits=[]
+for i,x in enumerate(ls):
+    if any(t in x for t in ('7450','7480','8480','8488','253.','273.','296.','Mate','Maté','MATE')):
+        hits.append(str(i+1)+': '+x)
+Path('acquisition/hits.txt').write_text('\n'.join(hits))
+print('lines',len(ls))
+print('\n'.join(hits[:100]))
+"
       - uses: actions/upload-artifact@v4
-        if: always()
         with:
-          name: m4d-cia-index-probe
+          name: m4d-cia-current-mate-blocks
           path: acquisition/
           retention-days: 7
