@@ -107,6 +107,8 @@ ambiguous labels:               0
 
 Thus Tables 4/5 are not a partial sampling of the magnetic-dipole line list: they cover the complete 91-line principal-isotopologue magnetic-dipole A-band set carried by the historical line list.
 
+The same quantum-identity audit was then executed against the accepted user-provided HITRAN2016 SpectralCalc export. Its A subset contains exactly `150` principal-isotopologue lines split as `91 d + 59 q`. The 91 accepted 2016 `d` labels match the Drouin Tables 4/5 set `91/91`, with zero missing, extra, or duplicate labels. This closes the principal-isotopologue target-edition continuity gate without redistributing the raw export.
+
 The 59 `q` transitions are not part of this Drouin magnetic-dipole update and must not be assigned the Drouin advanced parameters by extrapolation.
 
 ## 5. Strength magnitude of the non-Drouin quadrupole lines
@@ -218,7 +220,7 @@ A1 is no longer a byte/source-discovery blocker. Remaining issues are now execut
 1. freeze the exact SDV mathematical evaluator corresponding to Drouin/HITRAN2016, including the mapping of `S` to the adopted SDV width parameterization;
 2. freeze the temperature evaluation/interpolation rule for the four Table-22 Rosenkranz `Y` values rather than inventing an interpolation silently;
 3. confirm the candidate `Y=0` treatment for the 21 magnetic-dipole lines outside Table 22 from the source semantics and quantify its twilight impact;
-4. map the accepted local HITRAN2016 91 d lines to the Drouin rows by quantum identity and verify `91/91`, `0` ambiguous;
+4. accepted local HITRAN2016 `91/91` d-line continuity: **PASS** by quantum identity, zero missing/extra/duplicates;
 5. retain/test the 59 q lines with target-edition classic parameters;
 6. apply identical per-line physical profile semantics in target excitation and shell attenuation;
 7. pass the full M4D convergence domain.
@@ -234,7 +236,7 @@ Table-22 Y source:                        70 lines PASS
 high-J no-Y set:                          21 lines IDENTIFIED
 quadrupole non-Drouin set:                59 lines IDENTIFIED
 final SDV/Y evaluator semantics:          OPEN
-accepted HITRAN2016 local continuity map: OPEN
+accepted HITRAN2016 local continuity map: 91/91 PASS
 full numerical convergence:               OPEN
 ```
 
