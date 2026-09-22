@@ -150,9 +150,9 @@ kappa_i = rho_O2 * sum_k [ F_k + Y_k(p,T) F'_k ] I_k(T)
 
 for the mixed subset.
 
-This note freezes only the isolated-line `F_k` semantics above. The exact shell-temperature evaluation of `Y_k(p,T)` remains a separate gate because Table 22 tabulates air Y factors only at 200, 250, 296 and 340 K, while the mesospheric model may reach lower temperatures.
+This note freezes only the isolated-line `F_k` semantics above. The shell-temperature evaluation of `Y_k(p,T)` is frozen separately in `docs/m4d_a_band_table22_temperature_policy.md`: exact source nodes at 200/250/296/340 K, piecewise-linear interpolation inside the measured node range, a nominal 200-K clamp below range, and mandatory low-temperature extrapolation/Y=0 sensitivity.
 
-No arbitrary interpolation/extrapolation of Table-22 Y values is authorized by this note.
+No other interpolation/extrapolation rule is authorized.
 
 ## 7. Required numerical verification before final freeze
 
@@ -174,9 +174,9 @@ speed-dependent shift:                  FROZEN (Shift2 = 0)
 Dicke / hard-collision narrowing:       FROZEN OFF (anuVC = 0)
 correlation parameter:                  FROZEN (eta = 0)
 shell-local gamma/shift equations:      FROZEN
-Table-22 Y(T) continuous rule:           OPEN
+Table-22 Y(T) continuous rule:           SELECTED in separate policy / sensitivity pending
 accepted HITRAN2016 continuity mapping: OPEN
 full numerical convergence:             OPEN
 ```
 
-The principal-isotopologue isolated-line profile is now an executable historical specification. The remaining A-band design work is line-mixing temperature evaluation, local target-edition continuity, and numerical closure.
+The principal-isotopologue isolated-line profile is now an executable historical specification. The Table-22 operational temperature rule is selected separately and the principal target-edition continuity map is 91/91 PASS. Remaining A-band work is the declared Y/no-Y/q/rare sensitivities, the rare 280-line continuity check, and full numerical closure.
