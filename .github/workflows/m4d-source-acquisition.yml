@@ -1,4 +1,4 @@
-name: M4D source acquisition probe
+name: M4D CIA numerical diagnostic
 
 on:
   push:
@@ -11,23 +11,315 @@ permissions:
   contents: read
 
 jobs:
-  acquire:
+  cia-diagnostic:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Extract current O2-Air Mate blocks
+
+      - name: Install numerical dependency
+        run: python -m pip install --disable-pip-version-check "numpy>=1.26,<3"
+
+      - name: Run historical Mate CIA geometry diagnostic
         shell: bash
         run: |
           set -eu
           mkdir -p acquisition
-          curl -fL --retry 2 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' 'https://hitran.org/data/CIA/O2-air_2024.cia' -o acquisition/O2-air_2024.cia
-          wc -c acquisition/O2-air_2024.cia | tee acquisition/size.txt
-          sha256sum acquisition/O2-air_2024.cia | tee acquisition/sha256.txt
-          head -n 100 acquisition/O2-air_2024.cia > acquisition/first100.txt
-          grep -in -E '7450|8480|8488|253|273|296|Mate|MATE' acquisition/O2-air_2024.cia > acquisition/hits.txt || true
-          head -n 120 acquisition/hits.txt
+          curl -fL --retry 2 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' \
+            'https://lweb.cfa.harvard.edu/HITRAN/HITRAN2012/CIA/Main-Folder/O2-O2/O2-O2_2011.cia' \
+            -o acquisition/O2-O2_2011.cia
+          curl -fL --retry 2 --connect-timeout 20 --max-time 180 -A 'Mozilla/5.0' \
+            'https://lweb.cfa.harvard.edu/HITRAN/HITRAN2012/HITRAN2012/By-Molecule/Uncompressed-files/07_hit12.par' \
+            -o acquisition/07_hit12.par
+          sha256sum acquisition/O2-O2_2011.cia acquisition/07_hit12.par > acquisition/source_sha256.txt
+
+          cat > acquisition/analyze.py <<'PY'
+          from __future__ import annotations
+
+          import csv
+          import hashlib
+          import json
+          import math
+          import platform
+          from pathlib import Path
+
+          import numpy as np
+
+          R = 6370.0
+          TOP = 150.0
+          TARGETS = np.arange(50.0, 101.0)
+          SZAS = [0.0, 60.0, 85.0, 89.0, 89.9, 95.0, 99.0]
+          IRA_LO = 7571.882333
+          IRA_HI = 8170.942339
+
+          root = Path(".")
+          cia_path = root / "acquisition" / "O2-O2_2011.cia"
+          hit_path = root / "acquisition" / "07_hit12.par"
+          bg_path = root / "src/tfm_photochem/assets/historical_2020/midlatitude_equinox_quiet_radiative_background.csv"
+
+          def sha256(path: Path) -> str:
+              h = hashlib.sha256()
+              with path.open("rb") as f:
+                  for chunk in iter(lambda: f.read(1 << 20), b""):
+                      h.update(chunk)
+              return h.hexdigest()
+
+          cia_lines = cia_path.read_text(encoding="ascii").splitlines()
+          header_lines = [60046, 64241, 68271]
+          source = {}
+          source_meta = {}
+          for hline in header_lines:
+              fields = cia_lines[hline - 1].split()
+              n = int(fields[3])
+              temp = int(round(float(fields[4])))
+              arr = np.array(
+                  [[float(v) for v in line.split()] for line in cia_lines[hline : hline + n]],
+                  dtype=float,
+              )
+              source[temp] = (arr[:, 0], arr[:, 1])
+              source_meta[temp] = {
+                  "n": n,
+                  "lo": float(arr[0, 0]),
+                  "hi": float(arr[-1, 0]),
+                  "negative_samples": int(np.sum(arr[:, 1] < 0.0)),
+                  "k_min": float(np.min(arr[:, 1])),
+                  "k_max": float(np.max(arr[:, 1])),
+              }
+
+          # Historical IRA line-centre witness (not a target-edition substitution).
+          ira_nu = []
+          ira_sw = []
+          for s in hit_path.read_text(encoding="ascii").splitlines():
+              if len(s) < 160 or s[:2].strip() != "7":
+                  continue
+              gu = " ".join(s[67:82].strip().split())
+              gl = " ".join(s[82:97].strip().split())
+              if gu == "a 0" and gl == "X 0":
+                  ira_nu.append(float(s[3:15]))
+                  ira_sw.append(float(s[15:25]))
+          ira_nu = np.array(ira_nu, dtype=float)
+          ira_sw = np.array(ira_sw, dtype=float)
+          if len(ira_nu) != 835:
+              raise RuntimeError(f"unexpected IRA witness count {len(ira_nu)}")
+
+          # Use all historical source knots in the accepted HITRAN2016 IRA support.
+          knots = [np.array([IRA_LO, IRA_HI], dtype=float)]
+          for x, _ in source.values():
+              knots.append(x[(x >= IRA_LO) & (x <= IRA_HI)])
+          grid = np.unique(np.concatenate(knots))
+
+          k_grid = {}
+          k_lines = {}
+          for temp, (x, y) in source.items():
+              k_grid[temp] = np.interp(grid, x, y)
+              k_lines[temp] = np.interp(ira_nu, x, y)
+
+          # M4C accepted radiative atmosphere.
+          z = []
+          T = []
+          M = []
+          O2 = []
+          N2 = []
+          with bg_path.open(newline="", encoding="utf-8") as f:
+              for row in csv.DictReader(f):
+                  z.append(float(row["z_km"]))
+                  T.append(float(row["T_K"]))
+                  M.append(float(row["M_cm3"]))
+                  O2.append(float(row["O2_model_cm3"]))
+                  N2.append(float(row["N2_model_cm3"]))
+          z = np.array(z)
+          T = np.array(T)
+          M = np.array(M)
+          O2 = np.array(O2)
+          N2 = np.array(N2)
+
+          def shell_mid_fields(dz: float):
+              edges = np.arange(0.0, TOP + 0.5 * dz, dz)
+              mids = 0.5 * (edges[:-1] + edges[1:])
+              Ts = np.interp(mids, z, T)
+              O2s = np.interp(mids, z, O2)
+              N2s = np.interp(mids, z, N2)
+              return edges, mids, Ts, O2s, N2s
+
+          def path_lengths(target_z: float, sza_deg: float, edges: np.ndarray) -> tuple[bool, np.ndarray]:
+              theta = math.radians(sza_deg)
+              rt = R + target_z
+              u0 = rt * math.cos(theta)
+              impact = rt * math.sin(theta)
+              tol = 16.0 * np.finfo(float).eps * R
+              if sza_deg > 90.0 and impact < R - tol:
+                  return False, np.zeros(len(edges) - 1)
+              rtop = R + TOP
+              utop = math.sqrt(max(rtop * rtop - impact * impact, 0.0))
+
+              def cumulative(rad):
+                  rad = np.asarray(rad)
+                  root = np.sqrt(np.maximum(rad * rad - impact * impact, 0.0))
+                  present = rad >= impact - tol
+                  length = np.minimum(utop, root) - np.maximum(u0, -root)
+                  return np.where(present & (length > 0.0), length, 0.0)
+
+              inner = R + edges[:-1]
+              outer = R + edges[1:]
+              out = cumulative(outer) - cumulative(inner)
+              out[np.abs(out) <= tol] = 0.0
+              if np.min(out) < -tol:
+                  raise RuntimeError("negative shell path")
+              return True, out
+
+          def temp_weights(temp: float):
+              # Nominal historical policy.
+              if temp <= 253.0:
+                  return np.array([1.0, 0.0, 0.0]), True
+              if temp >= 296.0:
+                  return np.array([0.0, 0.0, 1.0]), True
+              if temp <= 273.0:
+                  f = (temp - 253.0) / 20.0
+                  return np.array([1.0 - f, f, 0.0]), False
+              f = (temp - 273.0) / 23.0
+              return np.array([0.0, 1.0 - f, f]), False
+
+          k_stack_grid = np.vstack([k_grid[253], k_grid[273], k_grid[296]])
+          k_stack_lines = np.vstack([k_lines[253], k_lines[273], k_lines[296]])
+          k_nodeclip_grid = np.maximum(k_stack_grid, 0.0)
+          k_nodeclip_lines = np.maximum(k_stack_lines, 0.0)
+          k_env_min_grid = np.min(k_nodeclip_grid, axis=0)
+          k_env_max_grid = np.max(k_nodeclip_grid, axis=0)
+          k_env_min_lines = np.min(k_nodeclip_lines, axis=0)
+          k_env_max_lines = np.max(k_nodeclip_lines, axis=0)
+
+          def analyse_dz(dz: float):
+              edges, mids, Ts, O2s, N2s = shell_mid_fields(dz)
+              weights = np.vstack([temp_weights(t)[0] for t in Ts])
+              outside = np.array([temp_weights(t)[1] for t in Ts], dtype=bool)
+              results = []
+              for sza in SZAS:
+                  for target in TARGETS:
+                      illum, path_km = path_lengths(float(target), float(sza), edges)
+                      if not illum:
+                          results.append({
+                              "z_km": float(target),
+                              "sza_deg": float(sza),
+                              "illuminated": False,
+                          })
+                          continue
+                      q = path_km * 1.0e5 * O2s * (O2s + N2s)
+                      coeff = q @ weights
+                      tau_grid_raw = coeff @ k_stack_grid
+                      tau_grid_nodeclip = coeff @ k_nodeclip_grid
+                      tau_lines_raw = coeff @ k_stack_lines
+                      tau_lines_nodeclip = coeff @ k_nodeclip_lines
+
+                      # Outside-source-range envelope: replace only those shells
+                      # by min/max of the three measured, nonnegative spectra.
+                      q_out = float(np.sum(q[outside]))
+                      coeff_in = q[~outside] @ weights[~outside] if np.any(~outside) else np.zeros(3)
+                      tau_env_min_grid = coeff_in @ k_nodeclip_grid + q_out * k_env_min_grid
+                      tau_env_max_grid = coeff_in @ k_nodeclip_grid + q_out * k_env_max_grid
+                      tau_env_min_lines = coeff_in @ k_nodeclip_lines + q_out * k_env_min_lines
+                      tau_env_max_lines = coeff_in @ k_nodeclip_lines + q_out * k_env_max_lines
+
+                      atten_lines = np.exp(-tau_lines_nodeclip)
+                      weighted = float(np.sum(ira_sw * atten_lines) / np.sum(ira_sw))
+                      atten_env_lo = np.exp(-tau_env_max_lines)
+                      atten_env_hi = np.exp(-tau_env_min_lines)
+                      weighted_env_lo = float(np.sum(ira_sw * atten_env_lo) / np.sum(ira_sw))
+                      weighted_env_hi = float(np.sum(ira_sw * atten_env_hi) / np.sum(ira_sw))
+
+                      results.append({
+                          "z_km": float(target),
+                          "sza_deg": float(sza),
+                          "illuminated": True,
+                          "path_km": float(np.sum(path_km)),
+                          "min_tangent_shell_mid_km": float(np.min(mids[path_km > 0])) if np.any(path_km > 0) else None,
+                          "tau_grid_raw_min": float(np.min(tau_grid_raw)),
+                          "tau_grid_raw_max": float(np.max(tau_grid_raw)),
+                          "tau_grid_nodeclip_min": float(np.min(tau_grid_nodeclip)),
+                          "tau_grid_nodeclip_max": float(np.max(tau_grid_nodeclip)),
+                          "tau_grid_nodeclip_vs_raw_max_abs": float(np.max(np.abs(tau_grid_nodeclip - tau_grid_raw))),
+                          "tau_lines_min": float(np.min(tau_lines_nodeclip)),
+                          "tau_lines_max": float(np.max(tau_lines_nodeclip)),
+                          "tau_lines_nodeclip_vs_raw_max_abs": float(np.max(np.abs(tau_lines_nodeclip - tau_lines_raw))),
+                          "cia_thin_weight_attenuation": weighted,
+                          "cia_thin_weight_effect_rel": float(1.0 - weighted),
+                          "cia_source_envelope_attenuation_low": weighted_env_lo,
+                          "cia_source_envelope_attenuation_high": weighted_env_hi,
+                          "cia_source_envelope_effect_low": float(1.0 - weighted_env_hi),
+                          "cia_source_envelope_effect_high": float(1.0 - weighted_env_lo),
+                          "tau_env_grid_min": float(np.min(tau_env_min_grid)),
+                          "tau_env_grid_max": float(np.max(tau_env_max_grid)),
+                      })
+              return results
+
+          r125 = analyse_dz(0.125)
+          r0625 = analyse_dz(0.0625)
+
+          key = lambda r: (r["z_km"], r["sza_deg"])
+          ref = {key(x): x for x in r0625}
+          refinement = []
+          for x in r125:
+              if not x.get("illuminated"):
+                  continue
+              y = ref[key(x)]
+              refinement.append({
+                  "z_km": x["z_km"],
+                  "sza_deg": x["sza_deg"],
+                  "abs_weight_effect_diff": abs(x["cia_thin_weight_effect_rel"] - y["cia_thin_weight_effect_rel"]),
+                  "rel_tau_lines_max_diff": abs(x["tau_lines_max"] - y["tau_lines_max"]) / max(abs(y["tau_lines_max"]), 1e-300),
+              })
+
+          illum125 = [x for x in r125 if x.get("illuminated")]
+          summary = {
+              "python": platform.python_version(),
+              "numpy": np.__version__,
+              "sources": {
+                  "O2-O2_2011.cia": {"bytes": cia_path.stat().st_size, "sha256": sha256(cia_path)},
+                  "07_hit12.par": {"bytes": hit_path.stat().st_size, "sha256": sha256(hit_path)},
+              },
+              "source_meta": source_meta,
+              "accepted_2016_ira_support_cm1": [IRA_LO, IRA_HI],
+              "historical_2012_ira_witness": {
+                  "count": int(len(ira_nu)),
+                  "range_cm1": [float(np.min(ira_nu)), float(np.max(ira_nu))],
+                  "sum_sw": float(np.sum(ira_sw)),
+              },
+              "spectral_grid_points": int(len(grid)),
+              "diagnostic_semantics": {
+                  "nominal_temperature": "253/273/296 linear interpolation; endpoint clamp outside",
+                  "nodeclip": "clip each measured source node k to >=0 before T interpolation; conservative diagnostic for negative-sample sensitivity",
+                  "source_envelope": "outside 253..296 K only: per-frequency min/max of three measured nonnegative spectra",
+                  "line_weight": "HITRAN2012 IRA line strength only; diagnostic, not final monomer-self-shielded gIRA",
+              },
+              "summary_0125": {
+                  "max_tau_grid": max(x["tau_grid_nodeclip_max"] for x in illum125),
+                  "max_tau_lines": max(x["tau_lines_max"] for x in illum125),
+                  "max_thin_weight_effect_rel": max(x["cia_thin_weight_effect_rel"] for x in illum125),
+                  "max_source_envelope_effect_high": max(x["cia_source_envelope_effect_high"] for x in illum125),
+                  "max_line_negative_handling_tau_difference": max(x["tau_lines_nodeclip_vs_raw_max_abs"] for x in illum125),
+                  "max_grid_negative_handling_tau_difference": max(x["tau_grid_nodeclip_vs_raw_max_abs"] for x in illum125),
+              },
+              "spatial_refinement": {
+                  "max_abs_weight_effect_diff": max(x["abs_weight_effect_diff"] for x in refinement),
+                  "max_rel_tau_lines_max_diff": max(x["rel_tau_lines_max_diff"] for x in refinement),
+              },
+              "cases_0125": r125,
+              "cases_00625": r0625,
+              "refinement_cases": refinement,
+          }
+
+          Path("acquisition/cia_diagnostic.json").write_text(
+              json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8"
+          )
+          print(json.dumps(summary["summary_0125"], indent=2))
+          print(json.dumps(summary["spatial_refinement"], indent=2))
+          PY
+
+          python acquisition/analyze.py
+
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: m4d-cia-current-mate-blocks
-          path: acquisition/
+          name: m4d-cia-numerical-diagnostic
+          path: |
+            acquisition/cia_diagnostic.json
+            acquisition/source_sha256.txt
           retention-days: 7
