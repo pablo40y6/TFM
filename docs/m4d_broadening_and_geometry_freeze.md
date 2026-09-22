@@ -130,7 +130,7 @@ Current status:
 
 **IRA classic Voigt: BASELINE CANDIDATE SELECTED / NUMERICAL VALIDATION PENDING.**
 
-CIA remains outside the monomer baseline and is a required M4D closure sensitivity, documented in `docs/m4d_ira_cia_historical_source_recovery.md`.
+CIA remains a separate binary-density opacity from the monomer line profile and source coefficient. The previous monomer-only attenuation candidate is **reopened for numerical closure** after the historical CIA full-domain diagnostic exceeded the 0.1% relevance threshold in required twilight cases. See `docs/m4d_ira_cia_numerical_diagnostic.md`.
 
 ## 5. Pressure shifts and narrowing
 
@@ -166,8 +166,9 @@ The M4C geometry equations and shadow semantics are reused, but NIR optical-dept
 The design-forensics rule remains:
 
 - piecewise-linear interpolation from the accepted one-kilometre atmospheric nodes;
-- exact spherical intersections on `0.125 km` sub-shells for M4D;
-- `0.0625 km` as convergence reference.
+- exact spherical intersections on `0.125 km` sub-shells for M4D monomer transfer;
+- `0.0625 km` as monomer convergence reference;
+- CIA-specific `0.0625 km` sub-shells with `0.03125 km` convergence reference.
 
 The previous review found maximum `0.125 -> 0.0625 km` differences below approximately `0.034%` across A/B/IRA in the tested domain.
 
@@ -221,7 +222,8 @@ Retained/resolved:
 
 - M4C spherical geometry semantics;
 - shell-local transfer;
-- `0.125 km` M4D sub-stratification with `0.0625 km` convergence reference;
+- monomer `0.125 km` M4D sub-stratification with `0.0625 km` convergence reference;
+- CIA `0.0625 km` sub-stratification with `0.03125 km` convergence reference;
 - rejection of Doppler-only;
 - A iso-1 historical advanced profile family identified;
 - A iso-2/3 historical Galatry/Dicke profile family identified;
@@ -236,6 +238,6 @@ Still blocking:
 - final target+attenuation convergence for all selected profiles;
 - pressure-shift sensitivity;
 - corrected qSDV B sensitivity;
-- historical IRA CIA byte materialization and twilight sensitivity.
+- historical IRA CIA bytes and path numerics PASS; fully coupled target-edition CIA+Voigt twilight rate and final attenuation-scope decision remain open.
 
 No M4D implementation is authorized.
