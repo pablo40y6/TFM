@@ -72,6 +72,15 @@ This exactly matches the accepted M4D A-subset cardinality.
 
 All `140 + 140` rare-isotopologue records have the two appended Dicke-narrowing fields. HITRAN2012 identifies these last two columns as the air- and self-broadened collisional/Dicke narrowing parameters, respectively, in `cm^-1 atm^-1` at 296 K.
 
+The principal-isotopologue subset makes an additional profile-family distinction explicit in the file layout:
+
+```text
+91 local-flag d rows: appended Dicke fields present
+59 local-flag q rows: appended Dicke fields absent
+```
+
+Thus the historical auxiliary itself does not supply Galatry/Dicke narrowing parameters for the 59 principal-isotopologue electric-quadrupole `q` transitions. Those lines must not be assigned either rare-isotopologue Galatry coefficients or Drouin magnetic-dipole advanced parameters by extrapolation; the source-supported candidate is the accepted target-edition classic profile.
+
 ## 3. Deterministic mapping rule
 
 The auxiliary file intentionally omits line position, intensity and lower-state energy. It repeats the molecule/isotopologue identifier, classic broadening/shift fields, global/local quantum identifications and a transition flag, then appends the two Dicke parameters when available.
@@ -187,8 +196,10 @@ A3 exact bytes/hash:                       PASS
 07_hit12.par audit witness:                PASS
 HITRAN2012 target A mapping:               430/430 PASS
 Rare Dicke coverage:                       280/280 PASS
+Principal q Dicke coverage:                 0/59 by source design; classic-profile candidate
 Auxiliary parameter-precedence semantics:  FROZEN
-Accepted HITRAN2016 local continuity map:   pending local raw-source check
+Accepted HITRAN2016 principal d continuity: 91/91 PASS
+Accepted HITRAN2016 rare continuity map:    pending local raw-source check
 ```
 
 A2/A3 are no longer source-materialization blockers. The remaining A-band external blocker is principally A1: the Drouin principal-isotopologue advanced parameterization, plus the final local HITRAN2016 continuity check and numerical convergence.
