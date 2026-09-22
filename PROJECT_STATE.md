@@ -33,7 +33,7 @@ The immutable current artifact is `artifacts/accepted/m4c-r2/tfm-photochem-miles
 
 M4D is **NOT IMPLEMENTED / DESIGN NOT FROZEN**. It must provide `gA`, `gB`, and `gIRA` without starting M5.
 
-The historical A-band source-discovery and byte-materialization blockers have now been substantially closed through reproducible public-source acquisition. The remaining gates are executable profile semantics, local HITRAN2016 continuity, one historical CIA asset, and numerical convergence.
+The historical A-band and Maté CIA source-discovery/byte-materialization blockers have now been closed through reproducible public-source acquisition. The remaining gates are local HITRAN2016 rare-line continuity and numerical closure/sensitivity for the selected A/B/IRA treatments.
 
 ## Frozen source / transition gates
 
@@ -115,7 +115,7 @@ bytes:   310708
 SHA-256: 935fd09d5f619f7eb3f7fac5347e80fa81bc23d3158dc9c519874bb161c364fe
 ```
 
-### Transition classification / mapping: PASS as historical source audit
+### Transition classification / mapping: PASS
 
 The principal-isotopologue target set contains:
 
@@ -124,7 +124,7 @@ The principal-isotopologue target set contains:
 59 electric-quadrupole q lines
 ```
 
-Drouin Tables 4/5 contain exactly `91` magnetic-dipole rows and map `91/91`, with zero unmatched/ambiguous labels, to the historical d-line set.
+Drouin Tables 4/5 contain exactly `91` magnetic-dipole rows and map `91/91`, with zero unmatched/ambiguous labels, to the historical d-line set. The accepted HITRAN2016 SpectralCalc A subset was independently checked by fixed-record quantum identity: it contains exactly `91` principal-isotopologue `d` lines and the label set matches Drouin `91/91`, with zero missing, extra, or duplicate labels.
 
 Drouin supplement Table 22 supplies first-order air Rosenkranz `Y` values at `200, 250, 296, 340 K` for `70/91` d lines. The remaining 21 high-J d lines are explicitly identified and account for about `0.0131464%` of historical iso-1 integrated A strength. The 59 q lines account for about `0.00079353%`.
 
@@ -152,7 +152,7 @@ Drouin supplement Table 22 supplies first-order air Rosenkranz `Y` values at `20
 - Table-22 temperature policy is now selected: exact source nodes at 200/250/296/340 K, piecewise-linear interpolation within 200..340 K, nominal 200-K clamp below range with mandatory linear-extrapolation/Y=0 sensitivity;
 - 21 no-Y d-line sensitivity;
 - 59 q-line sensitivity;
-- local accepted-HITRAN2016 `91/91` continuity mapping;
+- accepted-HITRAN2016 principal `91/91` continuity: **PASS**;
 - final A spectral/path convergence.
 
 See `docs/m4d_a_band_drouin_materialization_audit.md`, `docs/m4d_a_band_sdv_semantics_freeze.md`, and `docs/m4d_a_band_table22_temperature_policy.md`.
@@ -214,7 +214,20 @@ The known partial/defective historical qSDV data are not silently reproduced. A 
 
 The historical monomer baseline excludes CIA as a production process and baseline opacity, but M4D closure requires a twilight attenuation sensitivity.
 
-HITRAN2016 identifies Maté et al. (1999), DOI `10.1029/1999JD900824`, as the revised 1.27-micron CIA source. The relevant atmospheric product is `O2-Air`; do not separately add O2-O2 for the same mixture.
+HITRAN2016 identifies Maté et al. (1999), DOI `10.1029/1999JD900824`, as the revised 1.27-micron CIA source and explicitly corrects the 2012 pair-label error. The three historical Maté air-mixture numerical blocks have therefore been recovered byte-for-byte from the surviving HITRAN2012 `O2-O2_2011.cia` witness and are interpreted as `O2-Air` under the HITRAN2016 correction. Do not separately add O2-O2 for the same mixture.
+
+Historical witness:
+
+```text
+O2-O2_2011.cia
+bytes 1938473
+SHA-256 8cc3ecc87bf7a02492b385ecc71abf279b058da853aea768825deb81237d5ee3
+
+Maté blocks:
+253 K  block SHA-256 58366c46162ca55c84aecd8b81bdadc1f5a68a27db0fbbd615a401dcc21f0bfc
+273 K  block SHA-256 09a1e93c23004c0b12acf3e9b97fcb44f4bd32872e7ad1c6441225f0ab56b545
+296 K  block SHA-256 19bd3c333c56dc9dd90019b57d014a69db420cae139a33a1c470557b1ad78e08
+```
 
 Frozen cold-shell sensitivity policy:
 
@@ -227,7 +240,7 @@ outside source range: also propagate min/max envelope of the three measured spec
 
 Do not silently substitute the post-2016 theoretical temperature extension.
 
-**Still open:** exact historical HITRAN2016 machine-readable Maté `O2-Air` bytes/hash and the resulting twilight sensitivity.
+**Source materialization: PASS.** Still open: deterministic common-grid/support handling, the negative experimental-sample sensitivity, and the resulting full twilight CIA sensitivity. See `docs/m4d_ira_cia_materialization_audit.md`.
 
 ## Numerical closure gate
 
@@ -296,8 +309,8 @@ Earlier forensics/research notes remain provenance evidence even where their old
 ## Immediate next gate
 
 1. Execute the A iso-1 Table-22 low-temperature envelope numerically; SDV and operational Y(T) semantics are selected.
-2. Run local accepted-HITRAN2016 continuity maps: `91/91` Drouin d and `280/280` rare Galatry.
-3. Recover/freeze the exact historical Maté `O2-Air` CIA machine-readable asset.
+2. Complete the remaining accepted-HITRAN2016 continuity map: `280/280` rare Galatry (`91/91` Drouin d is now PASS).
+3. Close the CIA common-grid/negative-sample sensitivity using the frozen Maté blocks.
 4. Execute consistent A/B/IRA target+attenuation calculations and declared sensitivities.
 5. Pass the full altitude/SZA/tangent convergence gate.
 
