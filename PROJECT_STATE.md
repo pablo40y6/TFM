@@ -75,7 +75,8 @@ HAPI 1.1.0.8.2
 
 - **Doppler-only: REJECTED FOR FULL DOMAIN.** Illuminated twilight rays can sample dense atmosphere well below the 50-km chemistry target.
 - **Geometry: PASS.** Retain the accepted M4C spherical geometry, Earth radius `6370 km`, radiative top `150 km`, physical Earth shadow and tangent semantics.
-- **Path sub-stratification: SELECTED.** M4D NIR transfer uses `0.125 km`, checked against `0.0625 km`.
+- **Monomer path sub-stratification: SELECTED.** M4D NIR monomer transfer uses `0.125 km`, checked against `0.0625 km`.
+- **CIA path sub-stratification: SELECTED.** Historical O2-Air CIA uses `0.0625 km`, checked against `0.03125 km`; `0.125 -> 0.0625 km` narrowly fails the 0.1% CIA attenuation-factor gate in near-ground SZA=99 deg tangents.
 - **Shellwise spectroscopy: REQUIRED.** Target-temperature cross section times total column is rejected.
 - **No arbitrary Voigt attenuation wing:** for classic B/IRA candidates, evaluate all accepted absorber lines at each target quadrature node and converge target support/order separately.
 
@@ -210,37 +211,29 @@ The known partial/defective historical qSDV data are not silently reproduced. A 
 
 **BASELINE CANDIDATE SELECTED.** Use classic HITRAN2016 Voigt with atmospheric `air` coefficients under the corrected diluent semantics above, pending final full-domain convergence.
 
-## IRA CIA Option B
+## IRA CIA attenuation scope
 
-The historical monomer baseline excludes CIA as a production process and baseline opacity, but M4D closure requires a twilight attenuation sensitivity.
+The historical monomer source term remains the first-order 835-line a(0)-X(0) excitation. CIA is a separate binary-density opacity and never becomes a production source.
 
-HITRAN2016 identifies Maté et al. (1999), DOI `10.1029/1999JD900824`, as the revised 1.27-micron CIA source and explicitly corrects the 2012 pair-label error. The three historical Maté air-mixture numerical blocks have therefore been recovered byte-for-byte from the surviving HITRAN2012 `O2-O2_2011.cia` witness and are interpreted as `O2-Air` under the HITRAN2016 correction. Do not separately add O2-O2 for the same mixture.
+The historical Mate numerical source is materialized and the HITRAN2016 O2-Air semantic correction is frozen. A full-domain geometry diagnostic now shows that CIA is **not uniformly negligible** over the required twilight domain. At 0.0625-km CIA sub-stratification, a line-strength-weighted diagnostic gives about 0.382% reduction at 50 km / SZA 95 deg and about 2.05% at 100 km / SZA 99 deg, with much larger effects for near-ground SZA 99 deg tangents. The measured-temperature source envelope does not change that materiality conclusion.
 
-Historical witness:
+A profile-independent lower-bound test also finds four illuminated SZA 99 deg cases (80--83 km) where the minimum CIA attenuation across the entire accepted IRA spectral support already exceeds 0.1%.
 
-```text
-O2-O2_2011.cia
-bytes 1938473
-SHA-256 8cc3ecc87bf7a02492b385ecc71abf279b058da853aea768825deb81237d5ee3
+Therefore the previous **monomer-only attenuation baseline candidate is REOPENED FOR NUMERICAL CLOSURE**. This does not yet force CIA into production: the final decision requires the target-edition, monomer-self-shielded, CIA-coupled gIRA calculation above the 1e-15 s^-1 retained-rate floor.
 
-Maté blocks:
-253 K  block SHA-256 58366c46162ca55c84aecd8b81bdadc1f5a68a27db0fbbd615a401dcc21f0bfc
-273 K  block SHA-256 09a1e93c23004c0b12acf3e9b97fcb44f4bd32872e7ad1c6441225f0ab56b545
-296 K  block SHA-256 19bd3c333c56dc9dd90019b57d014a69db420cae139a33a1c470557b1ad78e08
-```
+Numerical CIA rules now selected:
 
-Frozen cold-shell sensitivity policy:
+~~~text
+historical source: Mate 253/273/296-K O2-Air blocks
+temperature: source-node interpolation + frozen endpoint/envelope policy
+physical opacity: nonnegative
+CIA sub-stratification: 0.0625 km
+CIA convergence reference: 0.03125 km
+~~~
 
-```text
-253..296 K: linear interpolation among measured Maté spectra
-T < 253 K:  nominal clamp to 253-K endpoint
-T > 296 K: nominal clamp to 296-K endpoint
-outside source range: also propagate min/max envelope of the three measured spectra
-```
+The 0.0625 -> 0.03125 comparison passes with maximum relative differences of about 0.0388% in the diagnostic attenuation factor and 0.0416% in the maximum line-centre optical depth.
 
-Do not silently substitute the post-2016 theoretical temperature extension.
-
-**Source materialization: PASS.** Still open: deterministic common-grid/support handling, the negative experimental-sample sensitivity, and the resulting full twilight CIA sensitivity. See `docs/m4d_ira_cia_materialization_audit.md`.
+See docs/m4d_ira_cia_materialization_audit.md and docs/m4d_ira_cia_numerical_diagnostic.md.
 
 ## Numerical closure gate
 
@@ -263,7 +256,8 @@ for rates above `1e-15 s^-1`. Below that floor report absolute differences and r
 Required sensitivities/refinements include:
 
 - spectral support/order;
-- `0.125 -> 0.0625 km` path refinement;
+- monomer `0.125 -> 0.0625 km` path refinement;
+- CIA `0.0625 -> 0.03125 km` path refinement;
 - pressure shifts on/off;
 - A LM/no-LM high-J treatment;
 - A q-line contribution;
@@ -310,7 +304,7 @@ Earlier forensics/research notes remain provenance evidence even where their old
 
 1. Execute the A iso-1 Table-22 low-temperature envelope numerically; SDV and operational Y(T) semantics are selected.
 2. Complete the remaining accepted-HITRAN2016 continuity map: `280/280` rare Galatry (`91/91` Drouin d is now PASS).
-3. Close the CIA common-grid/negative-sample sensitivity using the frozen Maté blocks.
+3. Execute the fully coupled target-edition IRA Voigt + historical CIA calculation; the CIA source/grid/path diagnostic is closed, but the monomer-only attenuation baseline is reopened until the retained-rate test is complete.
 4. Execute consistent A/B/IRA target+attenuation calculations and declared sensitivities.
 5. Pass the full altitude/SZA/tangent convergence gate.
 
