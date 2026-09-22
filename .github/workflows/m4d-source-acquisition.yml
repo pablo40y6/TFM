@@ -252,20 +252,30 @@ jobs:
 
           r125 = analyse_dz(0.125)
           r0625 = analyse_dz(0.0625)
+          r03125 = analyse_dz(0.03125)
 
           key = lambda r: (r["z_km"], r["sza_deg"])
-          ref = {key(x): x for x in r0625}
-          refinement = []
-          for x in r125:
-              if not x.get("illuminated"):
-                  continue
-              y = ref[key(x)]
-              refinement.append({
-                  "z_km": x["z_km"],
-                  "sza_deg": x["sza_deg"],
-                  "abs_weight_effect_diff": abs(x["cia_thin_weight_effect_rel"] - y["cia_thin_weight_effect_rel"]),
-                  "rel_tau_lines_max_diff": abs(x["tau_lines_max"] - y["tau_lines_max"]) / max(abs(y["tau_lines_max"]), 1e-300),
-              })
+
+          def compare(coarse, fine):
+              ref = {key(x): x for x in fine}
+              out = []
+              for x in coarse:
+                  if not x.get("illuminated"):
+                      continue
+                  y = ref[key(x)]
+                  a = 1.0 - x["cia_thin_weight_effect_rel"]
+                  b = 1.0 - y["cia_thin_weight_effect_rel"]
+                  out.append({
+                      "z_km": x["z_km"],
+                      "sza_deg": x["sza_deg"],
+                      "abs_weight_effect_diff": abs(x["cia_thin_weight_effect_rel"] - y["cia_thin_weight_effect_rel"]),
+                      "rel_attenuation_factor_diff": abs(a - b) / max(abs(b), 1e-300),
+                      "rel_tau_lines_max_diff": abs(x["tau_lines_max"] - y["tau_lines_max"]) / max(abs(y["tau_lines_max"]), 1e-300),
+                  })
+              return out
+
+          refinement_125_0625 = compare(r125, r0625)
+          refinement_0625_03125 = compare(r0625, r03125)
 
           illum125 = [x for x in r125 if x.get("illuminated")]
           summary = {
@@ -298,12 +308,22 @@ jobs:
                   "max_grid_negative_handling_tau_difference": max(x["tau_grid_nodeclip_vs_raw_max_abs"] for x in illum125),
               },
               "spatial_refinement": {
-                  "max_abs_weight_effect_diff": max(x["abs_weight_effect_diff"] for x in refinement),
-                  "max_rel_tau_lines_max_diff": max(x["rel_tau_lines_max_diff"] for x in refinement),
+                  "0.125_to_0.0625": {
+                      "max_abs_weight_effect_diff": max(x["abs_weight_effect_diff"] for x in refinement_125_0625),
+                      "max_rel_attenuation_factor_diff": max(x["rel_attenuation_factor_diff"] for x in refinement_125_0625),
+                      "max_rel_tau_lines_max_diff": max(x["rel_tau_lines_max_diff"] for x in refinement_125_0625),
+                  },
+                  "0.0625_to_0.03125": {
+                      "max_abs_weight_effect_diff": max(x["abs_weight_effect_diff"] for x in refinement_0625_03125),
+                      "max_rel_attenuation_factor_diff": max(x["rel_attenuation_factor_diff"] for x in refinement_0625_03125),
+                      "max_rel_tau_lines_max_diff": max(x["rel_tau_lines_max_diff"] for x in refinement_0625_03125),
+                  },
               },
               "cases_0125": r125,
               "cases_00625": r0625,
-              "refinement_cases": refinement,
+              "cases_003125": r03125,
+              "refinement_125_0625": refinement_125_0625,
+              "refinement_0625_03125": refinement_0625_03125,
           }
 
           Path("acquisition/cia_diagnostic.json").write_text(
