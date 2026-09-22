@@ -217,7 +217,7 @@ A source-corrected qSDV sensitivity on the historically covered principal-isotop
 
 Use the same classic HITRAN2016 air-diluent Voigt equations for the accepted `a(0)-X(0)` monomer lines.
 
-IRA CIA is a separate Option-B attenuation sensitivity; it is not folded into the monomer line profile or monomer production coefficient.
+IRA CIA remains separate from the monomer line profile and never enters the monomer production coefficient. Its attenuation scope is now **reopened for numerical closure**: the historical CIA diagnostic exceeds the 0.1% relevance threshold in required twilight cases, so monomer-only attenuation may not be frozen until the fully coupled retained-rate calculation is completed.
 
 ## 6. Solar photon flux
 
@@ -248,8 +248,9 @@ Retain accepted M4C geometry:
 For M4D NIR transfer use:
 
 - piecewise-linear interpolation of accepted one-kilometre atmospheric nodes;
-- exact intersections on deterministic `0.125 km` sub-shells;
-- `0.0625 km` as refinement reference.
+- exact intersections on deterministic `0.125 km` sub-shells for monomer line transfer;
+- `0.0625 km` as monomer refinement reference;
+- historical CIA uses `0.0625 km` sub-shells with `0.03125 km` as its convergence reference, because the quadratic-density opacity narrowly fails the 0.1% gate at `0.125 km` in near-ground SZA=99 deg tangents.
 
 Do not modify M4C-R2 UV behavior.
 
@@ -345,9 +346,9 @@ These are regression anchors for line strengths/solar integration, not forced an
 
 No empirical normalization may be used to force agreement.
 
-## 14. IRA CIA Option B
+## 14. IRA CIA attenuation closure
 
-The monomer baseline excludes CIA from production and baseline attenuation.
+The monomer source coefficient excludes CIA from production. The previous proposal to exclude CIA from baseline attenuation is now reopened: full-domain diagnostics show historically supported O2-Air CIA can be material in required twilight cases.
 
 The required closure sensitivity uses historical Maté `O2-Air` data and must not separately add O2-O2 for the same atmospheric mixture:
 
@@ -379,7 +380,7 @@ outside measured range:
 
 Endpoint clamping is a sensitivity convention, not a claim of measured extrapolation. Do not silently use the post-2016 theoretical temperature extension.
 
-The historical Maté numerical source is now materialized through the surviving `O2-O2_2011.cia` byte witness plus the explicit HITRAN2016 pair-semantic correction. The source gate is PASS; remaining CIA gates are common-grid/support handling, negative experimental-sample sensitivity, and the full twilight rate sensitivity.
+The historical Maté numerical source is materialized through the surviving `O2-O2_2011.cia` byte witness plus the explicit HITRAN2016 pair-semantic correction. The source and path-numerics gates are PASS. The line-centre diagnostic sees zero raw-vs-nonnegative difference; the full-support negative knots remain a required finite-wing sensitivity. The CIA-specific `0.0625 -> 0.03125 km` refinement passes the 0.1% gate. Remaining CIA work is the fully coupled target-edition monomer + CIA rate calculation and the final attenuation-scope decision.
 
 ## 15. Numerical convergence gate
 
@@ -402,7 +403,8 @@ for rates above `1e-15 s^-1`. Below the floor report absolute differences and re
 Required refinements/sensitivities include:
 
 - target spectral support/order;
-- `0.125 -> 0.0625 km` path refinement;
+- monomer `0.125 -> 0.0625 km` path refinement;
+- CIA `0.0625 -> 0.03125 km` path refinement;
 - pressure shifts on/off;
 - B corrected qSDV sensitivity;
 - A 21 no-Y d-line treatment;
@@ -442,7 +444,7 @@ Before `docs/m4d_final_design_specification.md` may be created:
 - run full B classic-Voigt convergence and corrected qSDV sensitivity;
 - run full IRA classic-Voigt convergence;
 - quantify pressure-shift sensitivity;
-- use the frozen historical Maté byte witness and close CIA grid/negative-sample handling plus twilight sensitivity;
+- use the frozen historical Maté byte witness and execute the final target-edition Voigt + CIA coupled twilight calculation; preserve an explicit raw-vs-nonnegative finite-wing sensitivity;
 - retain TIPS/solar/g0 regression checks.
 
 ## 18. Implementation boundary
