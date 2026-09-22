@@ -4,7 +4,7 @@ Status: **OPERATIONAL SOURCE GATE / DESIGN NOT FROZEN / NO IMPLEMENTATION AUTHOR
 
 Branch: `milestone/m4d-design`
 
-This document began as the M4D provenance acquisition checklist. A1/A2/A3 have now passed byte materialization and deterministic historical mapping; the only remaining external byte blocker is C1, the historical HITRAN2016 O2-Air 1.27-micron CIA asset. The remaining A/B/IRA work is numerical closure and accepted-HITRAN2016 continuity.
+This document began as the M4D provenance acquisition checklist. A1/A2/A3 and the historical Maté 1.27-micron CIA numerical source have now passed byte materialization. The remaining work is accepted-HITRAN2016 continuity for the rare A lines plus executable/numerical closure for A/B/IRA; there is no longer an external historical-source byte blocker.
 
 No current HITRAN/HAPI/CIA product may be substituted for a missing historical asset merely to pass this gate.
 
@@ -107,36 +107,36 @@ source: Mate et al. (1999)
 DOI 10.1029/1999JD900824
 ```
 
-Historical semantics already frozen:
+HITRAN2016 explicitly documents the 2012 pair-label error: the Maté air-mixture spectra were accidentally present under the 2012 `O2-O2` label, and the 2016 release corrected their semantics to `O2-Air`. The historical numerical blocks can therefore be recovered byte-for-byte from the surviving HITRAN2012 archive while applying the explicit HITRAN2016 pair-semantic correction. This is a historical recovery witness, not a modern substitution.
 
-- the 21:79 O2:N2 mixture data belong to `O2-Air`;
-- `O2-Air` already includes the O2-O2 contribution of that mixture;
-- do not add a separate O2-O2 opacity on top of it for the same atmospheric calculation;
-- three Maté temperature sets correspond to approximately 253, 273, and 296 K;
-- historical spectral domain is approximately 7450-8480 cm^-1.
-
-The exact 2016 machine-readable filename has not yet been recovered with sufficient confidence. Therefore filename inference is prohibited.
-
-Required local evidence:
+Frozen historical source witness:
 
 ```text
-historical HITRAN2016 provider/archive
-exact filename
-edition/version witness
-retrieval date
-byte size
-SHA-256
-header/reference identity
-set count
-per-set temperature
-per-set spectral range
-per-set row count
-units
+archive file: O2-O2_2011.cia
+bytes:        1938473
+SHA-256:      8cc3ecc87bf7a02492b385ecc71abf279b058da853aea768825deb81237d5ee3
 ```
 
-The frozen cold-shell sensitivity rule is already defined in `docs/m4d_ira_cia_historical_source_recovery.md` and must not be replaced with a modern low-temperature CIA dataset without explicitly changing the historical model branch.
+Recovered Maté 1.27-micron blocks:
 
-Gate C1 passes only after the exact historical bytes are identified and hashed.
+```text
+253 K: 7450.380..8477.180 cm^-1, 4194 points
+       block SHA-256 58366c46162ca55c84aecd8b81bdadc1f5a68a27db0fbbd615a401dcc21f0bfc
+273 K: 7500.089..8486.485 cm^-1, 4029 points
+       block SHA-256 09a1e93c23004c0b12acf3e9b97fcb44f4bd32872e7ad1c6441225f0ab56b545
+296 K: 7450.132..8487.465 cm^-1, 4237 points
+       block SHA-256 19bd3c333c56dc9dd90019b57d014a69db420cae139a33a1c470557b1ad78e08
+```
+
+Frozen semantics:
+
+- interpret these numerical blocks as `O2-Air` under the explicit HITRAN2016 correction;
+- use `n_O2 * n_air` in the CIA optical depth;
+- do not add a separate O2-O2 term for the same atmospheric mixture;
+- retain the frozen 253/273/296-K interpolation/clamp/envelope policy;
+- do not use the post-2016 theoretical low-temperature extension as a historical replacement.
+
+Gate C1: **PASS FOR HISTORICAL SOURCE MATERIALIZATION.** Remaining CIA work is numerical: common-grid/support handling, the declared treatment/sensitivity for small negative experimental samples, and the full twilight `gIRA` sensitivity. See `docs/m4d_ira_cia_materialization_audit.md`.
 
 ## 4. Raw HITRAN2016 SpectralCalc export — already available, never redistribute
 
@@ -180,7 +180,7 @@ Derived non-redistributive parameter summaries may be committed only if they do 
 
 ## 6. Exact numerical work unlocked by these assets
 
-With A1/A2/A3 materialized, and C1 still outstanding, execute numerical work in this order:
+With A1/A2/A3 and the historical Maté CIA source materialized, execute numerical work in this order:
 
 1. **A iso-1:** reconstruct the Drouin/HITRAN2016 advanced profile and line mixing; validate source normalization and total nonnegative physical absorption.
 2. **A iso-2/3:** execute historical Galatry/Dicke treatment and map all accepted rare lines.
@@ -235,11 +235,12 @@ A2/A3 exact source bytes              PASS
 A historical deterministic mapping    PASS
 A isolated-line SDV semantics          SELECTED / frozen equations
 A Table-22 Y(T) operational policy     SELECTED / low-T sensitivity pending
-C1 exact historical CIA bytes         BLOCKED / not materialized
-Full final numerical convergence      OPEN / C1 blocks CIA sensitivity
+C1 historical CIA source/material     PASS via Maté byte witness + HITRAN2016 semantic correction
+CIA grid/negative-sample sensitivity   OPEN / numerical closure pending
+Full final numerical convergence      OPEN
 M4D design                             NOT FROZEN
 M4D implementation                    NOT AUTHORIZED
 M5                                    NOT AUTHORIZED
 ```
 
-The next productive actions are **C1 source materialization plus numerical closure**. A-band source acquisition itself is no longer a blocker.
+The source-materialization phase is now substantially closed. The next productive actions are **accepted-HITRAN2016 rare-line continuity plus numerical closure**, including the CIA grid/noise sensitivity. A-band and CIA source acquisition are no longer external blockers.
