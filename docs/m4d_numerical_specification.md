@@ -130,7 +130,7 @@ Tables 4/5 provide `91` line-by-line magnetic-dipole parameters and map `91/91` 
 
 For each of these lines the selected profile family is **speed-dependent Voigt**, using Drouin/HITRAN2016 parameters. The paper supplies, per line, foreign/self widths and temperature exponents, foreign/self pressure shifts and linear shift-temperature coefficients, and speed-dependence parameter `S`.
 
-The exact mathematical evaluator and conversion to the HITRAN-facing SDV parameter convention remain an executable-design gate; do not substitute classic Voigt on these 91 lines merely for convenience.
+The executable isolated-line convention is frozen in `docs/m4d_a_band_sdv_semantics_freeze.md`: `Gam2 = S*Gam0`, `Shift2 = 0`, `anuVC = 0`, `eta = 0`, with shell-local Drouin foreign/self width and shift equations. Do not substitute classic Voigt on these 91 lines merely for convenience.
 
 ### 5.2 A iso 1: line mixing on 70/91 magnetic-dipole lines
 
@@ -144,14 +144,17 @@ for `70` of the `91` magnetic-dipole lines. After branch-label normalization the
 
 The `21` magnetic-dipole lines without a Table-22 Y value are explicitly identified in `docs/m4d_a_band_drouin_materialization_audit.md`. Their historical integrated strength is about `0.0131464%` of iso-1 A.
 
-Candidate rule:
+Selected historical_2020 rule:
 
 ```text
 70 lines: SDV + first-order Rosenkranz Y(T)
-21 lines: SDV with no invented LM term
+          exact Table-22 nodes at 200/250/296/340 K
+          piecewise-linear interpolation inside 200..340 K
+          T<200 K nominal 200-K clamp + required extrapolation/Y=0 envelope
+21 lines: SDV with Y=0 nominal; no invented LM term
 ```
 
-Do not freeze the candidate `Y=0` interpretation or the interpolation of Table-22 values until the historical relation semantics and numerical sensitivity are closed.
+This operational rule is selected in `docs/m4d_a_band_table22_temperature_policy.md`; the low-temperature and no-Y sensitivities remain numerical closure gates.
 
 ### 5.3 A iso 1: 59 electric-quadrupole lines
 
@@ -376,7 +379,7 @@ outside measured range:
 
 Endpoint clamping is a sensitivity convention, not a claim of measured extrapolation. Do not silently use the post-2016 theoretical temperature extension.
 
-The exact historical HITRAN2016 machine-readable `O2-Air` asset remains an acquisition gate.
+The historical Maté numerical source is now materialized through the surviving `O2-O2_2011.cia` byte witness plus the explicit HITRAN2016 pair-semantic correction. The source gate is PASS; remaining CIA gates are common-grid/support handling, negative experimental-sample sensitivity, and the full twilight rate sensitivity.
 
 ## 15. Numerical convergence gate
 
@@ -431,19 +434,19 @@ For A line mixing, non-negativity/conservation checks apply to the total physica
 
 Before `docs/m4d_final_design_specification.md` may be created:
 
-- freeze exact SDV evaluator/mapping for the 91 Drouin d lines;
-- freeze Table-22 `Y(T)` evaluation semantics;
-- justify/test the 21 d lines without Y and the 59 q lines;
-- pass local accepted-HITRAN2016 continuity mappings (`91/91` Drouin and `280/280` Galatry);
+- retain/regression-test the frozen SDV evaluator for the 91 Drouin d lines;
+- retain/regression-test the selected Table-22 `Y(T)` evaluation semantics;
+- quantify the required low-temperature Y envelope, 21 no-Y d-line sensitivity, and 59 q-line contribution;
+- complete the local accepted-HITRAN2016 rare continuity map (`91/91` Drouin is PASS; `280/280` Galatry remains open);
 - run full A target+attenuation convergence;
 - run full B classic-Voigt convergence and corrected qSDV sensitivity;
 - run full IRA classic-Voigt convergence;
 - quantify pressure-shift sensitivity;
-- freeze exact historical Maté `O2-Air` machine-readable bytes and run CIA twilight sensitivity;
+- use the frozen historical Maté byte witness and close CIA grid/negative-sample handling plus twilight sensitivity;
 - retain TIPS/solar/g0 regression checks.
 
 ## 18. Implementation boundary
 
 **M4D DESIGN IS NOT FROZEN / PRODUCTION IMPLEMENTATION IS NOT AUTHORIZED.**
 
-The previous source-discovery/byte blockers for A are substantially closed. The remaining work is executable historical semantics, the one outstanding CIA asset, local edition continuity, and numerical convergence. Do not advance to M5.
+The source-discovery/byte blockers for A and historical Maté CIA are closed. The remaining work is rare-line edition continuity and the declared numerical/sensitivity/convergence gates. Do not advance to M5.
