@@ -31,9 +31,11 @@ The immutable current artifact is `artifacts/accepted/m4c-r2/tfm-photochem-miles
 
 ## Current next milestone
 
-M4D is **NOT IMPLEMENTED / DESIGN NOT FROZEN**. It must provide `gA`, `gB`, and `gIRA` without starting M5.
+M4D is **PARTIAL ISOLATED RECONSTRUCTION / CIA DESIGN BLOCKER / DESIGN NOT FROZEN**. It must eventually provide `gA`, `gB`, and `gIRA` without starting M5. The accepted production implementation still ends at M4C-R2.
 
-The historical A-band and Maté CIA source-discovery/byte-materialization blockers have now been closed through reproducible public-source acquisition. The remaining gates are local HITRAN2016 rare-line continuity and numerical closure/sensitivity for the selected A/B/IRA treatments.
+The 2026-09-30 implementation experiment lives in `tfm_photochem.m4d_reconstruction`, with a source/mapping validator and a retained-rate CIA stop-gate validator. It provides historical source verification, deterministic A mapping, tested Drouin SDV primitives and classic B/IRA all-line Voigt transfer. Completed on 2026-10-01: a converged retained IRA rate at 50 km / SZA 95 degrees changes by 0.2915504276% with historical CIA, above the required 0.1% gate. The measured-temperature envelope remains 0.2722675384--0.2924815347%, so the stop conclusion is unchanged. Per the user's explicit instruction, scientific closure stops with DESIGN BLOCKER. It does not provide accepted A SDV+LM/Galatry transfer or complete full-domain numerical closure. See `docs/m4d_reconstruction_execution_specification.md` and `docs/m4d_reconstruction_audit.md` for scope, exact commands, results and remaining work.
+
+The historical A-band and Maté CIA source-discovery/byte-materialization blockers are closed through reproducible public-source acquisition. Local HITRAN2016 rare-line continuity is now PASS: 280/280 rare lines and 430/430 total auxiliary matches, with zero unmatched, duplicates or ambiguities. Numerical closure/sensitivity remains open and is subject to the user's mandatory CIA/qSDV stop conditions.
 
 ## Frozen source / transition gates
 
@@ -80,20 +82,20 @@ HAPI 1.1.0.8.2
 - **Shellwise spectroscopy: REQUIRED.** Target-temperature cross section times total column is rejected.
 - **No arbitrary Voigt attenuation wing:** for classic B/IRA candidates, evaluate all accepted absorber lines at each target quadrature node and converge target support/order separately.
 
-## Corrected HITRAN air-diluent semantics
+## Classic B/IRA pressure-width convention for the isolated experiment
 
-A previous candidate expression mixed an already air-defined coefficient with an extra O2 self fraction. That is superseded.
+For the 2026-09-30 isolated experiment, the user's explicit requested formula supersedes this branch's earlier air-only candidate:
 
-For the terrestrial atmospheric baseline an HITRAN `air` coefficient is a **diluent coefficient** applied to shell atmospheric pressure:
+The experiment uses shell-local total and O2 partial pressures:
 
 ```text
-gamma_L = gamma_air * p * (296/T)^n_air
+gamma_L = (296/T)^n_air * [gamma_air*(p-p_O2) + gamma_self*p_O2]
 nu_shifted = nu0 + delta_air * p
 ```
 
-Do not apply `gamma_air*(p-p_O2)+gamma_self*p_O2` when `gamma_air` is already the HITRAN air-diluent coefficient. `self` is a separate diluent choice for explicitly self/O2-rich conditions.
+Pressures are in atm. Do not multiply the air term by an additional 0.79. The earlier `gamma_air*p*(296/T)^n_air` candidate remains available as the explicitly named `branch_air_only` comparison; it is not the default in this experiment. Earlier design documents retain the previous candidate as provenance, not current execution instructions. The requested partial-pressure expression also appears in HITRAN's primary definitions: https://hitran.org/docs/definitions-and-units/.
 
-For the O2 A band this interpretation is independently reinforced by HITRAN2016: Drouin foreign parameters were converted to air using the N2:O2 `0.79:0.21` mixture before the HITRAN-facing representation was produced.
+Native Drouin A parameters retain their separately sourced foreign/self mixture. HITRAN2016 converted the Drouin foreign fields to air before creating its HITRAN-facing representation; the implementation does not confuse those native foreign fields with the main-record air coefficient.
 
 ## A-band principal isotopologue
 
@@ -194,22 +196,23 @@ Dicke/Galatry narrowing fields:
 
 Do not overwrite target-edition broadening/shift fields with redundant auxiliary copies.
 
+Local accepted-HITRAN2016 continuity is **PASS**: `280/280` rare lines with zero ambiguities, reproducible through `scripts/validate_m4d_mapping.py` and `evidence/m4d_mapping.json`.
+
 ### Still open
 
-- local accepted-HITRAN2016 `280/280`, zero-ambiguity continuity mapping;
 - Galatry target+attenuation numerical convergence.
 
 See `docs/m4d_a_band_auxiliary_mapping_audit.md`.
 
 ## B band
 
-**BASELINE CANDIDATE SELECTED.** Use classic HITRAN2016 Voigt with atmospheric `air` coefficients under the corrected diluent semantics above.
+**ISOLATED BASELINE CANDIDATE IMPLEMENTED.** Use classic HITRAN2016 Voigt with the explicitly requested partial-pressure expression above. Full-domain acceptance remains open.
 
 The known partial/defective historical qSDV data are not silently reproduced. A source-corrected qSDV sensitivity on covered principal-isotopologue lines is required; if any scientifically retained B rate changes by more than `0.1%`, reopen the baseline candidate.
 
 ## IRA monomer
 
-**BASELINE CANDIDATE SELECTED.** Use classic HITRAN2016 Voigt with atmospheric `air` coefficients under the corrected diluent semantics above, pending final full-domain convergence.
+**ISOLATED BASELINE CANDIDATE IMPLEMENTED.** Use classic HITRAN2016 Voigt with the explicitly requested partial-pressure expression above, pending final full-domain convergence and the CIA stop gate.
 
 ## IRA CIA attenuation scope
 
@@ -220,6 +223,8 @@ The historical Mate numerical source is materialized and the HITRAN2016 O2-Air s
 A profile-independent lower-bound test also finds four illuminated SZA 99 deg cases (80--83 km) where the minimum CIA attenuation across the entire accepted IRA spectral support already exceeds 0.1%.
 
 Therefore the previous **monomer-only attenuation baseline candidate is REOPENED FOR NUMERICAL CLOSURE**. This does not yet force CIA into production: the final decision requires the target-edition, monomer-self-shielded, CIA-coupled gIRA calculation above the 1e-15 s^-1 retained-rate floor.
+
+That coupled retained-rate stop probe is now **DESIGN BLOCKER**: at 50 km / SZA 95 degrees the refined monomer-only rate is `6.7194715555556325e-12 s^-1`, and the historical CIA rate is `6.699880907505247e-12 s^-1`. Both exceed the floor. Counterexample refinement maxima are 0.03885055038% spatial, 0.000214008794% quadrature order and 0.007189447952% target support, all below 0.1%. This proves a retained-rate failure of the monomer-only attenuation candidate; it is not a full-domain numerical maximum or final approval to change the accepted science. The user-required stop leaves the outstanding advanced A/B sensitivities and full-domain rate closure for a subsequent independently reviewed decision.
 
 Numerical CIA rules now selected:
 
@@ -302,13 +307,12 @@ Earlier forensics/research notes remain provenance evidence even where their old
 
 ## Immediate next gate
 
-1. Execute the A iso-1 Table-22 low-temperature envelope numerically; SDV and operational Y(T) semantics are selected.
-2. Complete the remaining accepted-HITRAN2016 continuity map: `280/280` rare Galatry (`91/91` Drouin d is now PASS).
-3. Execute the fully coupled target-edition IRA Voigt + historical CIA calculation; the CIA source/grid/path diagnostic is closed, but the monomer-only attenuation baseline is reopened until the retained-rate test is complete.
-4. Execute consistent A/B/IRA target+attenuation calculations and declared sensitivities.
-5. Pass the full altitude/SZA/tangent convergence gate.
+1. Audit the source-verified, coupled IRA retained-rate CIA stop probe in `evidence/m4d_cia_stop_gate.json`; obey the requested DESIGN BLOCKER stop before continuing scientific closure.
+2. Resolve the resulting CIA baseline decision through independent scientific review. Mapping is complete; no modern source replacement is needed.
+3. After that decision, complete A SDV+LM/Galatry transfer and its low-temperature/no-Y/quadrupole sensitivities, materialize and test corrected source-based B qSDV, and quantify pressure shifts.
+4. Pass the full altitude/SZA/tangent spectral and spatial rate gate. Geometry coverage alone is not rate convergence.
 
-Only then may `docs/m4d_final_design_specification.md` be created and production implementation authorized.
+Only then may independent audit accept a final M4D design/freeze. The current isolated implementation experiment is explicitly authorized by the user's request; it is not production acceptance.
 
 ## Known bootstrap reproducibility finding
 

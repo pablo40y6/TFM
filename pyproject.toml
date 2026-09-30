@@ -14,6 +14,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+m4d-audit = [
+  "pymupdf>=1.24,<2",
+]
 background-gen = [
   "pymsis==0.12.0",
 ]

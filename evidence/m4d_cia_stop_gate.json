@@ -1,0 +1,292 @@
+{
+  "M4D_frozen": false,
+  "bands": {
+    "A": {
+      "canonical_sha256": "176a6c21ee37b1244bd11ef7047f6e31f7cada7edff2c3498f31f8d1f2e92eea",
+      "lines": 430
+    },
+    "B": {
+      "canonical_sha256": "bb5f8b26a2ad3c9dc31870506c3c05bcdb115b7c5b06d7141c9660c952d83c2d",
+      "lines": 320
+    },
+    "IRA": {
+      "canonical_sha256": "8d06f322aa4058ab03150a705bf9765fe356a2c7ecd06df98379c46062d295ad",
+      "lines": 835
+    }
+  },
+  "case": {
+    "altitude_km": 50.0,
+    "sza_deg": 95.0
+  },
+  "cia_relative_reductions": {
+    "cia_envelope_max": 0.0029248153466058247,
+    "cia_envelope_min": 0.002722675384077,
+    "cia_nominal": 0.0029155042756581206,
+    "cia_raw": 0.0029155042756581206
+  },
+  "code_sha256": {
+    "src/tfm_photochem/m4d_reconstruction/__init__.py": "5930e8ebe44ff5dd213d9fc074df198f95853425986e20cdc9831c9913ec5b75",
+    "src/tfm_photochem/m4d_reconstruction/cia.py": "05a0ca55fbcd46e08daedd3ad11707ede74f09db290c28c4797bd4b7c15895ae",
+    "src/tfm_photochem/m4d_reconstruction/mapping.py": "7215a3c972e01a430f64fec35e30a458ff94c584263bd845f98e8a658289550f",
+    "src/tfm_photochem/m4d_reconstruction/sources.py": "cc0929be29063c2b339a321ea25c51cb3a274f411625e3d4c970f2a283506640",
+    "src/tfm_photochem/m4d_reconstruction/spectroscopy.py": "69abb3f46513fc0d84f3c86fbc50504d2ecbe07141ad4a19cd7d3831ab3fd71c",
+    "src/tfm_photochem/m4d_reconstruction/transfer.py": "8d82a340ede8a827fd3547506d781095a56bc863bfeb8d9af2d34b789abd4360"
+  },
+  "controls": {
+    "case": [
+      50.0,
+      95.0
+    ],
+    "cia": "historical_nominal_envelope_raw",
+    "diluent": "requested_partial",
+    "far_order": 4,
+    "near_cm1": 2.0,
+    "shifts": true
+  },
+  "counterexample_convergence": {
+    "baseline_to_spatial": {
+      "max_relative_difference": 0.00038850550379429836,
+      "relative_differences": {
+        "cia_envelope_max": 0.00038739187722377876,
+        "cia_envelope_min": 0.0003874707117713076,
+        "cia_nominal": 0.0003873938897834418,
+        "cia_raw": 0.0003873938897834418,
+        "monomer": 0.00038850550379429836,
+        "unattenuated": 0.0
+      },
+      "status": "PASS"
+    },
+    "baseline_to_spectral_order": {
+      "max_relative_difference": 2.140087936324544e-06,
+      "relative_differences": {
+        "cia_envelope_max": 2.1352934348020714e-06,
+        "cia_envelope_min": 2.135567352760543e-06,
+        "cia_nominal": 2.135289150163046e-06,
+        "cia_raw": 2.135289150163046e-06,
+        "monomer": 2.140087936324544e-06,
+        "unattenuated": 3.491051316321977e-11
+      },
+      "status": "PASS"
+    },
+    "spectral_order_to_spectral_support": {
+      "max_relative_difference": 7.189447951514405e-05,
+      "relative_differences": {
+        "cia_envelope_max": 7.182615535434312e-05,
+        "cia_envelope_min": 7.183367958685878e-05,
+        "cia_nominal": 7.182559438737761e-05,
+        "cia_raw": 7.182559438737761e-05,
+        "monomer": 7.189447951514405e-05,
+        "unattenuated": 3.4067191491384736e-06
+      },
+      "status": "PASS"
+    }
+  },
+  "decision": "DESIGN BLOCKER",
+  "diagnostic_floor_s1": 1e-15,
+  "gate_relative": 0.001,
+  "historical_cia_blocks": {
+    "253": {
+      "points": 4194,
+      "sha256": "58366c46162ca55c84aecd8b81bdadc1f5a68a27db0fbbd615a401dcc21f0bfc"
+    },
+    "273": {
+      "points": 4029,
+      "sha256": "09a1e93c23004c0b12acf3e9b97fcb44f4bd32872e7ad1c6441225f0ab56b545"
+    },
+    "296": {
+      "points": 4237,
+      "sha256": "19bd3c333c56dc9dd90019b57d014a69db420cae139a33a1c470557b1ad78e08"
+    }
+  },
+  "measured_temperature_envelope_changes_decision": false,
+  "not_run_after_stop": [
+    "full-domain A/B/IRA rate closure",
+    "A SDV+LM coupled transfer and rare Galatry evaluator",
+    "A low-temperature/no-Y/quadrupole sensitivities",
+    "B corrected source-based qSDV sensitivity",
+    "pressure-shift sensitivity",
+    "full-domain spectral/spatial maxima",
+    "illuminated tangent RATE closure (tangent/shadow geometry and shadow rate passed)"
+  ],
+  "preliminary_checks": {
+    "all_line_opacity": {
+      "absorber_cutoff": "none; every accepted line contributes",
+      "active_shells": 1991,
+      "max_relative_difference_from_direct_wofz": {
+        "4": 1.4054744698291315e-08,
+        "6": 3.3782455643144574e-12,
+        "8": 1.4259996743236795e-14
+      },
+      "near_radius_cm1": 2.0,
+      "nodes": 728,
+      "selected_moment_order": 4
+    },
+    "geometry": {
+      "cases": 357,
+      "illuminated": 327,
+      "immediately_shadowed_IRA_rate_exact_zero": true,
+      "immediately_shadowed_path_exact_zero": true,
+      "max_absolute_accepted_shell_difference_km": 2.842170943040401e-14,
+      "tangent_illuminated": true,
+      "tangent_sza_deg": 100.08663838402701
+    },
+    "unattenuated_anchors": {
+      "bands": [
+        "A",
+        "B",
+        "IRA"
+      ],
+      "max_relative_difference": 3.1011216756082296e-11,
+      "rates_s1": [
+        [
+          6.191439451989507e-09,
+          3.575285676787124e-10,
+          1.4549983480969263e-10
+        ],
+        [
+          6.1963256585484154e-09,
+          3.580557235805004e-10,
+          1.4573674700754026e-10
+        ],
+        [
+          6.199959739253897e-09,
+          3.5852735537759415e-10,
+          1.4593873602452573e-10
+        ],
+        [
+          6.202584209307043e-09,
+          3.5895153696502674e-10,
+          1.4611114499802447e-10
+        ],
+        [
+          6.204317565053516e-09,
+          3.5933010075531544e-10,
+          1.4625641628638752e-10
+        ],
+        [
+          6.2051968875092666e-09,
+          3.5966103383809097e-10,
+          1.4637502395027614e-10
+        ],
+        [
+          6.20528469126636e-09,
+          3.5988913887808597e-10,
+          1.4645036483664059e-10
+        ]
+      ],
+      "temperatures_K": [
+        180,
+        200,
+        220,
+        240,
+        260,
+        280,
+        296
+      ]
+    }
+  },
+  "retained_above_floor": true,
+  "runtime": {
+    "numpy": "2.5.3",
+    "python": "3.14.3",
+    "scipy": "1.18.1"
+  },
+  "scope": "isolated retained IRA stop probe, not full-domain closure",
+  "validator_script_sha256": "c5417e146ad24faee1de59ab501dde33f994597aeb7e8e1a4aca803d4a96d174",
+  "variants": {
+    "baseline": {
+      "configuration": {
+        "cia_step_km": 0.0625,
+        "core_order": 64,
+        "step_km": 0.125,
+        "support": 3.84,
+        "wing_order": 8
+      },
+      "illuminated": true,
+      "producer_validator_sha256": "cf16dbac535fd1792485e7b13a9f51d3281d47a93172a2eec82d63695a0cb684",
+      "rates_s1": {
+        "cia_envelope_max": 6.699322814785212e-12,
+        "cia_envelope_min": 6.700680935797437e-12,
+        "cia_nominal": 6.699385379421282e-12,
+        "cia_raw": 6.699385379421282e-12,
+        "monomer": 6.718974083419376e-12,
+        "unattenuated": 1.4628720520545941e-10
+      }
+    },
+    "spatial": {
+      "configuration": {
+        "cia_step_km": 0.03125,
+        "core_order": 64,
+        "step_km": 0.0625,
+        "support": 3.84,
+        "wing_order": 8
+      },
+      "illuminated": true,
+      "producer_validator_sha256": "cf16dbac535fd1792485e7b13a9f51d3281d47a93172a2eec82d63695a0cb684",
+      "rates_s1": {
+        "cia_envelope_max": 6.7019190838000874e-12,
+        "cia_envelope_min": 6.7032782597959614e-12,
+        "cia_nominal": 6.701981686175947e-12,
+        "cia_raw": 6.701981686175947e-12,
+        "monomer": 6.721585456363397e-12,
+        "unattenuated": 1.4628720520545941e-10
+      }
+    },
+    "spectral_order": {
+      "configuration": {
+        "cia_step_km": 0.0625,
+        "core_order": 128,
+        "step_km": 0.125,
+        "support": 3.84,
+        "wing_order": 16
+      },
+      "illuminated": true,
+      "producer_validator_sha256": "346fdbbe872fc7e3e2ca8a5fb36cd538378b4fdda5b6c4be9b5421d454a0a7b9",
+      "rates_s1": {
+        "cia_envelope_max": 6.699337119835782e-12,
+        "cia_envelope_min": 6.7006952455834444e-12,
+        "cia_nominal": 6.699399684576741e-12,
+        "cia_raw": 6.699399684576741e-12,
+        "monomer": 6.718988462645529e-12,
+        "unattenuated": 1.4628720521056637e-10
+      }
+    },
+    "spectral_support": {
+      "configuration": {
+        "cia_step_km": 0.0625,
+        "core_order": 128,
+        "step_km": 0.125,
+        "support": 7.68,
+        "wing_order": 16
+      },
+      "illuminated": true,
+      "producer_validator_sha256": "346fdbbe872fc7e3e2ca8a5fb36cd538378b4fdda5b6c4be9b5421d454a0a7b9",
+      "rates_s1": {
+        "cia_envelope_max": 6.699818342028862e-12,
+        "cia_envelope_min": 6.701176615757316e-12,
+        "cia_nominal": 6.699880907505247e-12,
+        "cia_raw": 6.699880907505247e-12,
+        "monomer": 6.7194715555556325e-12,
+        "unattenuated": 1.4628770357168742e-10
+      }
+    }
+  },
+  "verified_source_identities": {
+    "O2-O2_2011.cia": {
+      "bytes": 1938473,
+      "sha256": "8cc3ecc87bf7a02492b385ecc71abf279b058da853aea768825deb81237d5ee3"
+    },
+    "guest1593878592.txt": {
+      "bytes": 2268239,
+      "sha256": "6b4acbc01cb649891f2d8597875c9cd8e4805cfdd4d3b7841c2d18cbf718de12"
+    },
+    "hapi.py": {
+      "bytes": 1204196,
+      "sha256": "81d9d2f4fc6dd80021d329280810008e0385109d8c5295f41615f51d405b0964"
+    },
+    "wehrli85.txt": {
+      "bytes": 28555,
+      "sha256": "daad62d53f188d8c48bfb60e4b78afd22c74ffc49180e2ac249c6d95b8f96d43"
+    }
+  }
+}
