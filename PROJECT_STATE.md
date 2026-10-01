@@ -31,9 +31,11 @@ The immutable current artifact is `artifacts/accepted/m4c-r2/tfm-photochem-miles
 
 ## Current next milestone
 
-M4D is **PRAGMATIC FULL-DOMAIN RATES CLOSED / GO PROVISIONAL / NOT FROZEN**. The authorized operational path is A0 (430 classic Voigt lines), A1 (91 principal Drouin SDV lines, remaining 339 Voigt, no LM/Galatry), B (320 Voigt), and IRA (835 monomer Voigt lines with historical O2-Air CIA attenuation only). The practical convergence target is 0.5% for relevant rates; near-zero cases use absolute differences. All 359 cases pass finite/nonnegative/shadow and numerical convergence QA (maximum nominal difference 0.150%; CIA auxiliary maximum 0.105%). A1/A0 and all omission sensitivities are quantified; 569 tests + 13 subtests and all relevant validators pass. The provisional GO recommendation and full results are collected in `docs/m4d_closure_report.md` and one `evidence/m4d_closure.json`.
+M4D is **PROVISIONALLY CLOSED / INTEGRATION READY / NOT FROZEN** under the authorized pragmatic closure in `docs/m4d_closure_report.md`: A0 430 Voigt, B 320 Voigt, IRA 835 monomer Voigt plus historical O2-Air CIA attenuation; A1 is sensitivity only. Historical Y/Galatry/high-T/B-qSDV gates do not block integration; PR #4 is not merged.
 
-The old universal 0.1% gate and advanced-model Y normalization / T>340 K / Galatry convention blockers are historical, not operational blockers for this explicitly authorized approximation. Exact advanced spectroscopy remains optional future work, without invented conventions. PR #4 is not merged. M1â€“M4C-R2 remain accepted, main is unchanged, and M5 has not started.
+M5A is **NO-GO / INITIAL-CONDITION SOURCE BLOCKER** on `milestone/m5-temporal`. Accepted chemistry unambiguously defines O, O3, H, R_H and Delta, with six QSSA species, but no accepted full initial profile or dark/twilight initialization rule was found. The authoritative M5 handoff requires stopping in this case. Equations, source inventory, architecture considerations and the exact missing input are consolidated in `docs/m5_temporal_report.md`; no temporal solver or dawn result is claimed. Full pytest 569 + 13 subtests, ruff and five historical validators pass; M4C-R2 artifact SHA remains intact. Main and M1-M4D numerical code/assets are unchanged.
+
+The old spectroscopy sections below remain historical provenance; they are not the operational M5 path. A sourced initial profile or explicit authorization of a new initialization policy is needed before implementing M5A.
 
 ## Frozen source / transition gates
 
