@@ -19,8 +19,10 @@ from .spectroscopy import (
     K_B,
     SpectralSources,
     classic_parameters,
+    complex_sdv,
     complex_voigt,
     doppler_sigma,
+    drouin_parameters,
 )
 
 
@@ -123,6 +125,7 @@ class VoigtColumn:
     shifts: bool = True
     diluent: str = "requested_partial"
     used_shells: np.ndarray | None = None
+    drouin: dict | None = None
 
     def __post_init__(self):
         if self.used_shells is not None:
@@ -158,6 +161,20 @@ class VoigtColumn:
         ]
         self.gamma = np.array([pair[0] for pair in parameters])
         self.shift = np.array([pair[1] for pair in parameters])
+        self.gamma2 = np.zeros_like(self.gamma)
+        if self.drouin is not None:
+            for i, line in enumerate(self.lines):
+                if line.isotope == 1 and line.flag == "d":
+                    if line.dipole_label not in self.drouin:
+                        raise ValueError("missing principal Drouin row")
+                    for j, (t, p) in enumerate(
+                        zip(self.shells.temperature, self.shells.pressure)
+                    ):
+                        self.gamma[j, i], self.gamma2[j, i], self.shift[j, i] = (
+                            drouin_parameters(
+                                self.drouin[line.dipole_label], t, p, self.shifts
+                            )
+                        )
         self._far_coefficients = {}
 
     def cross_section(
@@ -204,12 +221,24 @@ class VoigtColumn:
                 if exact
                 else np.abs(nodes - centre) < near_cm1
             )
+            # For A1 the distant approximation uses the mean Drouin width;
+            # this is explicitly audited against exact SDV, never called an
+            # exact SDV moment expansion. exact=True evaluates every SDV wing.
+            sdv = np.any(self.gamma2[:, i] != 0)
             if not np.any(use):
                 continue
             detuning = nodes[use, None] - centre - self.shift[None, :, i]
-            profiles = complex_voigt(
-                detuning, self.sigma[None, :, i], self.gamma[None, :, i]
-            ).real
+            if sdv:
+                profiles = complex_sdv(
+                    detuning,
+                    self.sigma[None, :, i],
+                    self.gamma[None, :, i],
+                    self.gamma2[None, :, i],
+                ).real
+            else:
+                profiles = complex_voigt(
+                    detuning, self.sigma[None, :, i], self.gamma[None, :, i]
+                ).real
             out[use] += profiles * self.strength[None, :, i]
         if not np.all(np.isfinite(out)) or np.any(out < 0):
             raise FloatingPointError("invalid total Voigt absorption")
@@ -244,6 +273,8 @@ def compute_classic_rates(
     near_cm1: float = 2.0,
     block_size: int = 1024,
     progress=None,
+    drouin: dict | None = None,
+    exact: bool = False,
 ) -> dict[str, np.ndarray]:
     if not cases or not lines:
         raise ValueError("at least one target and transition are required")
@@ -262,7 +293,7 @@ def compute_classic_rates(
     # Unused shells have exactly zero geometric weight for every requested ray.
     columns = columns[used]
     column = (
-        VoigtColumn(lines, sources, shells, shifts, diluent, used)
+        VoigtColumn(lines, sources, shells, shifts, diluent, used, drouin)
         if np.any(used)
         else None
     )
@@ -276,11 +307,19 @@ def compute_classic_rates(
         oxygen = float(np.interp(z, bg.z_km, bg.O2_model_cm3))
         p, po2 = density * 1e6 * K_B * t / 101325, oxygen * 1e6 * K_B * t / 101325
         gamma, shift = classic_parameters(lines, t, p, po2, shifts, diluent)
+        gamma2 = np.zeros(len(lines))
+        if drouin is not None:
+            for i, line in enumerate(lines):
+                if line.isotope == 1 and line.flag == "d":
+                    gamma[i], gamma2[i], shift[i] = drouin_parameters(
+                        drouin[line.dipole_label], t, p, shifts
+                    )
         target_parameters[z] = (
             sources.strengths(lines, t),
             doppler_sigma(lines, t),
             gamma,
             shift,
+            gamma2,
         )
     if cia is not None:
         cia_coeff, cia_in, cia_out = cia_path_coefficients(
@@ -290,7 +329,7 @@ def compute_classic_rates(
         end = min(start + block_size, len(nodes))
         nu, index = nodes[start:end], owners[start:end]
         tau = (
-            column.cross_section(nu, far_order, near_cm1) @ columns
+            column.cross_section(nu, far_order, near_cm1, exact=exact) @ columns
             if column is not None
             else np.zeros((len(nu), len(cases)))
         )
@@ -309,10 +348,15 @@ def compute_classic_rates(
             }
         flux_weight = weights[start:end] * sources.photons(nu)
         target_weights = {}
-        for z, (strength, sigma, gamma, shift) in target_parameters.items():
+        for z, (strength, sigma, gamma, shift, gamma2) in target_parameters.items():
             profile = complex_voigt(
                 nu - centres[index] - shift[index], sigma[index], gamma[index]
             ).real
+            for i in np.flatnonzero(gamma2):
+                mask = index == i
+                profile[mask] = complex_sdv(
+                    nu[mask] - centres[i] - shift[i], sigma[i], gamma[i], gamma2[i]
+                ).real
             target_weights[z] = profile * strength[index] * flux_weight
         for j, (z, _) in enumerate(cases):
             if not illuminated[j]:

@@ -112,15 +112,19 @@ def complex_sdv(detuning, sigma: float, gamma: float, gamma2: float):
     Gam2=S*Gam0, Shift2=0, anuVC=eta=0. Sigma is Gaussian standard deviation.
     Dispersion sign agrees with the imaginary part of the pinned HAPI profile.
     """
+    sigma, gamma, gamma2 = np.broadcast_arrays(sigma, gamma, gamma2)
     if (
-        not np.all(np.isfinite([sigma, gamma, gamma2]))
+        not all(np.all(np.isfinite(x)) for x in (sigma, gamma, gamma2))
         or not np.all(np.isfinite(detuning))
-        or sigma <= 0 or gamma < 0
-        or (gamma2 != 0 and not 0 <= gamma2 < gamma / 1.5)
+        or np.any(sigma <= 0)
+        or np.any(gamma < 0)
+        or np.any((gamma2 != 0) & ((gamma2 < 0) | (gamma2 >= gamma / 1.5)))
     ):
         raise ValueError("invalid SDV profile parameters")
-    if gamma2 == 0:
+    if np.all(gamma2 == 0):
         return complex_voigt(detuning, sigma, gamma)
+    if np.any(gamma2 == 0):
+        raise ValueError("mixed zero/nonzero SDV widths must be evaluated separately")
     width = sigma * np.sqrt(2)
     x = (gamma - 1.5 * gamma2 - 1j * np.asarray(detuning)) / gamma2
     yroot = width / (2 * gamma2)
@@ -134,10 +138,14 @@ def drouin_parameters(
     row: tuple, temperature: float, pressure_atm: float, shifts: bool = True
 ) -> tuple[float, float, float]:
     if (
-        len(row) != 12 or not np.all(np.isfinite(row))
+        len(row) != 12
+        or not np.all(np.isfinite(row))
         or not np.all(np.isfinite([temperature, pressure_atm]))
-        or temperature <= 0 or pressure_atm < 0
-        or row[3] < 0 or row[5] < 0 or not 0 <= row[11] < 2 / 3
+        or temperature <= 0
+        or pressure_atm < 0
+        or row[3] < 0
+        or row[5] < 0
+        or not 0 <= row[11] < 2 / 3
     ):
         raise ValueError("invalid Drouin shell/parameters")
     _, _, _, gf, nf, gs, ns, df, dft, ds, dst, speed = row
@@ -244,18 +252,14 @@ def principal_a_cross_section(
             label = line.dipole_label
             if label not in drouin:
                 raise SourceError(f"Drouin row missing for {label}")
-            gamma, gamma2, shift = drouin_parameters(
-                drouin[label], t, p, shifts
-            )
+            gamma, gamma2, shift = drouin_parameters(drouin[label], t, p, shifts)
             y = mixing_y(mixing[label], t, low_policy) if label in mixing else 0.0
             profile = drouin_mixed_profile(
                 nu - line.nu - shift, sigma[i], gamma, gamma2, y, p
             )
         elif line.flag == "q":
             gamma, shift = classic_parameters((line,), t, p, po2, shifts)
-            profile = complex_voigt(
-                nu - line.nu - shift[0], sigma[i], gamma[0]
-            ).real
+            profile = complex_voigt(nu - line.nu - shift[0], sigma[i], gamma[0]).real
         else:
             raise SourceError(f"unsupported principal A transition flag {line.flag!r}")
         out += strengths[i] * profile
