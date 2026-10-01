@@ -68,3 +68,32 @@ be identified, report SOURCE MATERIALIZATION BLOCKER. Missing numerical evidence
 must remain explicitly NOT RUN, never PASS. A triggered stop condition may leave
 later profile/sensitivity work outstanding; tests and an honest audit handoff
 are still required. Do not declare M4D frozen or start M5.
+
+
+## Post-stop scientific resolution (2026-10-01)
+
+The required stop condition above was triggered by the converged retained IRA
+counterexample at 50 km / SZA 95 deg: historical CIA reduces the coupled rate by
+about 0.29155%, above the 0.1% gate. The stop therefore remains a valid audit
+event and is not reclassified as a PASS.
+
+Independent scientific review resolves the reopened IRA attenuation scope as
+follows:
+
+- the excitation source remains the accepted HITRAN2016 835-line
+  `a(0)-X(0)` monomer system;
+- historical Maté/HITRAN2016 O2-Air CIA is included as a separate opacity in
+  the selected M4D IRA direct-beam attenuation baseline;
+- CIA never becomes a binary-density O2(a1Delta) production coefficient;
+- use `n_O2*(n_O2+n_N2)` for the O2-Air pair density and do not add a
+  separate O2-O2 term on top of O2-Air;
+- retain the frozen 253/273/296-K interpolation with endpoint clamp as nominal,
+  plus the measured-source min/max envelope and raw/noise sensitivity;
+- no modern CIA data or empirical normalization replace the historical source.
+
+This resolution authorizes resuming the isolated M4D closure work after the
+mandatory stop. It does **not** freeze M4D, modify M4C-R2, or authorize M5.
+Remaining A-band advanced transfer, corrected B qSDV, pressure-shift
+sensitivity, and full-domain numerical closure are still required.
+
+See `docs/m4d_ira_cia_post_stop_resolution.md`.
