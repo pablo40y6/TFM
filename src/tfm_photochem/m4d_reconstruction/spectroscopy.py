@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.special import wofz
 
-from .sources import Line
+from .sources import Line, SourceError
 
 C2 = 1.4387768775039336
 K_B = 1.380649e-23
@@ -184,6 +184,71 @@ def drouin_mixed_profile(
         raise ValueError("invalid line-mixing pressure/coefficient")
     profile = complex_sdv(detuning, sigma, gamma, gamma2)
     return profile.real + (p * y) * profile.imag
+
+
+def principal_a_cross_section(
+    nodes,
+    lines: tuple[Line, ...],
+    sources: SpectralSources,
+    drouin: dict[str, tuple[float, ...]],
+    mixing: dict[str, tuple[float, ...]],
+    temperature: float,
+    pressure_atm: float,
+    oxygen_pressure_atm: float,
+    shifts: bool = True,
+    low_policy: str = "clamp",
+) -> np.ndarray:
+    """Principal-isotopologue A-band cross section on arbitrary nodes.
+
+    Accepted HITRAN2016 records remain authoritative for line centres,
+    intensities, lower-state energies and ordinary q-line fields. Magnetic
+    dipole d lines use the quantum-matched Drouin Tables 4/5 SDV parameters;
+    the 70 Table-22 lines additionally use pressure-scaled first-order mixing.
+    The 21 d lines absent from Table 22 retain SDV with Y=0. Electric
+    quadrupole q lines retain the accepted target-edition classic profile.
+    """
+    nu = np.asarray(nodes, dtype=float)
+    t, p, po2 = float(temperature), float(pressure_atm), float(oxygen_pressure_atm)
+    if (
+        not np.all(np.isfinite(nu))
+        or not np.all(np.isfinite([t, p, po2]))
+        or t <= 0
+        or not 0 <= po2 <= p
+    ):
+        raise ValueError("invalid A-band evaluation state")
+    if any(
+        line.isotope != 1 or line.upper != "b 0" or line.lower != "X 0"
+        for line in lines
+    ):
+        raise SourceError("principal A evaluator received a non-principal A line")
+
+    strengths = sources.strengths(lines, t)
+    sigma = doppler_sigma(lines, t)
+    out = np.zeros_like(nu)
+    for i, line in enumerate(lines):
+        if line.flag == "d":
+            label = line.dipole_label
+            if label not in drouin:
+                raise SourceError(f"Drouin row missing for {label}")
+            gamma, gamma2, shift = drouin_parameters(
+                drouin[label], t, p, shifts
+            )
+            y = mixing_y(mixing[label], t, low_policy) if label in mixing else 0.0
+            profile = drouin_mixed_profile(
+                nu - line.nu - shift, sigma[i], gamma, gamma2, y, p
+            )
+        elif line.flag == "q":
+            gamma, shift = classic_parameters((line,), t, p, po2, shifts)
+            profile = complex_voigt(
+                nu - line.nu - shift[0], sigma[i], gamma[0]
+            ).real
+        else:
+            raise SourceError(f"unsupported principal A transition flag {line.flag!r}")
+        out += strengths[i] * profile
+
+    if not np.all(np.isfinite(out)):
+        raise FloatingPointError("invalid principal A cross section")
+    return out
 
 
 def voigt_sum(
