@@ -1,0 +1,31 @@
+name: M4D unit validation
+
+on:
+  push:
+    branches:
+      - milestone/m4d-design
+    paths:
+      - src/tfm_photochem/m4d_reconstruction/**
+      - tests/test_m4d_reconstruction.py
+      - pyproject.toml
+      - .github/workflows/m4d-unit-tests.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+      - name: Install project
+        run: python -m pip install --disable-pip-version-check -e ".[dev]"
+      - name: Ruff
+        run: python -m ruff check .
+      - name: Pytest
+        run: python -m pytest -q -p no:cacheprovider
