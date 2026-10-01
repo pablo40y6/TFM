@@ -1,0 +1,7 @@
+# Frozen asset hashes refer to exact Git bytes; Windows checkout must preserve them.
+src/tfm_photochem/assets/** -text
+artifacts/accepted/** -text
+
+# Keep isolated M4D code fingerprints independent of checkout newline settings.
+src/tfm_photochem/m4d_reconstruction/*.py text eol=lf
+scripts/validate_m4d*.py text eol=lf
