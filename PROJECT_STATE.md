@@ -33,6 +33,19 @@ The immutable current artifact is `artifacts/accepted/m4c-r2/tfm-photochem-miles
 
 M4D is **PARTIAL ISOLATED RECONSTRUCTION / CIA SCOPE RESOLVED / DESIGN NOT FROZEN**. It must eventually provide `gA`, `gB`, and `gIRA` without starting M5. The accepted production implementation still ends at M4C-R2.
 
+The next isolated A experiment adds principal SDV/q shell-and-target transfer
+as an explicitly labelled LM-off diagnostic, independent profile/transfer tests
+and fail-closed nominal entry points. Review of the exact frozen sources now
+documents three A blockers: Table-22 Y normalization against complex SDV is
+not demonstrated by its cm^-1 atm^-1 annotation; 248 active 0.125-km shells above
+119 km exceed the selected 340-K Y domain; and pinned HAPI has no Galatry
+evaluator or established complete historical beta/profile/temperature convention.
+The earlier principal SDV+LM algebra remains candidate algebra, not nominal
+scientific acceptance. Full 430-line gA, Galatry limits and full-domain A rate
+sensitivities remain NOT RUN. See `docs/m4d_a_advanced_transfer_blockers.md` and
+`evidence/m4d_a_advanced_transfer.json`. No new coefficients or formulas were
+inferred to bypass these gates.
+
 The 2026-09-30 implementation experiment lives in `tfm_photochem.m4d_reconstruction`, with a source/mapping validator and a retained-rate CIA stop-gate validator. It provides historical source verification, deterministic A mapping, tested Drouin SDV primitives and classic B/IRA all-line Voigt transfer. Completed on 2026-10-01: a converged retained IRA rate at 50 km / SZA 95 degrees changes by 0.2915504276% with historical CIA, above the required 0.1% gate. The measured-temperature envelope remains 0.2722675384--0.2924815347%, so the mandatory stop was correctly triggered. Independent post-stop scientific review then resolved the scope decision: historical Maté/HITRAN2016 O2-Air CIA is included in the M4D IRA **attenuation** baseline while the excitation source remains the accepted 835-line monomer system and CIA never becomes a production term. The historical stop remains audit evidence; M4D is still not frozen because A/B sensitivities and full-domain numerical closure remain open. See `docs/m4d_ira_cia_post_stop_resolution.md`, `docs/m4d_reconstruction_execution_specification.md` and `docs/m4d_reconstruction_audit.md`.
 
 The historical A-band and Maté CIA source-discovery/byte-materialization blockers are closed through reproducible public-source acquisition. Local HITRAN2016 rare-line continuity is now PASS: 280/280 rare lines and 430/430 total auxiliary matches, with zero unmatched, duplicates or ambiguities. Numerical closure/sensitivity remains open and is subject to the user's mandatory CIA/qSDV stop conditions.
@@ -155,6 +168,9 @@ Drouin supplement Table 22 supplies first-order air Rosenkranz `Y` values at `20
 - Table-22 temperature policy is now selected: exact source nodes at 200/250/296/340 K, piecewise-linear interpolation within 200..340 K, nominal 200-K clamp below range with mandatory linear-extrapolation/Y=0 sensitivity;
 - 21 no-Y d-line sensitivity;
 - 59 q-line sensitivity;
+- exact physical normalization of Table-22 Y against F/F-prime; the earlier
+  `p*Y*Im(F)` algebra is blocked for nominal rate transfer pending historical proof;
+- supported treatment or approved materiality bound for active shells above 340 K;
 - accepted-HITRAN2016 principal `91/91` continuity: **PASS**;
 - final A spectral/path convergence.
 
@@ -200,6 +216,7 @@ Local accepted-HITRAN2016 continuity is **PASS**: `280/280` rare lines with zero
 
 ### Still open
 
+- exact historical Galatry beta/profile conversion and temperature law;
 - Galatry target+attenuation numerical convergence.
 
 See `docs/m4d_a_band_auxiliary_mapping_audit.md`.
@@ -308,7 +325,9 @@ Earlier forensics/research notes remain provenance evidence even where their old
 ## Immediate next gate
 
 1. CIA post-stop review is complete: include historical Maté/HITRAN2016 O2-Air CIA in the IRA attenuation baseline; keep excitation monomer-only and retain nominal/envelope/raw CIA sensitivities.
-2. Complete A SDV+LM/Galatry transfer and its low-temperature/no-Y/quadrupole sensitivities.
+2. Resolve the documented A LM normalization, high-temperature and historical
+   Galatry convention blockers before completing nominal SDV+LM/Galatry transfer
+   and its low-temperature/no-Y/quadrupole retained-rate sensitivities.
 3. Materialize and test corrected source-based B qSDV and quantify pressure-shift sensitivity.
 4. Pass the full altitude/SZA/tangent spectral and spatial rate gate, including the selected IRA CIA baseline and its source-envelope sensitivity. Geometry coverage alone is not rate convergence.
 

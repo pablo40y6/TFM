@@ -7,6 +7,8 @@ on:
     paths:
       - src/tfm_photochem/m4d_reconstruction/**
       - tests/test_m4d_reconstruction.py
+      - tests/test_m4d_a_transfer.py
+      - scripts/validate_m4d_a_transfer.py
       - pyproject.toml
       - .github/workflows/m4d-unit-tests.yml
   workflow_dispatch:

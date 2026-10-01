@@ -112,7 +112,12 @@ def complex_sdv(detuning, sigma: float, gamma: float, gamma2: float):
     Gam2=S*Gam0, Shift2=0, anuVC=eta=0. Sigma is Gaussian standard deviation.
     Dispersion sign agrees with the imaginary part of the pinned HAPI profile.
     """
-    if sigma <= 0 or gamma < 0 or not 0 <= gamma2 < gamma / 1.5 and gamma2 != 0:
+    if (
+        not np.all(np.isfinite([sigma, gamma, gamma2]))
+        or not np.all(np.isfinite(detuning))
+        or sigma <= 0 or gamma < 0
+        or (gamma2 != 0 and not 0 <= gamma2 < gamma / 1.5)
+    ):
         raise ValueError("invalid SDV profile parameters")
     if gamma2 == 0:
         return complex_voigt(detuning, sigma, gamma)
@@ -128,6 +133,13 @@ def complex_sdv(detuning, sigma: float, gamma: float, gamma2: float):
 def drouin_parameters(
     row: tuple, temperature: float, pressure_atm: float, shifts: bool = True
 ) -> tuple[float, float, float]:
+    if (
+        len(row) != 12 or not np.all(np.isfinite(row))
+        or not np.all(np.isfinite([temperature, pressure_atm]))
+        or temperature <= 0 or pressure_atm < 0
+        or row[3] < 0 or row[5] < 0 or not 0 <= row[11] < 2 / 3
+    ):
+        raise ValueError("invalid Drouin shell/parameters")
     _, _, _, gf, nf, gs, ns, df, dft, ds, dst, speed = row
     gamma = pressure_atm * (
         0.79 * gf * (296 / temperature) ** nf + 0.21 * gs * (296 / temperature) ** ns
@@ -145,6 +157,8 @@ def drouin_parameters(
 
 
 def mixing_y(values: tuple, temperature: float, low_policy: str = "clamp") -> float:
+    if len(values) != 4 or not np.all(np.isfinite(values)):
+        raise SourceError("invalid Table-22 coefficient row")
     t = float(temperature)
     if not np.isfinite(t) or t <= 0 or t > 340:
         raise ValueError("DESIGN BLOCKER: Y temperature outside supported policy")
