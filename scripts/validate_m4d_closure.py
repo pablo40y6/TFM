@@ -38,7 +38,7 @@ TOL = 0.005
 def stats(reference, trial, cases):
     a, b = np.asarray(reference), np.asarray(trial)
     floor = max(FLOOR, 1e-4 * float(a.max()))
-    relevant = a > floor
+    relevant = np.maximum(a, b) > floor
     delta = np.abs(b - a)
     relative = delta[relevant] / a[relevant]
     indices = np.flatnonzero(relevant)
@@ -54,10 +54,24 @@ def stats(reference, trial, cases):
         "maximum_case_reference_trial_s1": [float(a[maximum]), float(b[maximum])],
         "relevant_cases": int(relevant.sum()),
         "absolute_max_s1": float(delta.max()),
+        "absolute_max_fraction_of_reference_peak": float(delta.max() / a.max())
+        if a.max()
+        else 0.0,
+        "absolute_max_case_z_sza": list(cases[int(np.argmax(delta))]),
         "near_zero_cases": int((~relevant).sum()),
+        "near_zero_absolute_p50_p90_p99_s1": np.percentile(
+            delta[~relevant], [50, 90, 99]
+        ).tolist()
+        if np.any(~relevant)
+        else [0.0, 0.0, 0.0],
         "near_zero_absolute_max_s1": float(delta[~relevant].max())
         if np.any(~relevant)
         else 0.0,
+        "near_zero_absolute_max_case_z_sza": list(
+            cases[int(np.flatnonzero(~relevant)[np.argmax(delta[~relevant])])]
+        )
+        if np.any(~relevant)
+        else None,
         "signed_relative_min_max": [
             float(((b - a)[relevant] / a[relevant]).min()),
             float(((b - a)[relevant] / a[relevant]).max()),
@@ -108,6 +122,7 @@ def main():
         "hitran_records": 14085,
         "bands": {k: len(v) for k, v in bands.items()},
         "code_sha256": code,
+        "validator_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "cases_z_sza": cases,
         "rates": {},
         "convergence": {},
@@ -119,6 +134,18 @@ def main():
         "spectral": dict(step_km=0.125, core_order=128, wing_order=24, support=3.84),
         "support": dict(step_km=0.125, core_order=128, wing_order=24, support=7.68),
     }
+    report["controls"] = {
+        "variants": variants,
+        "far_order": 4,
+        "near_cm1": 2.0,
+        "shifts": True,
+        "diluent": "requested_partial",
+        "cia_step_base_km": 0.0625,
+        "cia_step_spatial_km": 0.03125,
+        "CIA_role": "attenuation only; nO2*(nO2+nN2)",
+        "line_mixing": False,
+        "Galatry": False,
+    }
 
     def run(label, lines, config, advanced=False, collision=False, run_cases=cases):
         controls = dict(
@@ -127,6 +154,8 @@ def main():
             block_size=512,
             **({"drouin": drouin} if advanced else {}),
         )
+        if collision and config.get("step_km") == 0.0625:
+            controls["cia_step_km"] = 0.03125
         identity = {
             "code": code,
             "sources": SOURCE_IDENTITIES,
@@ -170,11 +199,12 @@ def main():
         assert result["illuminated"][-2:] == [True, False]
         return result
 
-    for label, band in (("A0", "A"), ("A1", "A"), ("B", "B"), ("IRA", "IRA")):
-        report["rates"][label] = {}
-        with ThreadPoolExecutor(max_workers=3) as pool:
-            pending = {
-                variant: pool.submit(
+    populations = (("A0", "A"), ("A1", "A"), ("B", "B"), ("IRA", "IRA"))
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        pending = {}
+        for label, band in populations:
+            for variant, config in variants.items():
+                pending[label, variant] = pool.submit(
                     run,
                     f"{label}/{variant}",
                     bands[band],
@@ -182,30 +212,49 @@ def main():
                     advanced=label == "A1",
                     collision=label == "IRA",
                 )
-                for variant, config in variants.items()
-            }
-            for variant, task in pending.items():
-                report["rates"][label][variant] = task.result()
+            pending[label, "reverse"] = pool.submit(
+                run,
+                f"{label}/reverse",
+                tuple(reversed(bands[band])),
+                variants["base"],
+                advanced=label == "A1",
+                collision=label == "IRA",
+            )
+        for label, band in populations:
+            report["rates"][label] = {}
+            for variant in variants:
+                report["rates"][label][variant] = pending[label, variant].result()
                 save(args.output, report)
-        key = "cia_nominal" if label == "IRA" else "monomer"
-        r = report["rates"][label]
-        report["convergence"][label] = {
-            "spatial": stats(r["base"][key], r["spatial"][key], cases),
-            "spectral": stats(r["base"][key], r["spectral"][key], cases),
-            "support": stats(r["spectral"][key], r["support"][key], cases),
-        }
-        # Reversed source order is an independent full-domain calculation.
-        reverse = run(
-            f"{label}/reverse",
-            tuple(reversed(bands[band])),
-            variants["base"],
-            advanced=label == "A1",
-            collision=label == "IRA",
-        )
-        report["convergence"][label]["source_order"] = stats(
-            r["base"][key], reverse[key], cases
-        )
-        save(args.output, report)
+            key = "cia_nominal" if label == "IRA" else "monomer"
+            r = report["rates"][label]
+            report["convergence"][label] = {
+                "spatial": stats(r["base"][key], r["spatial"][key], cases),
+                "spectral": stats(r["base"][key], r["spectral"][key], cases),
+                "support": stats(r["spectral"][key], r["support"][key], cases),
+            }
+            # Reversed source order is an independent full-domain calculation.
+            reverse = pending[label, "reverse"].result()
+            report["convergence"][label]["source_order"] = stats(
+                r["base"][key], reverse[key], cases
+            )
+            if label == "IRA":
+                report["CIA_auxiliary_convergence"] = {
+                    name: {
+                        "spatial": stats(r["base"][name], r["spatial"][name], cases),
+                        "spectral": stats(r["base"][name], r["spectral"][name], cases),
+                        "support": stats(
+                            r["spectral"][name], r["support"][name], cases
+                        ),
+                        "source_order": stats(r["base"][name], reverse[name], cases),
+                    }
+                    for name in (
+                        "monomer",
+                        "cia_envelope_min",
+                        "cia_envelope_max",
+                        "cia_raw",
+                    )
+                }
+            save(args.output, report)
 
     report["sensitivities"]["A1_vs_A0"] = stats(
         report["rates"]["A0"]["support"]["monomer"],
@@ -219,28 +268,29 @@ def main():
         "59_q": lambda x: x.isotope == 1 and x.flag == "q",
         "280_rare": lambda x: x.isotope != 1,
     }
-    for name, remove in removals.items():
-        selected = tuple(x for x in bands["A"] if not remove(x))
-        with ThreadPoolExecutor(max_workers=2) as pool:
-            pending = {
-                label: pool.submit(
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        pending = {}
+        counts = {}
+        for name, remove in removals.items():
+            selected = tuple(x for x in bands["A"] if not remove(x))
+            counts[name] = 430 - len(selected)
+            for label in ("A0", "A1"):
+                pending[label, name] = pool.submit(
                     run,
                     f"{label}/omit_{name}",
                     selected,
                     variants["support"],
                     advanced=label == "A1",
                 )
-                for label in ("A0", "A1")
-            }
-            for label, task in pending.items():
-                r = task.result()
-                report["sensitivities"][f"{label}_omit_{name}"] = stats(
-                    report["rates"][label]["support"]["monomer"], r["monomer"], cases
-                )
-                report["sensitivities"][f"{label}_omit_{name}"]["removed_lines"] = (
-                    430 - len(selected)
-                )
-                save(args.output, report)
+        for (label, name), task in pending.items():
+            r = task.result()
+            report["sensitivities"][f"{label}_omit_{name}"] = stats(
+                report["rates"][label]["support"]["monomer"], r["monomer"], cases
+            )
+            report["sensitivities"][f"{label}_omit_{name}"]["removed_lines"] = counts[
+                name
+            ]
+            save(args.output, report)
 
     ira = report["rates"]["IRA"]["support"]
     report["cia"] = {
@@ -287,6 +337,7 @@ def main():
         "interpretation": "rigorous Voigt transmission bound; no claim about arbitrary unsourced Y",
     }
     report["far_approximation"] = {}
+    classic_a_probe = None
     for label, band in (("A0", "A"), ("A1", "A"), ("B", "B"), ("IRA", "IRA")):
         lines = bands[band]
         centres = np.array([x.nu for x in lines])
@@ -307,7 +358,25 @@ def main():
         )
         exact = column.cross_section(nodes, exact=True)
         error = np.abs(column.cross_section(nodes, order=4) - exact)
-        tau_bound = float((error.max(axis=0) @ columns).max())
+        nominal = np.asarray(
+            report["rates"][label]["base"][
+                "cia_nominal" if label == "IRA" else "monomer"
+            ]
+        )
+        relevant = nominal > max(FLOOR, 1e-4 * float(nominal.max()))
+        per_case_bound = error.max(axis=0) @ columns
+        tau_bound = float(per_case_bound[relevant].max())
+        if label == "A0":
+            classic_a_probe = exact
+        if label == "A1":
+            active_hot = shells.temperature[used] > 340
+            delta_hot = np.abs(exact[:, active_hot] - classic_a_probe[:, active_hot])
+            report["hot_shell_A1_vs_A0"] = {
+                "sampled_transmission_relative_bound": float(
+                    np.expm1((delta_hot.max(axis=0) @ columns[active_hot]).max())
+                ),
+                "scope": "all hot shells; sampled exact SDV versus Voigt; no LM assumed",
+            }
         report["far_approximation"][label] = {
             "probe_nodes": len(nodes),
             "active_shells": int(used.sum()),
@@ -315,6 +384,7 @@ def main():
                 (error / np.maximum(exact, 1e-300)).max()
             ),
             "sampled_shellwise_transmission_bound": float(np.expm1(tau_bound)),
+            "sampled_all_cases_optical_depth_bound": float(per_case_bound.max()),
             "scope": "sampled-node bound, not rigorous continuum bound",
         }
         save(args.output, report)
@@ -330,6 +400,15 @@ def main():
             value["relative_max"] <= TOL
             for band in report["convergence"].values()
             for value in band.values()
+        )
+        and all(
+            value["relative_max"] <= TOL
+            for band in report["CIA_auxiliary_convergence"].values()
+            for value in band.values()
+        )
+        and all(
+            value["sampled_shellwise_transmission_bound"] <= TOL
+            for value in report["far_approximation"].values()
         )
         else "NO-GO provisional: investigate numerical convergence"
     )

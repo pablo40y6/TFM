@@ -50,7 +50,7 @@ def fixture(monkeypatch, pressure=0.001):
         np.array([pressure]),
         np.array([pressure * 0.21]),
         np.array([o2]),
-        np.array([o2 * 4]),
+        np.array([o2 * 0.79 / 0.21]),
     )
     bg = SimpleNamespace(
         z_km=np.array([0.0, 150.0]),
