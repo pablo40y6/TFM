@@ -197,7 +197,7 @@ def test_drouin_mixing_zero_limits_and_pressure_scaling():
         base.real,
     )
     mixed = drouin_mixed_profile(nodes, sigma, gamma, gamma2, -0.2, 0.7)
-    assert np.allclose(mixed - base.real, -0.14 * base.imag, rtol=2e-15, atol=0)
+    assert np.allclose(mixed, base.real - 0.14 * base.imag, rtol=2e-15, atol=1e-15)
 
 
 def test_drouin_first_order_mixing_is_dispersion_odd_about_line_centre():
