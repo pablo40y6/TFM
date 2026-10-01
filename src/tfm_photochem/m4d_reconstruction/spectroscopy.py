@@ -158,6 +158,34 @@ def mixing_y(values: tuple, temperature: float, low_policy: str = "clamp") -> fl
     return float(np.interp(t, [200, 250, 296, 340], values))
 
 
+def drouin_mixed_profile(
+    detuning,
+    sigma: float,
+    gamma: float,
+    gamma2: float,
+    y_per_atm: float,
+    pressure_atm: float,
+) -> np.ndarray:
+    """Drouin SDV with first-order Rosenkranz line mixing.
+
+    The historical Table-22 coefficient is pressure-normalized. Following the
+    executable Rosenkranz convention used with the complex qSD/HT profile, the
+    dimensionless in-profile coefficient is Y = y_per_atm * pressure_atm and
+    absorption is Re(F) + Y*Im(F).
+
+    ``detuning`` is already relative to the pressure-shifted line centre.
+    Individual first-order mixed-line contributions are not required to remain
+    nonnegative in their far wings; physical nonnegativity is a property of the
+    summed band opacity and is checked at the transfer layer.
+    """
+    p = float(pressure_atm)
+    y = float(y_per_atm)
+    if not np.isfinite(p) or p < 0 or not np.isfinite(y):
+        raise ValueError("invalid line-mixing pressure/coefficient")
+    profile = complex_sdv(detuning, sigma, gamma, gamma2)
+    return profile.real + (p * y) * profile.imag
+
+
 def voigt_sum(
     nodes,
     lines: tuple[Line, ...],
