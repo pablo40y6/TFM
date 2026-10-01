@@ -28,8 +28,11 @@ from tfm_photochem.m4d_reconstruction.spectroscopy import (
     classic_parameters,
     complex_sdv,
     complex_voigt,
+    doppler_sigma,
     drouin_mixed_profile,
+    drouin_parameters,
     mixing_y,
+    principal_a_cross_section,
 )
 from tfm_photochem.m4d_reconstruction.transfer import (
     Atmosphere,
@@ -215,6 +218,104 @@ def test_drouin_first_order_mixing_is_dispersion_odd_about_line_centre():
 def test_invalid_drouin_line_mixing_controls_fail(pressure, y):
     with pytest.raises(ValueError):
         drouin_mixed_profile(np.array([0.0]), 0.01, 0.06, 0.006, y, pressure)
+
+
+def _record_with_flag(flag):
+    chars = list(" " * 160)
+    chars[126] = flag
+    return "".join(chars)
+
+
+def test_principal_a_cross_section_dispatches_d_and_q_profiles():
+    base = synthetic_lines()[0]
+    dline = replace(
+        base,
+        isotope=1,
+        nu=13100.0,
+        sw=2e-25,
+        elower=10.0,
+        upper="b 0",
+        lower="X 0",
+        local_lower="P1P1 d",
+        record=_record_with_flag("d"),
+    )
+    qline = replace(
+        base,
+        isotope=1,
+        nu=13101.0,
+        sw=3e-25,
+        elower=20.0,
+        upper="b 0",
+        lower="X 0",
+        local_lower="Q1",
+        record=_record_with_flag("q"),
+    )
+    lines = (dline, qline)
+    row = (13100.0, 1.0, 10.0, 0.05, 0.7, 0.08, 0.6, 0.0, 0.0, 0.0, 0.0, 0.1)
+    drouin = {"P1P1": row}
+    mixing = {"P1P1": (0.01, 0.02, 0.03, 0.04)}
+    nodes = np.linspace(13099.8, 13101.2, 301)
+    sources = synthetic_sources()
+    p, po2 = 0.7, 0.14
+
+    actual = principal_a_cross_section(
+        nodes, lines, sources, drouin, mixing, 296.0, p, po2
+    )
+    sigma = doppler_sigma(lines, 296.0)
+    gd, gd2, sd = drouin_parameters(row, 296.0, p)
+    expected = dline.sw * drouin_mixed_profile(
+        nodes - dline.nu - sd, sigma[0], gd, gd2, 0.03, p
+    )
+    gq, sq = classic_parameters((qline,), 296.0, p, po2)
+    expected += qline.sw * complex_voigt(
+        nodes - qline.nu - sq[0], sigma[1], gq[0]
+    ).real
+    assert np.allclose(actual, expected, rtol=2e-15, atol=0)
+
+
+def test_principal_a_cross_section_uses_zero_y_when_table22_is_absent():
+    line = replace(
+        synthetic_lines()[0],
+        isotope=1,
+        nu=13100.0,
+        upper="b 0",
+        lower="X 0",
+        local_lower="R45R45 d",
+        record=_record_with_flag("d"),
+    )
+    row = (13100.0, 1.0, 0.0, 0.05, 0.7, 0.08, 0.6, 0.0, 0.0, 0.0, 0.0, 0.1)
+    nodes = np.linspace(13099.9, 13100.1, 101)
+    actual = principal_a_cross_section(
+        nodes, (line,), synthetic_sources(), {"R45R45": row}, {}, 296.0, 0.5, 0.1
+    )
+    sigma = doppler_sigma((line,), 296.0)[0]
+    gamma, gamma2, shift = drouin_parameters(row, 296.0, 0.5)
+    expected = line.sw * complex_sdv(
+        nodes - line.nu - shift, sigma, gamma, gamma2
+    ).real
+    assert np.allclose(actual, expected, rtol=2e-15, atol=0)
+
+
+def test_principal_a_cross_section_fails_closed_on_missing_drouin_mapping():
+    line = replace(
+        synthetic_lines()[0],
+        isotope=1,
+        upper="b 0",
+        lower="X 0",
+        local_lower="P1P1 d",
+        record=_record_with_flag("d"),
+    )
+    with pytest.raises(SourceError, match="Drouin row missing"):
+        principal_a_cross_section(
+            np.array([line.nu]),
+            (line,),
+            synthetic_sources(),
+            {},
+            {},
+            296.0,
+            0.5,
+            0.1,
+        )
 
 
 def test_profiles_recover_unit_area():
