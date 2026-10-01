@@ -1,304 +1,179 @@
-# M5 temporal reconstruction and initial-condition blocker
+# M5 temporal reference cycle
 
-## Decision and authorized integration base
+## Decision
 
-**INITIALIZATION BLOCKER / NO-GO M5A: reference_twilight_equilibrium is nonunique.**
-The initial-condition policy is now explicitly authorized; the earlier missing-
-policy blocker is superseded. The new blocker is an exact physical consequence
-of the accepted model at SZA=99, not missing external profiles or spectroscopy.
+**NO-GO provisional M5A / PERIODIC INITIALIZATION BLOCKER: accepted OH/HO2 QSSA
+leaves its physical domain during the nominal bootstrap dawn.**
 
-Branch: `milestone/m5-temporal`, continuing from `8230587`, whose integration base
-is local M4D closure `f1841de891145323ddabaea50b7e2038e6ddaf5c`.
-Local `milestone/m4d-design` still points to `25caaf9285545338a6b2cfc259b3348db7857ce3`.
-No branch was merged or rewritten and main remains unchanged.
+This is not the old dark-equilibrium uniqueness blocker. The authorized policy
+is `reference_periodic_diurnal_spinup`; the SZA=99 dark continuum remains an
+accepted regression and is non-blocking. No accepted chemistry was changed to
+continue through the new failure. No complete periodic day, seed independence
+or final reference dawn is certified.
 
-M4D is PROVISIONALLY CLOSED / INTEGRATION READY, without a definitive scientific
-freeze. M5 uses A0 (430 Voigt), B (320 Voigt), IRA (835 monomer Voigt plus historical
-O2-Air CIA attenuation only); A1 remains sensitivity only. PR #4 is not merged;
-Y/Galatry/high-T/B-qSDV questions do not block M5.
+Branch: `milestone/m5-temporal`, integration base
+`f1841de891145323ddabaea50b7e2038e6ddaf5c`. M4D stays INTEGRATION READY / NOT
+FROZEN. Main and accepted M1-M4C chemistry/assets/artifacts are unchanged;
+PR #4 remains unmerged. The single machine-readable evidence file is
+`evidence/m5_temporal_evidence.json`.
 
-Implemented `tfm_photochem.m5_temporal.local_rhs`: a pure five-species temporal RHS
-that calls the accepted scalar closure without modifying kinetics or tendencies.
-It rejects invalid concentrations explicitly, contains no clipping and keeps
-Delta dynamic. A separate initialization preflight rejects exact nonunique dark
-equilibria before numerical optimization; no equilibrium is selected arbitrarily.
-The general root solver and 255-state dawn integration are intentionally stopped
-because the user's explicit multiple-root stop condition has already occurred.
+## Exact model and implemented architecture
 
-## Exact accepted chemistry
+| Role | Definition |
+| --- | --- |
+| Dynamic state | O, O3, H, R_H=OH+HO2, Delta; 51 levels 50..100 km, 255 ODEs |
+| Algebraic species | O1D, OH, HO2, H2O2, B0, B1; accepted six QSSA |
+| Frozen atmosphere | M4A T, M, O2, N2, CO2, H2O, H2 |
+| UV | Eight accepted M4C J, recomputed with dynamic O/O3 on every RHS |
+| NIR | M4D A0 430 Voigt; B 320 Voigt; IRA 835 monomer Voigt with historical O2-Air CIA attenuation only |
+| Transport | None |
 
-Reviewed PROJECT_STATE, architecture, historical topology/reactions/local closure,
-odd oxygen, background, UV radiation and milestone 3/4A/4B/4C reports, together
-with their source modules and tests. The scientific reference is the current
-accepted M4B-corrected `close_local_chemistry`; M3's QSSA mathematics is unchanged.
+`local_rhs` uses accepted `close_local_chemistry` and stoichiometry. There are no
+new reactions, rates or Delta=P/L closure; all five species remain dynamic.
+Concentrations are molecule cm^-3, tendencies molecule cm^-3 s^-1, time seconds.
 
-| Role | Variables | Definition / source |
-| --- | --- | --- |
-| Prognostic | O, O3, H, R_H, Delta | `LocalState`, `config.DYNAMIC_SPECIES` |
-| Reduced family | R_H | OH + HO2; H remains separate and dynamic |
-| QSSA/algebraic | O1D, OH, HO2, H2O2, B0, B1 | `qssa.py`, `local_closure.py` |
-| Prescribed | T, M, O2, N2, CO2, H2O, H2 | frozen M4A `LocalBackground` |
-| Forcing | eight UV J plus gA, gB, gIRA | M4C and authorized M4D |
+`ReferenceEquinoxSolarCycle`: latitude 45 degrees, declination zero, period
+86400 s; cos(SZA)=cos(45)*cos(2*pi*(t/86400-1/2)). Midnight=135, noon=45,
+sunrise/sunset=90. This is an explicit reference, not a calendar ephemeris.
+The extraction window is morning SZA=99..60.
 
-The grid is 51 integer levels, 50..100 km: 255 dynamic variables, no transport.
-Concentrations are molecule cm^-3; tendencies/event fluxes molecule cm^-3 s^-1;
-J/g frequencies s^-1; T kelvin. Second/third-order coefficients use accepted
-cm3 molecule^-1 s^-1 / cm6 molecule^-2 s^-1 units.
+Three numerical seed families are defined, with factors 1, 0.1 and 10 in
+reference O/O3 and broad positive H/R_H/Delta. Missing MSIS O uses 1e-10*M as a
+numerical seed only. **Only nominal seed factor 1 was integrated; zero full days
+completed.** Physical failure stops the task before the other families. It does
+not prove that every possible seed or periodic orbit is impossible.
 
-Let `r_ID` denote exactly the event flux from accepted `fluxes.evaluate_fluxes`.
-The following aggregate equations were reconstructed directly from the current
-registry-derived `stoichiometry.TENDENCY_COEFFICIENTS` (no new reactions):
+Consecutive-day endpoint convergence is configured at 0.1% for relevant
+concentrations and 1 molecule cm^-3 near zero, followed by full-cycle agreement
+across seeds, stricter BDF and Radau within 0.5%. Those periodic gates have not
+been reached. The implemented final export would contain five dynamic species,
+six algebraic species, all eleven forcing frequencies, time, height, SZA and
+explicit dawn window. **No accepted dawn series at 60/70/80/90/100 km is exported.**
 
-```text
-dO/dt =
-    -r_O_ASSOCIATION
-    -r_O_O3
-    -2*r_BARTH_RECOMBINATION
-    -r_O_OH
-    -r_O_HO2
-    +r_H_HO2_H2O_O
-    +r_OH_OH
-    +r_O3_PHOTOLYSIS_GROUND_EFFECTIVE
-    +r_O2_SRC
-    +r_O2_LYMAN_ALPHA
-    +2*r_O2_PHOTOLYSIS_GROUND_EFFECTIVE
-    +r_O1D_RADIATIVE
-    +r_O1D_N2
-    +r_O1D_O2_B1
-    +r_O1D_O2_B0
-    +r_B1_O3
-    +r_DELTA_O3
-```
+## Numerical work and corrections
 
-```text
-dO3/dt =
-    +r_O_ASSOCIATION
-    -r_O_O3
-    -r_H_O3
-    -r_OH_O3
-    -r_HO2_O3
-    -r_O3_PHOTOLYSIS_GROUND_EFFECTIVE
-    -r_B1_O3
-    -r_DELTA_O3
-    -r_O3_HARTLEY_PRODUCTS
-```
+The solver uses log concentrations in dark levels and scaled physical
+concentrations in illuminated levels, with exact coordinate transformations.
+The switches occur at all 51 physical tangent events on dawn and dusk. One-sided
+forcing at a split endpoint avoids fitting an incoming discontinuity on the
+outgoing dark interval. No concentration clipping or arbitrary equilibrium
+reset is used. Negative/nonfinite trials are rejected and retried from the last
+accepted state at reduced step.
 
-```text
-dH/dt =
-    -r_H_O2_ASSOCIATION
-    -r_H_O3
-    +r_O_OH
-    +r_OH_H2
-    -r_H_HO2_2OH
-    -r_H_HO2_H2O_O
-    -r_H_HO2_H2_O2
-    +r_H2O_PHOTOLYSIS_A
-    +r_O1D_H2
-```
+The chemical block Jacobian is a Newton iteration approximation: radiation
+partial derivatives are omitted from that preconditioner, while the full RHS
+always recomputes dynamic UV. One-sided finite differences adapt to the physical
+QSSA domain. Synthetic analytic derivative/recovery tests cover this strategy,
+BDF and Radau; independent method comparison is required for acceptance.
 
-```text
-dR_H/dt =
-    +r_H_O2_ASSOCIATION
-    +r_H_O3
-    -r_O_OH
-    -r_OH_H2
-    +r_H_HO2_2OH
-    -r_H_HO2_H2O_O
-    -r_H_HO2_H2_O2
-    -2*r_OH_OH
-    -2*r_OH_HO2
-    -2*r_HO2_HO2
-    +2*r_H2O2_PHOTOLYSIS
-    +r_H2O_PHOTOLYSIS_A
-    +2*r_O1D_H2O
-    +r_O1D_H2
-```
+Two numerical implementation problems were corrected:
 
-```text
-dDelta/dt =
-    +r_O2_IRA_BAND
-    -r_DELTA_RADIATIVE
-    +r_B0_N2
-    +r_B0_O2
-    +r_B0_O
-    +r_B0_O3
-    +r_B0_CO2
-    -r_DELTA_O2
-    -r_DELTA_N2
-    -r_DELTA_O
-    -r_DELTA_O3
-    +r_O3_HARTLEY_PRODUCTS
-```
+- Missing altitude-specific tangent nodes smeared finite illuminated NIR rates
+  toward shadow zero. The table now includes all 51 tangent angles and applies
+  exact current shadow geometry.
+- The accepted geometry's grazing tolerance sometimes admitted impact just
+  below Earth, producing a tiny Earth chord and failed shell-length closure.
+  A private M5 wrapper repairs only that roundoff interval to the tangent radius.
+  Ordinary rays remain byte-identical; all tangent neighborhoods pass independent
+  length/nonnegativity tests. Accepted M4C source files remain unchanged.
 
-For ordinary events use the unchanged accepted coefficients and reactant
-products. A self-reaction event is k*X^2, without 1/2; stoichiometry supplies the
-factor two. Barth consumes two O via its gross recombination event, while its
-separate effective B0 source is not a second dynamic event. Gross/complement
-Hartley/Lyman diagnostics and O1D_O2_TOTAL are not assembled again.
+Log coordinates alone also caused enormous dy/y Newton predictors when solar
+sources appeared in nearly empty populations. Switching coordinates removes
+that artificial stiffness without changing an ODE. Invalid Jacobian perturbations
+are handled numerically instead of being classified as physical trajectory stops.
 
-The six closures are exactly:
+For performance, private copies of original closure bytecode cache frozen scalar
+coefficients and batch the original 257-point OH ambiguity scan. Original modules
+are never mutated. Endpoint/small residual samples and Brent root tolerances remain
+accepted originals. Golden comparisons cover all 51 heights, all three seeds,
+dark/illuminated forcing and QSSA error propagation. The scientific blocker below
+is reproduced using the **original scalar closure**, independent of these caches.
 
-```text
-P_O1D = 0.9*JH*O3 + J_SRC*O2 + 0.44*J_LYA*O2 + J_H2O_B*H2O
-L_O1D = A_O1D + k_O1D_N2*N2 + k_O1D_O2*O2
-        + k_O1D_H2O*H2O + k_O1D_H2*H2
-O1D = P_O1D/L_O1D
-HO2 = R_H - OH
-H2O2 = k_HO2_HO2(T,M)*HO2^2/(J_H2O2 + k_OH_H2O2*OH)
-OH: unique physical root of accepted OH production-minus-loss = 0
-0 = r_H_O3 + r_O_HO2 + r_HO2_O3 + 2*r_H_HO2_2OH
-    + 2*r_H2O2_PHOTOLYSIS + r_H2O_PHOTOLYSIS_A
-    + 2*r_O1D_H2O + r_O1D_H2
-    - r_O_OH - r_OH_O3 - r_OH_H2 - 2*r_OH_OH
-    - r_OH_HO2 - r_OH_H2O2
-P_B1 = gB*O2 + 0.8*k_O1D_O2*O1D*O2
-L_B1 = A_B1 + k_B1_O2*O2 + k_B1_N2*N2 + k_B1_O*O + k_B1_O3*O3
-B1 = P_B1/L_B1
-P_B0 = gA*O2 + 0.2*k_O1D_O2*O1D*O2
-       + k_B1_O2*B1*O2 + k_B1_N2*B1*N2 + P_Barth_B0
-P_Barth_B0 = k_Barth*O^2*M*O2/(6.6*O2 + 19*O)
-L_B0 = A_B0 + k_B0_N2*N2 + k_B0_O2*O2
-       + k_B0_O*O + k_B0_O3*O3 + k_B0_CO2*CO2
-B0 = P_B0/L_B0
-P_Delta = 0.9*JH*O3 + gIRA*O2 + sum(B0 quenching fluxes)
-L_Delta = A_Delta + k_Delta_O2*O2 + k_Delta_N2*N2
-          + k_Delta_O*O + k_Delta_O3*O3
-dDelta/dt = P_Delta - L_Delta*Delta
-```
+## NIR baseline preparation
 
-Existing zero/singular limits and the 257-point OH root ambiguity guard are
-retained; Delta remains prognostic. There is a unique OH/HO2 reconstruction only
-when that existing closure accepts the supplied state and forcing. No assumption
-that it will remain nonsingular throughout dawn has been verified yet.
+Authorized HITRAN export: 2268239 bytes, 14085 records, SHA256
+6b4acbc01cb649891f2d8597875c9cd8e4805cfdd4d3b7841c2d18cbf718de12;
+A/B/IRA = 430/320/835. Raw data are not committed or uploaded. Derived opacity
+caches remain outside Git and carry spectral/control/code fingerprints.
 
-M4B partitions `J2_star=J_SRC+0.44*J_LYA`, `J2_ground=J_O2_TOTAL-J2_star`,
-`J3_star=0.9*JH`, `J3_ground=J_O3_TOTAL-J3_star`. Gross subset checks remain
-`J_O2_TOTAL>=J_SRC+J_LYA`, `J_O3_TOTAL>=JH`. Eight UV inputs also include
-J_H2O2, J_H2O_A, J_H2O_B. The accepted 0.89/0.11 H2O short-wavelength reduction
-and H2O2 source/temperature policy remain unchanged. No legacy optional HOx
-reaction is imported; the four explicit topology exclusions remain excluded.
+Adaptive piecewise linear interpolation/direct midpoint auditing gives
+**276 nodes**, maximum relevant error **0.4976554195%**, near-zero maximum absolute
+error **9.836573759e-16 s^-1**. Worst relative case: IRA, z=94 km,
+SZA=99.7186393503, direct=1.7821954387e-14 s^-1,
+interpolated=1.7910646309e-14 s^-1. This is a midpoint audit, not a uniform bound.
+NIR HITRAN transfer is never evaluated inside the temporal RHS.
 
-## Authorized initialization and exact nonuniqueness
+## Physical QSSA domain exit
 
-The user authorized `reference_twilight_equilibrium`: five stationary tendencies
-at fixed SZA=99, nonnegative states, unique physical roots across seeds, passing
-QSSA and independent constant-forcing relaxation. Existing profiles are numerical
-seeds only, never an automatic accepted initial condition. This supersedes the
-previous lack of an accepted initialization policy.
+The full nominal run from t=0 fails at **t=19223.755728 s (LST 05:20:23.756),
+SZA=96.98356356, z=100 km**. Its positive state is approximately
+[O=5.653112466e11, O3=3.897608539e8, H=1492.249917,
+R_H=0.299405517, Delta=1.381497227e7] molecule cm^-3.
 
-At SZA=99 the accepted solid-Earth shadow covers every integer height 50..79 km.
-M4C returns exactly zero for all eight UV inputs there regardless of dynamic
-column opacity. Direct M4D calls with the verified complete A/B/IRA line subsets
-and historical CIA also return exactly zero for all three g-factors. The validator
-loads the frozen historical sources and authorized HITRAN export; this is direct
-model forcing, not an assumed negligible twilight flux or an interpolated table.
+The original OH production-minus-loss residual is positive at every one of its
+257 guard samples, including OH=R_H. A stationary OH partition would need to
+leave 0<=OH<=R_H, implying negative HO2. The original `close_local_chemistry`
+rejects the state with `NoPhysicalRootError`. Further step reduction reaches the
+same domain boundary; no root or parameter was substituted to cross it.
 
-For any c>=0 the following is then an exact stationary solution:
+Independent probes start from the same accepted full-column state at
+19222.723173 s. They use the complete dynamic UV/RHS:
+
+| Solver | rtol / transformed atol | max step, s | Domain exit, s | Height, km |
+| --- | --- | ---: | ---: | ---: |
+| BDF base | 2e-6 / 1e-8 | 120 | 19223.755514 | 100 |
+| BDF stricter | 2e-8 / 1e-10 | 60 | 19223.756557 | 100 |
+| Radau stricter | 2e-8 / 1e-10 | 60 | 19223.581121 | 99 |
+
+Each exit is independently rejected by the original scalar closure. All 257
+residuals are positive; minima are 1.0101e-10, 1.1532e-10 and 6.5317e-11
+molecule cm^-3 s^-1, respectively. Small values locate the boundary; they are
+not the sole evidence for a physical exit. A separately labelled one-second
+forward-Euler diagnostic using the accepted RHS at the common anchor gives
+positive minimum residuals 0.01454 and 0.009813 at 99 and 100 km. This diagnostic
+is neither an accepted integration trajectory nor a repair.
+
+A stronger local check starts at an accepted boundary state at 19223.756557 s:
+all 51 original scalar closures still pass and the endpoint residual is
+-5.522e-8. Directional steps of 1e-5, 1e-4 and 1e-3 s using the accepted full
+RHS and recomputed UV give dG/dt=0.1021..0.1068 molecule cm^-3 s^-2. The minimum
+OH residual becomes positive by 9.656e-7..1.067e-4. Thus the vector field points
+out of the admissible domain, beyond a floating-point sign ambiguity. These are
+directional diagnostics, not a continued physical trajectory.
+
+On the common **0.8-second pre-boundary interval**, relevant maximum differences
+are **0.015595%** (BDF base versus stricter) and **0.001981%** (stricter BDF versus
+Radau). Near-zero R_H absolute differences are 1.478e-4 and 7.504e-5 molecule
+cm^-3. This is local numerical agreement only; no full-day convergence or
+periodic seed independence is claimed. The stop is physical admissibility of
+this reduced QSSA trajectory, not CIA, a spectroscopy approximation or the old
+universal 0.1% gate. No error in accepted reaction rates/budgets is inferred.
+
+## Dark continuum regression and QA
+
+At fixed SZA=99, every 50..79 km level is in solid-Earth shadow. Direct accepted
+M4C/M4D forcing is exactly zero. For any c>=0, [0,c,0,0,0] has five zero
+tendencies and all six zero QSSA residuals. Two witnesses per level, a factor
+100 apart in O3, remain unchanged for 24 h BDF. The `dark-regression` validator
+returns PASS; this result is historical and non-blocking for periodic forcing.
+
+- Full pytest: **622 passed + 13 subtests passed**.
+- Ruff: PASS.
+- Legacy, local closure, odd-oxygen budget, M4A background and M4C UV validators:
+  all five PASS.
+- Dark continuum regression and recorded OH/HO2 domain-exit regression: PASS.
+- Full periodic validator: intentional NO-GO at the physical QSSA domain boundary.
+- M4C-R2 artifact SHA256 remains
+  2944c8a8e0899b320c69c45192ee6f03b9001114c4120a9db8c67a3f1bb8f1fe.
 
 ```text
-y = [O=0, O3=c, H=0, R_H=0, Delta=0]
-OH=HO2=H2O2=O1D=B0=B1=0
-five tendencies = 0
-six QSSA residuals = 0
-```
-
-Every accepted event is zero: there is no O for association/Barth, no radicals
-for ozone destruction, no excited species and no photolysis. The accepted
-R_H=0 boundary convention has zero OH production here and is fully consistent.
-Consequently there is a continuum of nonnegative physical equilibria: changing
-O3 alone is a neutral mode. Root tolerances, scaling, positive seeds or a longer
-integration cannot establish a unique attracting root that these equations lack.
-
-At each of the 30 shadowed heights, the preflight verifies two distinct roots
-with c equal to 0.1 and 10 times the existing reference O3 seed, a factor 100
-apart. Those reference values are used only to construct counterexamples.
-For example, at 60 km:
-
-| Witness | O3, molecule cm^-3 | Other four dynamic species | Five tendencies / six QSSA residuals |
-| --- | ---: | --- | --- |
-| lower O3 seed | 9.078617676877669e8 | exactly zero | exactly zero |
-| higher O3 seed | 9.078617676877668e10 | exactly zero | exactly zero |
-
-The normalized residual is exactly zero for any positive scale; no arbitrary
-residual floor determines this conclusion. All witness states are finite and
-nonnegative. The independently tested RHS retains Hartley and B1 ozone budgets
-and the exact dynamic Delta response `delta(dDelta/dt)=-L_Delta*delta(Delta)`.
-
-## BDF persistence and attraction failure
-
-All 60 distinct stationary witnesses were integrated with the accepted RHS for
-86400 seconds at fixed direct SZA=99 forcing using BDF, rtol=1e-9, atol=1e-8
-molecule cm^-3 and max_step=3600 seconds. Their maximum absolute departure is
-exactly zero; every integration succeeds with finite/nonnegative states.
-Starting from the different O3 values preserves their difference instead of
-relaxing to a common root. This disproves a unique attractor, not just seed
-independence of an optimizer. The analytic continuum establishes nonuniqueness
-for arbitrary persistence intervals, including intervals longer than one day.
-
-For these exact constant boundary trajectories BDF receives a zero iteration
-Jacobian to avoid finite-difference trial states outside the physical QSSA domain.
-This is a numerical iteration choice only, not a physical Jacobian or a linear
-stability calculation. No general stability of the dark equilibria or relaxation
-from arbitrary five-species interior perturbations is claimed. Neither is needed
-to disprove uniqueness: valid O3-only perturbations stay on distinct exact roots.
-
-`scripts/validate_m5_temporal.py` reproduces direct forcing, exact stationary/QSSA
-witnesses and BDF persistence at all 30 heights. It deliberately exits **2** for
-INITIALIZATION BLOCKER. This is the requested scientific stop, not a software
-regression. Remaining illuminated-height root searches cannot repair the failed
-full-domain uniqueness criterion and have not been pursued.
-
-## Architecture identified for continuation (not implemented)
-
-The pure local RHS is implemented; the eventual full-column solver uses BDF with Radau verification,
-configurable tolerances/max_step, and separate diagnostics. Never clip state in
-the RHS. Independent chemical levels have no transport, but M4C UV radiation
-couples their O/O3 opacity: reevaluate that inexpensive kernel with the dynamic
-column, or demonstrate an explicitly declared fixed-opacity approximation.
-A single J table in SZA/height cannot preserve evolving O/O3 self-shielding.
-
-NIR forcing depends on prescribed atmosphere/O2 and may be precomputed in
-SZA/height, with node reproduction and interpolation-error checks and A0/A1
-selection. Precomputed ray geometry can also avoid repeated geometric work for
-UV. No HITRAN transfer inside each chemical RHS evaluation is required.
-
-A prescribed 99->60-degree reference dawn is authorized in principle; its
-interval, interpolation resolution and output times have not been selected or
-implemented because the authorized initialization is nonunique. No calendar
-astronomy, atmosphere regeneration, vertical transport, temporal curves, solver
-convergence or downstream A0/A1 chemical sensitivity has been claimed.
-
-## QA and boundary preservation
-
-Executed after this reconstruction:
-
-- Full pytest: **604 passed + 13 subtests passed**.
-- Ruff (`src tests scripts`): all checks passed.
-- Legacy, local closure, odd-oxygen budget, historical background, historical UV:
-  all five validators exit 0.
-- M4C-R2 artifact SHA256:
-  `2944c8a8e0899b320c69c45192ee6f03b9001114c4120a9db8c67a3f1bb8f1fe`.
-- Compared all 37 packaged source/asset files in that artifact with the current
-  checkout: 11 byte-identical, 26 differ only by pre-existing checkout line
-  endings; no source/asset content differences. No EOL conversion was made here.
-- No M1-M4D code, tests, assets, artifact or numerical evidence is changed by M5.
-
-The new M5 validator returns the intentional initialization stop described above.
-No dawn trajectories, BDF-versus-Radau dawn convergence or temporal 60/70/80/90/100
-km output is claimed; those depend on a passing initial condition. No new public
-JSON is committed; the validator emits its machine-readable witnesses to stdout.
-
-Reproduce with `PYTHONPATH=src`:
-
-```text
-python scripts/validate_m5_temporal.py --sources <frozen-source-folder> --hitran <authorized-export>
-python -m pytest -q -p no:cacheprovider
+PYTHONPATH=src python scripts/validate_m5_temporal.py --sources <frozen-source-folder> --hitran <authorized-export> --cache <outside-git-cache>
+PYTHONPATH=src python scripts/validate_m5_temporal.py --mode dark-regression --sources <frozen-source-folder> --hitran <authorized-export>
+PYTHONPATH=src python scripts/validate_m5_temporal.py --mode domain-regression --sources <frozen-source-folder> --hitran <authorized-export>
+PYTHONPATH=src python -m pytest -q -p no:cacheprovider
 python -m ruff check src tests scripts
 ```
 
-The next scientific decision must change the uniqueness requirement/initialization
-policy, not the accepted dark chemistry silently. A possible future policy is a
-specified illuminated initialization followed by an explicit presunset trajectory,
-or the already planned repeated diurnal cycle to periodic convergence. Neither
-policy nor an arbitrary selection from the dark equilibrium continuum is adopted
-here. SZA=99 full-domain unique stationary initialization fails the authorized gate.
+Continuing needs a scientific decision about temporal OH/HO2 QSSA admissibility;
+this task does not alter the accepted reduction or invent a partition outside
+its physical domain. Calendar ephemerides and dynamic atmosphere are not started.
