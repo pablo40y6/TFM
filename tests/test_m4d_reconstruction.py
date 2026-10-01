@@ -28,6 +28,7 @@ from tfm_photochem.m4d_reconstruction.spectroscopy import (
     classic_parameters,
     complex_sdv,
     complex_voigt,
+    drouin_mixed_profile,
     mixing_y,
 )
 from tfm_photochem.m4d_reconstruction.transfer import (
@@ -181,6 +182,39 @@ def test_sdv_against_independent_maxwell_speed_integral(speed):
         rtol=2e-12,
         atol=1e-12,
     )
+
+
+def test_drouin_mixing_zero_limits_and_pressure_scaling():
+    nodes = np.linspace(-0.15, 0.15, 401)
+    sigma, gamma, gamma2 = 0.01, 0.06, 0.006
+    base = complex_sdv(nodes, sigma, gamma, gamma2)
+    assert np.array_equal(
+        drouin_mixed_profile(nodes, sigma, gamma, gamma2, 0.0, 0.8),
+        base.real,
+    )
+    assert np.array_equal(
+        drouin_mixed_profile(nodes, sigma, gamma, gamma2, 0.35, 0.0),
+        base.real,
+    )
+    mixed = drouin_mixed_profile(nodes, sigma, gamma, gamma2, -0.2, 0.7)
+    assert np.allclose(mixed - base.real, -0.14 * base.imag, rtol=2e-15, atol=0)
+
+
+def test_drouin_first_order_mixing_is_dispersion_odd_about_line_centre():
+    nodes = np.linspace(-0.2, 0.2, 1001)
+    base = complex_sdv(nodes, 0.01, 0.06, 0.006)
+    mixed = drouin_mixed_profile(nodes, 0.01, 0.06, 0.006, 0.3, 0.8)
+    correction = mixed - base.real
+    assert np.allclose(correction, -correction[::-1], rtol=2e-12, atol=2e-15)
+    # First-order mixing redistributes an isolated line; its symmetric
+    # principal-value area correction is zero.
+    assert abs(np.sum(correction)) < 1e-12
+
+
+@pytest.mark.parametrize("pressure,y", [(-1e-3, 0.1), (np.nan, 0.1), (1.0, np.nan)])
+def test_invalid_drouin_line_mixing_controls_fail(pressure, y):
+    with pytest.raises(ValueError):
+        drouin_mixed_profile(np.array([0.0]), 0.01, 0.06, 0.006, y, pressure)
 
 
 def test_profiles_recover_unit_area():
