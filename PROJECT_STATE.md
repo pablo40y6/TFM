@@ -31,9 +31,9 @@ The immutable current artifact is `artifacts/accepted/m4c-r2/tfm-photochem-miles
 
 ## Current next milestone
 
-M4D is **PARTIAL ISOLATED RECONSTRUCTION / CIA DESIGN BLOCKER / DESIGN NOT FROZEN**. It must eventually provide `gA`, `gB`, and `gIRA` without starting M5. The accepted production implementation still ends at M4C-R2.
+M4D is **PARTIAL ISOLATED RECONSTRUCTION / CIA SCOPE RESOLVED / DESIGN NOT FROZEN**. It must eventually provide `gA`, `gB`, and `gIRA` without starting M5. The accepted production implementation still ends at M4C-R2.
 
-The 2026-09-30 implementation experiment lives in `tfm_photochem.m4d_reconstruction`, with a source/mapping validator and a retained-rate CIA stop-gate validator. It provides historical source verification, deterministic A mapping, tested Drouin SDV primitives and classic B/IRA all-line Voigt transfer. Completed on 2026-10-01: a converged retained IRA rate at 50 km / SZA 95 degrees changes by 0.2915504276% with historical CIA, above the required 0.1% gate. The measured-temperature envelope remains 0.2722675384--0.2924815347%, so the stop conclusion is unchanged. Per the user's explicit instruction, scientific closure stops with DESIGN BLOCKER. It does not provide accepted A SDV+LM/Galatry transfer or complete full-domain numerical closure. See `docs/m4d_reconstruction_execution_specification.md` and `docs/m4d_reconstruction_audit.md` for scope, exact commands, results and remaining work.
+The 2026-09-30 implementation experiment lives in `tfm_photochem.m4d_reconstruction`, with a source/mapping validator and a retained-rate CIA stop-gate validator. It provides historical source verification, deterministic A mapping, tested Drouin SDV primitives and classic B/IRA all-line Voigt transfer. Completed on 2026-10-01: a converged retained IRA rate at 50 km / SZA 95 degrees changes by 0.2915504276% with historical CIA, above the required 0.1% gate. The measured-temperature envelope remains 0.2722675384--0.2924815347%, so the mandatory stop was correctly triggered. Independent post-stop scientific review then resolved the scope decision: historical Maté/HITRAN2016 O2-Air CIA is included in the M4D IRA **attenuation** baseline while the excitation source remains the accepted 835-line monomer system and CIA never becomes a production term. The historical stop remains audit evidence; M4D is still not frozen because A/B sensitivities and full-domain numerical closure remain open. See `docs/m4d_ira_cia_post_stop_resolution.md`, `docs/m4d_reconstruction_execution_specification.md` and `docs/m4d_reconstruction_audit.md`.
 
 The historical A-band and Maté CIA source-discovery/byte-materialization blockers are closed through reproducible public-source acquisition. Local HITRAN2016 rare-line continuity is now PASS: 280/280 rare lines and 430/430 total auxiliary matches, with zero unmatched, duplicates or ambiguities. Numerical closure/sensitivity remains open and is subject to the user's mandatory CIA/qSDV stop conditions.
 
@@ -212,7 +212,7 @@ The known partial/defective historical qSDV data are not silently reproduced. A 
 
 ## IRA monomer
 
-**ISOLATED BASELINE CANDIDATE IMPLEMENTED.** Use classic HITRAN2016 Voigt with the explicitly requested partial-pressure expression above, pending final full-domain convergence and the CIA stop gate.
+**ISOLATED MONOMER CANDIDATE IMPLEMENTED.** Use classic HITRAN2016 Voigt with the explicitly requested partial-pressure expression above. For the selected M4D IRA radiative-transfer baseline, this monomer opacity is combined with the resolved historical O2-Air CIA attenuation; full-domain convergence remains open.
 
 ## IRA CIA attenuation scope
 
@@ -222,9 +222,9 @@ The historical Mate numerical source is materialized and the HITRAN2016 O2-Air s
 
 A profile-independent lower-bound test also finds four illuminated SZA 99 deg cases (80--83 km) where the minimum CIA attenuation across the entire accepted IRA spectral support already exceeds 0.1%.
 
-Therefore the previous **monomer-only attenuation baseline candidate is REOPENED FOR NUMERICAL CLOSURE**. This does not yet force CIA into production: the final decision requires the target-edition, monomer-self-shielded, CIA-coupled gIRA calculation above the 1e-15 s^-1 retained-rate floor.
+The previous **monomer-only attenuation baseline candidate failed the retained-rate gate**. At 50 km / SZA 95 degrees the refined monomer-only rate is `6.7194715555556325e-12 s^-1`, and the historical CIA rate is `6.699880907505247e-12 s^-1`. Both exceed the floor. Counterexample refinement maxima are 0.03885055038% spatial, 0.000214008794% quadrature order and 0.007189447952% target support, all below 0.1%.
 
-That coupled retained-rate stop probe is now **DESIGN BLOCKER**: at 50 km / SZA 95 degrees the refined monomer-only rate is `6.7194715555556325e-12 s^-1`, and the historical CIA rate is `6.699880907505247e-12 s^-1`. Both exceed the floor. Counterexample refinement maxima are 0.03885055038% spatial, 0.000214008794% quadrature order and 0.007189447952% target support, all below 0.1%. This proves a retained-rate failure of the monomer-only attenuation candidate; it is not a full-domain numerical maximum or final approval to change the accepted science. The user-required stop leaves the outstanding advanced A/B sensitivities and full-domain rate closure for a subsequent independently reviewed decision.
+The mandatory stop was then independently reviewed. The resolved M4D baseline keeps the 835-line monomer system as the **only excitation source** but includes historical Maté/HITRAN2016 O2-Air CIA as a separate opacity in IRA direct-beam attenuation. Do not add a separate O2-O2 term on top of O2-Air. The nominal historical temperature clamp/interpolation, measured-source envelope and raw/noise sensitivity remain required. This resolves the CIA scope decision without freezing M4D or changing M4C-R2. See `docs/m4d_ira_cia_post_stop_resolution.md`.
 
 Numerical CIA rules now selected:
 
@@ -307,10 +307,10 @@ Earlier forensics/research notes remain provenance evidence even where their old
 
 ## Immediate next gate
 
-1. Audit the source-verified, coupled IRA retained-rate CIA stop probe in `evidence/m4d_cia_stop_gate.json`; obey the requested DESIGN BLOCKER stop before continuing scientific closure.
-2. Resolve the resulting CIA baseline decision through independent scientific review. Mapping is complete; no modern source replacement is needed.
-3. After that decision, complete A SDV+LM/Galatry transfer and its low-temperature/no-Y/quadrupole sensitivities, materialize and test corrected source-based B qSDV, and quantify pressure shifts.
-4. Pass the full altitude/SZA/tangent spectral and spatial rate gate. Geometry coverage alone is not rate convergence.
+1. CIA post-stop review is complete: include historical Maté/HITRAN2016 O2-Air CIA in the IRA attenuation baseline; keep excitation monomer-only and retain nominal/envelope/raw CIA sensitivities.
+2. Complete A SDV+LM/Galatry transfer and its low-temperature/no-Y/quadrupole sensitivities.
+3. Materialize and test corrected source-based B qSDV and quantify pressure-shift sensitivity.
+4. Pass the full altitude/SZA/tangent spectral and spatial rate gate, including the selected IRA CIA baseline and its source-envelope sensitivity. Geometry coverage alone is not rate convergence.
 
 Only then may independent audit accept a final M4D design/freeze. The current isolated implementation experiment is explicitly authorized by the user's request; it is not production acceptance.
 
