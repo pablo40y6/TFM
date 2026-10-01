@@ -90,3 +90,8 @@ See `evidence/m4d_a_advanced_transfer.json` for reproducible numeric scope, code
 fingerprints and blocker exceptions, and `m4d_a_advanced_transfer_execution.md`
 for the implementation contract. Historical restricted source records remain
 outside Git and unchanged.
+
+Historical witnesses: [Drouin manuscript](https://pmc.ncbi.nlm.nih.gov/articles/PMC5103325/),
+[publisher supplement](https://ars.els-cdn.com/content/image/1-s2.0-S0022407316301108-mmc1.pdf),
+[pinned HAPI source](https://raw.githubusercontent.com/hitranonline/hapi/f41d9911f2631eed51b96d6c617b4f27786ad477/hapi/hapi.py).
+Exact byte identities are enforced by `m4d_reconstruction.sources` and the audit.

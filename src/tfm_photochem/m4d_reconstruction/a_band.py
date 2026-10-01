@@ -74,7 +74,12 @@ class PrincipalA:
             for line in self.lines
         ):
             raise SourceError("principal A requires only principal b(0)-X(0) d/q lines")
-        labels = {line.dipole_label for line in self.lines if line.flag == "d"}
+        labels = set(
+            unique_rows(
+                ((line.dipole_label, line) for line in self.lines if line.flag == "d"),
+                "principal A dipole labels",
+            )
+        )
         if (
             len(self.lines) != 150
             or len(labels) != 91

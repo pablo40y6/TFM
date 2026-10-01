@@ -167,6 +167,14 @@ def test_order_invariance_and_owner_decomposition():
     assert np.all(expected > 0)  # includes a node 100 cm^-1 beyond the last line
 
 
+def test_duplicate_dipole_label_is_rejected_even_with_a_distinct_full_key():
+    m = model()
+    duplicate_label = replace(m.lines[0], local_upper="distinct upper identity")
+    assert duplicate_label.key != m.lines[0].key
+    with pytest.raises(SourceError, match="dipole labels: duplicate/ambiguous"):
+        replace(m, lines=m.lines[:-1] + (duplicate_label,))
+
+
 def test_negative_summed_opacity_is_blocked_never_clipped():
     m = model()
     m = replace(m, mixing={label: (1e4,) * 4 for label in m.mixing})

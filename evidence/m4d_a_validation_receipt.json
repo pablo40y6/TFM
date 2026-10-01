@@ -1,0 +1,147 @@
+{
+  "M4D_frozen": false,
+  "M5_started": false,
+  "a_code_sha256": {
+    "scripts/validate_m4d_a_transfer.py": "fb79f8613105843e55fb4c70e570cd558213afe3bd25f7d119887d4d4a2f806a",
+    "src/tfm_photochem/m4d_reconstruction/a_band.py": "38bf44faec655fa333d82deb814b382410887d1777003745c68a0f536aa4f11c",
+    "src/tfm_photochem/m4d_reconstruction/spectroscopy.py": "beb71003869636201b664e2ec2105967efb3998208418b031f3200016a655cb7"
+  },
+  "a_validator": {
+    "decision": "SCIENTIFIC BLOCKER",
+    "exit_code": 2,
+    "scientific_blockers": [
+      "LM normalization",
+      "Y above 340 K",
+      "historical Galatry convention"
+    ]
+  },
+  "accepted_validators": {
+    "validate_historical_2020_background": {
+      "exit_code": 0,
+      "stdout_sha256_lf": "70d70d9bd84b9097154a9c39b04d302c20ef9542b205b4257b42c3b80c486816"
+    },
+    "validate_historical_2020_uv": {
+      "exit_code": 0,
+      "stdout_sha256_lf": "d8680b892d28085cea2bea51f66bae956431dbc5851bc7555e68f11ae95f06e1"
+    },
+    "validate_legacy": {
+      "exit_code": 0,
+      "stdout_sha256_lf": "36cffed160ec6a13da955a590ee08a873f8a25ab06f8b9bcf21ebcd1cfd905d4"
+    },
+    "validate_local_closure": {
+      "exit_code": 0,
+      "stdout_sha256_lf": "1de9c4e65019bb49ea01446e78b8aef2b4b613997e14cdbdbf9eba2bd8cc2991"
+    },
+    "validate_odd_oxygen_photolysis_budget": {
+      "exit_code": 0,
+      "stdout_sha256_lf": "310f842c1e949e1de187662a674443e069a02e08ddc4af8c5a435793b9fe0f58"
+    }
+  },
+  "actual_remote_start": "25caaf9285545338a6b2cfc259b3348db7857ce3",
+  "branch": "codex/m4d-advanced-transfer",
+  "cia_retained_rate_validator": {
+    "cia_relative_reductions": {
+      "cia_envelope_max": 0.0029248153466058247,
+      "cia_envelope_min": 0.002722675384077,
+      "cia_nominal": 0.0029155042756581206,
+      "cia_raw": 0.0029155042756581206
+    },
+    "convergence": {
+      "baseline_to_spatial": {
+        "max_relative_difference": 0.00038850550379429836,
+        "relative_differences": {
+          "cia_envelope_max": 0.00038739187722377876,
+          "cia_envelope_min": 0.0003874707117713076,
+          "cia_nominal": 0.0003873938897834418,
+          "cia_raw": 0.0003873938897834418,
+          "monomer": 0.00038850550379429836,
+          "unattenuated": 0.0
+        },
+        "status": "PASS"
+      },
+      "baseline_to_spectral_order": {
+        "max_relative_difference": 2.140087936324544e-06,
+        "relative_differences": {
+          "cia_envelope_max": 2.1352934348020714e-06,
+          "cia_envelope_min": 2.135567352760543e-06,
+          "cia_nominal": 2.135289150163046e-06,
+          "cia_raw": 2.135289150163046e-06,
+          "monomer": 2.140087936324544e-06,
+          "unattenuated": 3.491051316321977e-11
+        },
+        "status": "PASS"
+      },
+      "spectral_order_to_spectral_support": {
+        "max_relative_difference": 7.189447951514405e-05,
+        "relative_differences": {
+          "cia_envelope_max": 7.182615535434312e-05,
+          "cia_envelope_min": 7.183367958685878e-05,
+          "cia_nominal": 7.182559438737761e-05,
+          "cia_raw": 7.182559438737761e-05,
+          "monomer": 7.189447951514405e-05,
+          "unattenuated": 3.4067191491384736e-06
+        },
+        "status": "PASS"
+      }
+    },
+    "decision": "DESIGN BLOCKER",
+    "exit_code": 2,
+    "interpretation": "historical stop reproduced; post-stop CIA attenuation scope remains resolved",
+    "provenance": "Fresh numerical run started during A wrapper finalization. Only A code and text line endings changed during execution; all executed classic spectroscopy and CIA/source/transfer definitions are unchanged. Producer fingerprints are retained in the raw report."
+  },
+  "clean_windows_checkout_pytest": {
+    "core_autocrlf": true,
+    "status": "PASS",
+    "subtests": 13,
+    "tests": 564
+  },
+  "date": "2026-10-01",
+  "integrity": {
+    "M4C_zip_sha256": "2944c8a8e0899b320c69c45192ee6f03b9001114c4120a9db8c67a3f1bb8f1fe",
+    "accepted_byte_identical_files": 13,
+    "accepted_scientific_changes": [],
+    "accepted_source_checkout_line_endings_only": 18,
+    "unchanged_classic_modules_lf": [
+      "src/tfm_photochem/m4d_reconstruction/cia.py",
+      "src/tfm_photochem/m4d_reconstruction/sources.py",
+      "src/tfm_photochem/m4d_reconstruction/transfer.py"
+    ],
+    "unchanged_classic_spectroscopy_AST_definitions": [
+      "SpectralSources",
+      "doppler_sigma",
+      "classic_parameters",
+      "complex_voigt",
+      "voigt_sum"
+    ]
+  },
+  "legacy_cia_validator": {
+    "cases_per_spacing": 357,
+    "exit_code": 0
+  },
+  "mapping_validator": {
+    "exit_code": 0,
+    "matches": 430
+  },
+  "publication": "NOT RUN; automatic approval rejected push, user approval pending",
+  "pytest": {
+    "status": "PASS",
+    "subtests": 13,
+    "tests": 564
+  },
+  "requested_baseline": "3cc036efc0d77e5f62f5b4fbe01d372d9ba9c5de",
+  "ruff": {
+    "status": "PASS"
+  },
+  "runtime": {
+    "numpy": "2.5.3",
+    "python": "3.14.3",
+    "scipy": "1.18.1"
+  },
+  "unexecuted": [
+    "nominal full A rates",
+    "full-domain A convergence",
+    "retained low-T/no-Y/q sensitivities",
+    "Galatry area/limits",
+    "corrected B qSDV"
+  ]
+}
