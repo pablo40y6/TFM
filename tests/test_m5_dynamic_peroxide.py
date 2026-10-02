@@ -189,3 +189,76 @@ def test_daily_initializer_rejects_known_stable_two_cycle(monkeypatch):
     initial[:,0]=.2e6
     with pytest.raises(RuntimeError,match="cycle convergence not attained"):
         model.periodic_spinup(SimpleNamespace(),initial,max_cycles=40,acceleration=False)
+
+
+
+def test_period2_lag_certificate_distinguishes_periods_and_drift():
+    from scripts.validate_m5_temporal import certify_period2_lags
+    baseline=np.full((51,7),1e6)
+    a=baseline.copy()
+    b=baseline.copy()
+    b[35,1]*=3
+    two=[a if n%2==0 else b for n in range(31)]
+    assert certify_period2_lags(two)["period2_candidate_pass"]
+    assert not certify_period2_lags([a]*31)["period2_candidate_pass"]
+    four=[baseline*(1+n%4) for n in range(31)]
+    assert not certify_period2_lags(four)["period2_candidate_pass"]
+    # Small two-day changes alone do not certify slow secular growth.
+    drifting=[state*(1.0007**n) for n,state in enumerate(two)]
+    result=certify_period2_lags(drifting)
+    assert max(result["lag_history"][-1]["D2"]["relative_max"])<.005
+    assert not result["period2_candidate_pass"]
+
+
+def test_period2_near_zero_absolute_guard():
+    from scripts.validate_m5_temporal import lag_analysis, lag_pass
+    a=np.full((51,7),1e6)
+    b=a.copy()
+    a[0,0]=1e-9
+    b[0,0]=.01
+    metric=lag_analysis([a,b])[0]["D1"]
+    assert max(metric["relative_max"])==0
+    assert not lag_pass(metric)
+
+
+
+def test_phase_pair_comparison_allows_only_common_parity_swap():
+    from scripts.validate_m5_temporal import compare_phase_pairs
+    a=np.full((51,7),1e6)
+    b=a*2
+    matched=compare_phase_pairs([a,b],[b,a])
+    assert matched["pass_"] and matched["parity_swapped"]
+    different=compare_phase_pairs([a,b],[a,b*1.1])
+    assert not different["pass_"]
+    mixed=b.copy()
+    mixed[:25]=a[:25]
+    assert not compare_phase_pairs([a,b],[a,mixed])["pass_"]
+
+
+
+def test_ordinary_certification_never_extrapolates_or_resets_endpoints(tmp_path,monkeypatch):
+    from types import SimpleNamespace
+
+    from scripts import validate_m5_temporal as validator
+    a=np.full((51,7),1e6)
+    b=a.copy()
+    b[35,1]*=3
+    np.savez_compressed(tmp_path/"seven-seed-0-latest.npz",state=a,day=55)
+    received=[]
+    def physical_day(rhs,initial):
+        expected=a if len(received)%2==0 else b
+        np.testing.assert_array_equal(initial,expected)
+        received.append(initial.copy())
+        end=b if len(received)%2 else a
+        return SimpleNamespace(t=np.array([0.,86400.]),nfev=1,trial_rejections=0),np.array([initial,end])
+    monkeypatch.setattr(validator,"integrate_reference_cycle",physical_day)
+    monkeypatch.setattr(validator,"retained_closure_audit",lambda *args:
+                        dict(retained_QSSA_scaled_max=0.,family_budget_scaled_max=0.))
+    rhs=SimpleNamespace(nir_provider=SimpleNamespace(sza_deg=np.array([0.,180.]),
+                          rates_s1=np.zeros((2,51,3))),locals=DynamicPeroxideColumnRHS().locals)
+    result=validator.ordinary_period2_candidate(rhs,tmp_path,0,days=20)
+    assert len(received)==20 and result["ordinary_days"]==20
+    assert result["period2_candidate_pass"] and not result["acceleration"]
+    # Resume a chain without repeating or replacing any completed physical day.
+    validator.ordinary_period2_candidate(rhs,tmp_path,0,days=22)
+    assert len(received)==22

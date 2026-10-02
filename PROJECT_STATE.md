@@ -36,19 +36,18 @@ The immutable current artifact is `artifacts/accepted/m4c-r2/tfm-photochem-miles
 
 M4D is **PROVISIONALLY CLOSED / INTEGRATION READY / NOT FROZEN** under the authorized pragmatic closure in `docs/m4d_closure_report.md`: A0 430 Voigt, B 320 Voigt, IRA 835 monomer Voigt plus historical O2-Air CIA attenuation; A1 is sensitivity only. Historical Y/Galatry/high-T/B-qSDV gates do not block integration; PR #4 is not merged.
 
-M5A is **NO-GO / PERIODIC INITIALIZATION BLOCKER: persistent alternating-day dynamics**
-on `milestone/m5-temporal`. The authorized 357-ODE model passes seven-boundary
-positivity, three remaining QSSA, golden flux/budget comparisons, and both old
-witness crossings. Three seed families reach recorded map indices 55/54/56;
-ordinary continuations retain a large alternating-day response. A common daily
-cycle and accepted reference dawn are not certified. At 85 km the one-day O3
-change is ~65.315%; tighter BDF/Radau reproduce it while agreeing to 0.002983%
-over the full day (base/tighter BDF 0.075816%). This observed spin-up obstruction
-is not a proof that no mathematical daily orbit exists. No 48-hour policy is
-accepted and no chemistry, forcing or further species promotion is introduced.
-Full pytest **864 + 13 subtests**, ruff and five historical validators pass; old
-QSSA blockers remain regressions only. See the single report and evidence JSON.
-M3/M4/main are unchanged; M4C-R2 SHA remains intact.
+M5A is **NO-GO / LONG TRANSIENT AND SLOW DRIFT: period-2 not certified**
+on milestone/m5-temporal. Strict 24-hour recurrence is no longer an a priori
+requirement. The unchanged 357-ODE model completed 30 new ordinary consecutive
+days per seed (90 total), without acceleration. D1/D3 retain the alternating
+response; D2/D4 and same-phase drift exceed 0.5%. This horizon does not prove
+that an asymptotic 48-hour orbit is absent. Seed independence, 48-hour solver
+certification, perturbation recovery and both reference dawns remain uncertified.
+This is reduced frozen-model behavior, not an atmospheric claim. Positivity,
+three remaining QSSA, HOx budget, exact shadow and historical regressions pass.
+Full pytest **868 + 13 subtests**, ruff and five historical validators pass.
+M3/M4/main and M4C-R2 SHA remain unchanged. See the single temporal report and
+existing evidence JSON.
 
 ## Frozen source / transition gates
 

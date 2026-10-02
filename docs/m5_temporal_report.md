@@ -2,11 +2,11 @@
 
 ## Current decision
 
-**NO-GO M5A / PERIODIC INITIALIZATION BLOCKER: persistent alternating-day dynamics.**
+**NO-GO M5A / LONG TRANSIENT AND SLOW DRIFT: period-2 not certified.**
 
-Dynamic H2O2 passes the physics preflights and resolves the previous dark QSSA obstruction. The prescribed three seed families nevertheless do not obtain a common certified 24-hour cycle. Ordinary continuations show large alternating-day excursions, reproduced by tighter BDF and Radau. The reference dawn remains unaccepted because its initialization policy has not passed.
+Thirty additional consecutive ordinary physical days were completed for each of the three existing seven-state seed lineages: **90 new full-column days**, 31 midnight endpoint states per lineage. No secant, day-map acceleration, clipping, algebraic species reset or chemistry/forcing change was used. Starting candidates retain their original seed provenance; the new day count is physical and excludes all prior accelerated candidate indices.
 
-This is an observed failure of the tested daily spin-up, **not a proof that no mathematical 24-hour orbit exists**. A possible 48-hour attractor is a hypothesis from the alternating snapshots, not a newly accepted initialization policy. No chemistry, kinetic constant or forcing is changed to suppress the behavior.
+The strict 24-hour-orbit requirement is historical. The current test accepts either parity of a common asymptotic two-day orbit under unchanged 24-hour forcing. D2/D4 and same-phase drift fail across the full 357-variable state. This finite-horizon result does not prove that an asymptotic 48-hour orbit is absent.
 
 ## Current model
 
@@ -30,63 +30,73 @@ Remaining QSSA losses have strictly positive radiative terms: O1D >=0.00681 s^-1
 
 The 100-km natural-night witness begins with OH=0.0155041789, HO2=1000, H2O2=1.2815680973e8 cm^-3. The new equations remain finite/nonnegative to 10000 s. At 4289.881963 s: OH=0.00575855734, HO2=999.979044, H2O2=1.28156809733e8. At 10000 s: OH=0.00154090328, HO2=999.942414, H2O2=1.28156809750e8. All eleven actual reference forcings are exactly zero throughout this interval. BDF base/tight maximum difference=0.00002009%; BDF/Radau=0.000010865% (relative for values >1e-8 cm^-3, absolute below). Peroxide is evolved freely.
 
-## Periodic reference and new obstruction
+## Ordinary period-2 experiment
 
-ReferenceEquinoxSolarCycle: 45 N, declination 0, 86400 s; frozen M4A; dynamically attenuated M4C UV; M4D A0/B/IRA, including O2-Air CIA attenuation only; no transport. Three original numerical seed families (1, 0.1, 10 factors) reach recorded map indices **55 / 54 / 56** without a daily periodic PASS. These indices include candidate-map acceleration and are not physical elapsed days. The later continuations are ordinary unchanged-ODE days; the following snapshots are from one continuous ordinary stretch.
+ReferenceEquinoxSolarCycle: 45 N, declination 0, 86400 s; frozen M4A; dynamic M4C UV self-shielding; M4D A0/B/IRA with historical CIA attenuation; no transport. The model/NIR/background fingerprint is identical across the three continuations. Every day starts directly from the previous physical endpoint. Initial candidate indices were 55/54/56; the new 0..30 counter denotes actual consecutive days. Starting and final full states are in the existing evidence JSON. Full endpoint histories and sampled trajectories remain in the local derived cache.
 
-All states remain finite/nonnegative. O1D/B0/B1 keep physical positive denominators; their largest scaled full-day residual is 4.44e-16. The full-day OH+HO2 budget residual is <=1.63e-16 relative to the event-flux sum. No additional QSSA promotion is indicated.
+For every species, lag differences are calculated at all 51 heights. Relevant concentrations use abs(a-b)/max(a,b). The near-zero floor is max(1 cm^-3, 1e-6 times the reference species column peak); below it the absolute bound is 0.005 times that declared floor. Certification requires six consecutive D2/D4 passes at <=0.5%, material D1/D3, and both same-phase ten-day comparisons <=0.5%, after at least 20 ordinary days.
 
-At the same midnight solar phase, 85 km, family 0:
+| Seed family | New ordinary days | Final D1 | Final D2 | Final D3 | Final D4 | Period-2 |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| 0 | 30 | 65.65450% | 1.68905% | 65.66204% | 3.37454% | FAIL |
+| 1 | 30 | 65.65391% | 1.84701% | 65.66591% | 3.70459% | FAIL |
+| 2 | 30 | 65.63662% | 1.34859% | 65.65809% | 2.71125% | FAIL |
 
-| Recorded map index | O3 (cm^-3) | H2O2 (cm^-3) |
-| --- | ---: | ---: |
-| 36 | 1.5041516e7 | 2465.957 |
-| 37 | 5.2171279e6 | 4676.117 |
-| 38 | 1.6244815e7 | 2326.355 |
-| 39 | 5.5511466e6 | 4271.437 |
-| 40 | 1.5329591e7 | 2430.490 |
-| 41 | 5.2930228e6 | 4578.007 |
+These are maxima over all seven species and heights. Full per-species D1..D4 histories, near-zero absolute differences, floors and final spatial witnesses are in evidence/m5_temporal_evidence.json under period2_certification.
 
-The alternation persists in the later samples, including the final recorded continuations. The witness 36->37 changes O3 by **65.315%** (the larger-density denominator); all seven species participate in the phase response. This difference is far above numerical uncertainty and is not a near-zero normalization artifact. The apparent two-day recurrence still has drift and is not certified here as an exact 48-hour orbit.
+| Physical day | D2 seed 0 | D4 seed 0 | D2 seed 1 | D4 seed 1 | D2 seed 2 | D4 seed 2 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 5 | 2.0707% | 4.1357% | 2.4660% | 4.9246% | 1.8746% | 3.3823% |
+| 10 | 1.9815% | 3.9578% | 2.3329% | 4.6628% | 1.6463% | 3.2877% |
+| 15 | 1.8995% | 3.7944% | 2.2047% | 4.4104% | 1.5816% | 3.1648% |
+| 20 | 1.8239% | 3.6436% | 2.0812% | 4.1669% | 1.5083% | 3.0235% |
+| 25 | 1.7540% | 3.5040% | 1.9620% | 3.9318% | 1.4298% | 2.8706% |
+| 30 | 1.6890% | 3.3745% | 1.8470% | 3.7046% | 1.3486% | 2.7112% |
 
-### Independent full-day verification
+## Phase convergence, seed dependence and drift
 
-The same full 51x7 witness initial state is integrated over 0..86400 s with BDF base, tighter BDF, and Radau. Every actual dynamic UV call and the prescribed NIR table are retained. Comparison uses a per-species relevance floor max(1 cm^-3, 1e-6 of the full time-height species peak); below it, the absolute bound is 0.005 times that declared floor.
+Each provisional parity is compared to the same parity ten physical days earlier. Neither phase passes the full-state threshold:
 
-| Check | Maximum relevant relative difference | Outcome |
-| --- | ---: | --- |
-| BDF base vs tighter BDF | 0.075816% | PASS |
-| Tighter BDF vs Radau | 0.002983% | PASS |
-| One-day O3 change at 85 km, all three solvers | ~65.315% | Daily periodicity FAIL |
-| Physical states / exact shadow forcing / three QSSA / family budget | finite, nonnegative; shadow exactly zero | PASS |
+| Seed family | Ten-day drift, latest phase | Ten-day drift, other phase | H at 100 km: initial -> final (cm^-3) | Days with increasing midnight H |
+| --- | ---: | ---: | ---: | ---: |
+| 0 | 8.4090% | 8.4714% | 1.419825e+08 -> 1.84985e+08 | 30/30 |
+| 1 | 9.3280% | 9.4358% | 4.5856246e+08 -> 5.0080527e+08 | 30/30 |
+| 2 | 6.8698% | 6.9455% | 7.0297465e+08 -> 7.4435904e+08 | 30/30 |
 
-The corresponding near-zero absolute differences pass the declared bounds; their per-species values are in the single evidence JSON. The same witness and independent trajectories are replayable with the existing validator's `periodicity-regression` mode. Matching source-fingerprinted local caches are audited again; an empty cache recomputes the three integrations.
+O3 at 85 km approaches two alternating values, roughly 1.57e7 and 5.41e6 cm^-3, but that local pattern does not certify the whole column. Material lag-2 changes remain elsewhere, including O3 near 94 km. H and the tracked hydrogen inventory retain slow growth at the same solar phase. The absence-of-drift requirement fails even though concentrations remain physical.
 
-NIR forcing uses the existing audited 276-node interpolation: maximum midpoint relative error 0.497655%, near-zero absolute error 9.837e-16 s^-1, exact geometrical shadow. This interpolation is unchanged from the accepted M5 radiation setup.
+Diagnostic phase pairing permits only one common A/B swap for the whole column. A/B are provisional endpoint labels, not accepted reference phases:
 
-The current blocker is the required **common 24-hour initialization**, not the historical OH/HO2/H2O2 QSSA failures. No dawn from these states is labeled an accepted reference. A multi-day initialization, an arbitrary chosen phase, or any change of chemistry/forcing would require a new scientific decision; none is implemented.
+| Pair | Parity swapped | Maximum phase A difference | Maximum phase B difference | Seed independence |
+| --- | --- | ---: | ---: | --- |
+| 0 vs 1 | False | 70.1858% | 70.0003% | not certified |
+| 0 vs 2 | True | 76.9084% | 76.6792% | not certified |
 
-## Numerical implementation and QA
+These finite-time separations do **not** establish multiple asymptotic attractors: the individual lineages have not converged. No MULTIPLE ATTRACTOR diagnosis is claimed.
 
-The current column kernel reuses accepted scalar O1D/B0/B1 and event evaluator bytecode with frozen coefficients. Joint evaluation matches the scalar temporal kernel bit-for-bit for independent random columns; scalar full traces remain the golden audit. Benchmark chemistry cost decreased ~7.8 times; this changes evaluation overhead only.
+## Interpretation and stopping point
 
-Full pytest: **864 tests + 13 subtests PASS**. Ruff PASS; five historical validators PASS; old OH and peroxide validator regressions PASS; the new alternating-day witness regression PASS. M4C-R2 SHA256 remains `2944c8a8e0899b320c69c45192ee6f03b9001114c4120a9db8c67a3f1bb8f1fe`. main and accepted M3/M4 code remain unchanged. M4D remains NOT FROZEN.
+D1 and D3 remain large. D2 decreases slowly; D4 is approximately twice D2 in the dominant drifting variables. Neither period-3 nor period-4 recurrence passes the measured tolerance. Quasiperiodicity is not demonstrated. The supported diagnosis is an alternating component with a long transient / slow finite-window secular drift. The tested horizon cannot distinguish eventual relaxation from permanently persistent drift.
 
-Local implementation commits: `9a461ae` dynamic peroxide; `c888fdc` identical joint column evaluation. Current evidence is consolidated in `evidence/m5_temporal_evidence.json`; generated numerical caches stay outside Git.
+This is behavior of the **frozen-reference reduced model**, not a demonstrated atmospheric property. There is no transport and the prescribed reservoirs/atmosphere remain fixed.
+
+No certified two-day candidate is available for the downstream 48-hour BDF/tighter-BDF/Radau and perturbation-recovery tests. Those stages and dawn_A/dawn_B remain **not executed / not accepted**. The previous full-day witness comparison (base/tight 0.075816%, tight/Radau 0.002983%) is historical evidence only; it is not presented as a new 48-hour verification. No arbitrary day is selected as reference and no chemistry is adjusted to obtain periodicity.
+
+## Physics and QA
+
+All 90 new days have finite/nonnegative sampled states, exact shadow in all eleven forcings, physical O1D/B0/B1 closures and the accepted OH+HO2 budget. The largest scaled QSSA residual is 5.959e-16 and the family-budget residual is 1.622e-16. The retained denominators keep their strictly positive radiative lower bounds. Positivity/QSSA/budget tests pass; asymptotic initialization and absence of drift fail.
+
+The seven-state chemistry kernel is unchanged from c888fdc; no accepted M3/M4 module, reaction, rate, forcing or additional QSSA species is modified. Dynamic H2O2 remains the M5 baseline.
+
+Full pytest: **868 tests + 13 subtests PASS**. Ruff and five historical validators PASS. All three historical blocker regressions pass: dark continuum, old OH root failure, old H2O2 dark singularity. M4C-R2 SHA256 remains 2944c8a8e0899b320c69c45192ee6f03b9001114c4120a9db8c67a3f1bb8f1fe. main is unchanged; M4D stays NOT FROZEN. Generated trajectories/caches and the licensed raw HITRAN export remain outside Git.
 
 ## Reproduction
 
-Use the authorized local HITRAN export and frozen source directory; the raw export is not in Git. The existing `scripts/validate_m5_temporal.py` supports:
+The existing validator defaults to period2-certification, rejects acceleration in this mode, retains every physical day and resumes checkpoints with the same model/input fingerprint. The existing evidence JSON supplies starting candidates if prior local seed checkpoints are absent. Run separately for --family 0, 1 and 2 with --ordinary-days 30. Mode period2-assessment reports all lags and aligned provisional phase comparisons. A seed-local candidate PASS alone still requires independence, 48-hour solver agreement and perturbation recovery before GO M5A.
 
-- `--mode domain-regression`: original OH root failure.
-- `--mode positivity-regression`: original six-state dark peroxide obstruction.
-- `--mode periodicity-regression`: current seven-state one-day obstruction, checked with base/tighter BDF and Radau.
-- `--mode periodic`: attempt the full daily seed spin-up; finite-horizon lack of convergence returns a structured NO-GO, not a claim of global orbit nonexistence.
+Use PYTHONPATH=src;. on Windows. Example commands:
 
-For example, with `PYTHONPATH=src;.` on Windows:
+    python scripts/validate_m5_temporal.py --sources <frozen-m4d-sources> --hitran <authorized-HITRAN2016-export> --cache <derived-cache> --mode period2-certification --family 0 --ordinary-days 30
+    python scripts/validate_m5_temporal.py --sources <frozen-m4d-sources> --hitran <authorized-HITRAN2016-export> --cache <derived-cache> --mode period2-assessment
 
-```text
-python scripts/validate_m5_temporal.py --sources <frozen-m4d-sources> --hitran <authorized-guest1593878592.txt> --cache <local-derived-cache> --mode periodicity-regression
-```
-
-The dark continuum remains a regression test; the analytic dark HO2/H2O2 limit also passes BDF and Radau at 50/75/100 km with no clipping.
+Modes dark-regression, domain-regression, positivity-regression and the former one-day periodicity-regression remain historical regressions. The old periodic/acceleration mode is a historical daily-orbit diagnostic, not the current initialization requirement.

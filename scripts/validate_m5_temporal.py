@@ -370,7 +370,7 @@ def BASE_PREFLIGHT_FORCING():
 
 
 def retained_closure_audit(rhs, times, states):
-    """Four QSSA only; the OH residual is now its exact temporal derivative."""
+    """Audit the three remaining QSSA, exact shadow and dynamic HOx budget."""
     residual_max = family_max = 0.
     for time, column in zip(times, states, strict=True):
         uv, forcings = rhs.forcing(time, column)
@@ -496,24 +496,191 @@ def periodicity_regression(rhs, args):
             raise RuntimeError("one-day independent solver convergence exceeds 0.5%")
         comparisons.append(dict(relative_max=maximum.tolist(),near_zero_absolute_max_cm3=absolute.tolist()))
     print(json.dumps(dict(decision="PASS alternating-day obstruction regression",
-                         current_M5_decision="NO-GO / 24-hour periodic initialization not certified",
+                         historical_daily_initialization_decision="24-hour initialization failed; no longer an a priori requirement",
                          comparisons=comparisons,periodicity=periods,audits=audits,
                          source_sha256=code_sha),indent=2))
     return 0
+
+
+def lag_analysis(states):
+    """D1..D4 for complete same-solar-phase states; no day-map acceleration."""
+    result = []
+    for day in range(1, len(states)):
+        row = {"ordinary_day": day}
+        for lag in range(1, min(4, day)+1):
+            row[f"D{lag}"] = {k: v.tolist() for k,v in
+                              cycle_difference(states[day-lag],states[day]).items()}
+        result.append(row)
+    return result
+
+
+def lag_pass(metric, tolerance=.005):
+    relative = np.array(metric["relative_max"])
+    absolute = np.array(metric["near_zero_absolute_max"])
+    floor = np.array(metric["relevance_floor_cm3"])
+    return bool(np.all(relative <= tolerance) and np.all(absolute <= tolerance*floor))
+
+
+def certify_period2_lags(states):
+    """Certification requires stable lag-2/4 and absence of ten-day phase drift."""
+    history = lag_analysis(states)
+    tail = history[-6:]
+    phase_drift = [] if len(states)<12 else [cycle_difference(states[-11],states[-1]),
+                                            cycle_difference(states[-12],states[-2])]
+    stationary = len(states)>=21 and len(tail)==6 and all("D4" in r and lag_pass(r["D2"]) and
+        lag_pass(r["D4"]) and max(r["D1"]["relative_max"])>.02 and
+        max(r["D3"]["relative_max"])>.02 for r in tail)
+    drift = [{k:v.tolist() for k,v in x.items()} for x in phase_drift]
+    return dict(period2_candidate_pass=bool(stationary and len(drift)==2 and
+                all(lag_pass(x) for x in drift)),lag_history=history,
+                ten_day_phase_drift=drift)
+
+
+def compare_phase_pairs(reference, trial):
+    """Match two full column phases with only a common parity swap allowed."""
+    alternatives = []
+    for swap in (False,True):
+        metrics = [{k:v.tolist() for k,v in cycle_difference(reference[i],
+                   trial[1-i if swap else i]).items()} for i in range(2)]
+        score = max(max(m["relative_max"])/.005 for m in metrics)
+        score = max(score,max(np.max(np.array(m["near_zero_absolute_max"])/
+                                    (.005*np.array(m["relevance_floor_cm3"]))) for m in metrics))
+        errors = []
+        for i,m in enumerate(metrics):
+            a,b = np.asarray(reference[i]),np.asarray(trial[1-i if swap else i])
+            denominator = np.maximum(np.maximum(a,b),m["relevance_floor_cm3"])
+            errors.append((abs(a-b)/(.005*denominator)).ravel())
+        rms = float(np.sqrt(np.mean(np.concatenate(errors)**2)))
+        alternatives.append(dict(parity_swapped=swap,normalized_max=score,
+                                 alignment_rms_normalized=rms,
+                                 phases=metrics,pass_=all(lag_pass(m) for m in metrics)))
+    valid = [x for x in alternatives if x["pass_"]]
+    return min(valid or alternatives,key=lambda x:x["alignment_rms_normalized"])
+
+
+def assess_ordinary_period2(cache):
+    """Finite-horizon lag and phase audit; uncertified patterns stay diagnostics."""
+    families, endpoints = [], []
+    for family in range(3):
+        with np.load(Path(cache)/f"period2-ordinary-family-{family}.npz") as data:
+            states = data["endpoints"]
+            audits = json.loads(str(data["audits"]))
+            previous_index = int(data["previous_map_index"])
+            fingerprint = str(data["fingerprint"])
+        certificate = certify_period2_lags(states)
+        endpoints.append(states[-2:])
+        window = states[-11:]
+        hydrogen = states[:,:,2]+states[:,:,3]+states[:,:,4]+2*states[:,:,5]
+        summary = dict(family=family,ordinary_days=len(states)-1,
+            previous_candidate_map_index=previous_index,acceleration=False,
+            fingerprint=fingerprint,**certificate,
+            physical_audit=dict(finite_nonnegative=all(x["finite_nonnegative"] for x in audits),
+                retained_QSSA_scaled_max=max(x["retained_QSSA_scaled_max"] for x in audits),
+                family_budget_scaled_max=max(x["family_budget_scaled_max"] for x in audits),
+                exact_shadow=True),
+            H_100km_first_last_cm3=states[[0,-1],50,2].tolist(),
+            hydrogen_inventory_first_last_cm3=hydrogen[[0,-1]].tolist(),
+            H_100km_last_ten_day_growth_cm3=float(window[-1,50,2]-window[0,50,2]),
+            O3_85km_last_twelve_cm3=states[-12:,35,1].tolist(),
+            starting_state_cm3=states[0].tolist(),
+            provisional_phase_A_cm3=states[-2].tolist(),provisional_phase_B_cm3=states[-1].tolist())
+        families.append(summary)
+    if len({x["fingerprint"] for x in families}) != 1:
+        raise RuntimeError("seed families used different equations or frozen inputs")
+    matches = [dict(family=family,**compare_phase_pairs(endpoints[0],endpoints[family]))
+               for family in (1,2)]
+    certified = all(x["period2_candidate_pass"] for x in families)
+    independent = certified and all(x["pass_"] for x in matches)
+    decision = ("period-2 candidate PASS; 48-hour solvers and perturbations still required"
+                if independent else "MULTIPLE ATTRACTOR BLOCKER" if certified else
+                "NO-GO / period-2 not certified in tested ordinary-day horizon")
+    return dict(decision=decision,interpretation="frozen-reference reduced model; no transport",
+                families=families,phase_pair_comparisons=matches,
+                seed_independence_pass=independent,ordinary_period2_pass=certified,
+                trajectory_solver_verification_48h="pending certified candidate",
+                perturbation_recovery="pending certified candidate",
+                dawn_A_B="not accepted without full attractor certification")
+
+
+def ordinary_period2_candidate(rhs, cache, family, *, days=30):
+    """Continue each original seed lineage using consecutive physical days only.
+
+    Retain every endpoint and trajectory, audit all sampled states, and never
+    substitute an extrapolated or algebraically reset endpoint.
+    """
+    if days < 20:
+        raise ValueError("period-2 certification requires at least 20 ordinary days")
+    cache = Path(cache)
+    identity = hashlib.sha256()
+    identity.update((Path(__file__).resolve().parents[1]/
+                     "src/tfm_photochem/m5_temporal.py").read_bytes())
+    identity.update(np.ascontiguousarray(rhs.nir_provider.sza_deg).tobytes())
+    identity.update(np.ascontiguousarray(rhs.nir_provider.rates_s1).tobytes())
+    identity.update(json.dumps([asdict(x) for x in rhs.locals],sort_keys=True).encode())
+    fingerprint = identity.hexdigest()
+    path = cache/f"period2-ordinary-family-{family}.npz"
+    if path.exists():
+        with np.load(path) as data:
+            if str(data["fingerprint"]) != fingerprint:
+                raise RuntimeError("ordinary continuation fingerprint changed")
+            endpoints = list(data["endpoints"])
+            audits = json.loads(str(data["audits"]))
+            previous_index = int(data["previous_map_index"])
+    else:
+        original_checkpoint = cache/f"seven-seed-{family}-latest.npz"
+        if original_checkpoint.exists():
+            with np.load(original_checkpoint) as data:
+                endpoints = [data["state"].copy()]
+                previous_index = int(data["day"])
+        else:
+            evidence = json.loads((Path(__file__).resolve().parents[1]/
+                                  "evidence/m5_temporal_evidence.json").read_text())
+            retained = evidence["period2_certification"]["families"][family]
+            endpoints = [np.array(retained["starting_state_cm3"])]
+            previous_index = retained["previous_candidate_map_index"]
+        audits = []
+    for day in range(len(endpoints),days+1):
+        initial = endpoints[-1]
+        solution, curve = integrate_reference_cycle(rhs,initial)
+        audit = retained_closure_audit(rhs,solution.t,curve)
+        audit.update(finite_nonnegative=bool(np.all(np.isfinite(curve)) and np.all(curve>=0)),
+                     minimum_cm3=float(curve.min()),nfev=int(solution.nfev),
+                     trial_rejections=int(solution.trial_rejections))
+        endpoints.append(curve[-1].copy())
+        audits.append(audit)
+        np.savez_compressed(cache/f"period2-family-{family}-day-{day}.npz",
+                            time=solution.t,state=curve,initial=initial,fingerprint=fingerprint)
+        np.savez_compressed(path,endpoints=np.array(endpoints),audits=json.dumps(audits),
+                            previous_map_index=previous_index,fingerprint=fingerprint)
+        row = lag_analysis(endpoints)[-1]
+        print("ORDINARY_PERIOD2",family,json.dumps(row),flush=True)
+    certificate = certify_period2_lags(endpoints)
+    result = dict(family=family,ordinary_days=len(endpoints)-1,previous_map_index=previous_index,
+                  acceleration=False,physical_audits=audits,fingerprint=fingerprint,**certificate)
+    (cache/f"period2-family-{family}.json").write_text(json.dumps(result,indent=2)+"\n")
+    return result
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--sources", type=Path, required=True)
     parser.add_argument("--hitran", type=Path, required=True)
-    parser.add_argument("--mode", choices=("periodic", "onset", "positivity-regression", "dark-regression", "domain-regression", "periodicity-regression", "forcing"), default="periodic")
+    parser.add_argument("--mode", choices=("periodic", "onset", "positivity-regression", "dark-regression", "domain-regression", "periodicity-regression", "period2-certification", "period2-assessment", "forcing"), default="period2-certification")
     parser.add_argument("--cache", type=Path, default=Path(".m5-derived-cache"))
+    parser.add_argument("--family", type=int, choices=(0,1,2), default=0)
+    parser.add_argument("--ordinary-days", type=int, default=30)
     parser.add_argument("--output", type=Path, default=Path("evidence/m5_reference_cycle.npz"))
     parser.add_argument("--seed-cycles-dir", type=Path,
                         help="Reuse local spin-up trajectories; recheck physical closure, period and seeds")
     parser.add_argument("--accelerate-periodic", action="store_true",
                         help="Accelerate positive day-map guesses; certify three consecutive ordinary cycles")
     args = parser.parse_args()
+    if args.mode == "period2-certification" and args.accelerate_periodic:
+        parser.error("period-2 certification uses ordinary physical days only")
+    if args.mode == "period2-assessment":
+        result = assess_ordinary_period2(args.cache)
+        print(json.dumps(result,indent=2))
+        return 0 if result["seed_independence_pass"] else 2
     if args.mode == "positivity-regression":
         print(json.dumps(positivity_preflight(),indent=2))
         return 0
@@ -550,6 +717,10 @@ def main() -> int:
         return 0
     rhs = TemporalColumnRHS(table,progress=lambda t,n,sza:
                              print(f"RHS t={t:.3f}s SZA={sza:.6f} evaluations={n}",file=sys.stderr,flush=True))
+    if args.mode == "period2-certification":
+        result = ordinary_period2_candidate(rhs,args.cache,args.family,days=args.ordinary_days)
+        print(json.dumps(result,indent=2))
+        return 0 if result["period2_candidate_pass"] else 2
     if args.mode == "periodicity-regression":
         return periodicity_regression(rhs,args)
     onset = onset_validation(rhs,args.cache)
