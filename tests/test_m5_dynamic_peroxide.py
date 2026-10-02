@@ -130,3 +130,16 @@ def test_illuminated_golden_reference():
     assert new.algebraic==c.algebraic
     assert new.fluxes==c.fluxes
     assert new.tendencies==c.tendencies
+
+
+def test_vector_column_is_identical_to_golden_scalar_kernel():
+    from dataclasses import replace
+    rhs=DynamicPeroxideColumnRHS()
+    rng=np.random.default_rng(875)
+    for _ in range(12):
+        column=10**rng.uniform(-8,11,(51,7))
+        forcing=[replace(BASE_FORCING, J_H2O2=10**rng.uniform(-10,-3)) for _ in range(51)]
+        batch=rhs.column_kernel(column,forcing)
+        scalar=np.array([dynamic_peroxide_rhs(0.,state,background=b,forcing=f,chemistry=rhs.chemistry)
+                         for state,b,f in zip(column,rhs.locals,forcing,strict=True)])
+        np.testing.assert_array_equal(batch,scalar)

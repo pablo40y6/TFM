@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, fields
 from functools import lru_cache
+from inspect import signature
 from types import FunctionType, SimpleNamespace
 
 import numpy as np
@@ -23,6 +24,7 @@ from .historical_2020.local_types import (
     LocalState,
     _validate_scalar,
 )
+from .historical_2020.photolysis_budget import partition_odd_oxygen_photolysis
 from .historical_2020.stoichiometry import TENDENCY_COEFFICIENTS
 from .historical_2020.uv_geometry import spherical_shell_paths
 from .historical_2020.uv_radiation import compute_uv_photolysis, local_forcing_from_uv
@@ -664,6 +666,121 @@ def temporal_bootstrap_seeds(rhs):
     return tuple(result)
 
 
+class _DynamicPeroxideColumnKernel:
+    def __init__(self, locals):
+        self.locals = locals
+        self.background = SimpleNamespace(
+            **{
+                f.name: np.array([getattr(b, f.name) for b in locals])
+                for f in fields(LocalBackground)
+            }
+        )
+        coeff = {}
+        for name, fn in vars(kinetics).items():
+            if name.startswith(("k_", "a_")) and callable(fn):
+                params = list(signature(fn).parameters)
+                value = np.array(
+                    [
+                        fn(*[b.T if p == "temperature_k" else b.M for p in params])
+                        for b in locals
+                    ]
+                )
+                coeff[name] = lambda *args, value=value: value
+        namespace = dict(qssa.solve_o1d_qssa.__globals__)
+        namespace["kinetics"] = SimpleNamespace(**coeff)
+        self.o1d = FunctionType(qssa.solve_o1d_qssa.__code__, namespace)
+        self.b1 = FunctionType(qssa.solve_b1_qssa.__code__, namespace)
+        self.b0 = FunctionType(qssa.solve_b0_qssa.__code__, namespace)
+        self.old_barth = CachedLocalClosure().close.__globals__["barth_sources"]
+        self.partition = partition_odd_oxygen_photolysis
+        self.event_namespace = dict(fluxes.evaluate_fluxes.__globals__)
+        self.event_namespace.update(
+            kinetics=namespace["kinetics"],
+            barth_sources=self.barth,
+            partition_odd_oxygen_photolysis=self.budget,
+        )
+        self.events = FunctionType(
+            fluxes.evaluate_fluxes.__code__, self.event_namespace
+        )
+
+    def barth(self, state, bg):
+        if state.O is not self.barth_o:
+            self.barth_values = np.array(
+                [
+                    self.old_barth(SimpleNamespace(O=float(o)), b)
+                    for o, b in zip(state.O, self.locals, strict=True)
+                ]
+            ).T
+            self.barth_o = state.O
+        return tuple(self.barth_values)
+
+    def budget(self, **kwargs):
+        parts = [
+            self.partition(
+                **{
+                    key: (value[i] if isinstance(value, np.ndarray) else value)
+                    for key, value in kwargs.items()
+                }
+            )
+            for i in range(51)
+        ]
+        return SimpleNamespace(
+            **{
+                f.name: np.array([getattr(p, f.name) for p in parts])
+                for f in fields(parts[0])
+            }
+        )
+
+    def __call__(self, column, forcings):
+        state = SimpleNamespace(
+            **{key: column[:, i] for i, key in enumerate(DYNAMIC_PEROXIDE_SPECIES)}
+        )
+        state.R_H = state.OH + state.HO2
+        forcing = SimpleNamespace(
+            **{
+                f.name: np.array([getattr(v, f.name) for v in forcings])
+                for f in fields(LocalForcing)
+            }
+        )
+        b = self.background
+        self.barth_o = None
+        o = self.o1d(state, b, forcing)
+        b1 = self.b1(state, b, forcing, o.value)
+        _, barth = self.barth(state, b)
+        b0 = self.b0(state, b, forcing, o.value, b1.value, barth)
+        a = SimpleNamespace(
+            O1D=o.value,
+            OH=state.OH,
+            HO2=state.HO2,
+            H2O2=state.H2O2,
+            B0=b0.value,
+            B1=b1.value,
+        )
+        e = self.events(state, b, forcing, a)
+        totals = {
+            species: sum(
+                e[event] * row[species]
+                for event, row in TENDENCY_COEFFICIENTS.items()
+                if row[species] != 0
+            )
+            for species in DYNAMIC_SPECIES
+        }
+        oh = sum(
+            e[event] * w for event, w in OH_EVENT_COEFFICIENTS.items() if w > 0
+        ) - sum(e[event] * (-w) for event, w in OH_EVENT_COEFFICIENTS.items() if w < 0)
+        return np.array(
+            [
+                totals["O"],
+                totals["O3"],
+                totals["H"],
+                oh,
+                totals["R_H"] - oh,
+                e["HO2_HO2"] - e["H2O2_PHOTOLYSIS"] - e["OH_H2O2"],
+                totals["Delta"],
+            ]
+        ).T
+
+
 class DynamicPeroxideColumnRHS(TemporalColumnRHS):
     """M5 current model: 357 ODEs, only O1D/B0/B1 algebraic."""
 
@@ -673,15 +790,40 @@ class DynamicPeroxideColumnRHS(TemporalColumnRHS):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.chemistry = DynamicPeroxideClosure().close
+        self.column_kernel = _DynamicPeroxideColumnKernel(self.locals)
 
     def __call__(self, time_s, log_state):
         values = np.asarray(log_state, dtype=float)
         if values.shape != (357,) or not np.all(np.isfinite(values)):
             raise ValueError("log_state must have 357 finite values")
         if np.any(np.abs(values) > 700):
-            raise FloatingPointError("log-state representation range exceeded; no clipping")
+            raise FloatingPointError(
+                "log-state representation range exceeded; no clipping"
+            )
         concentration = np.exp(values).reshape(51, 7)
-        return (self.physical_tendencies(time_s, concentration)/concentration).ravel()
+        return (self.physical_tendencies(time_s, concentration) / concentration).ravel()
+
+    def physical_tendencies(self, time_s, concentration, illumination_limit=None):
+        values = np.asarray(concentration, dtype=float)
+        if (
+            values.shape != (51, 7)
+            or not np.all(np.isfinite(values))
+            or np.any(values < 0)
+        ):
+            raise ValueError(
+                "physical temporal column requires 51x7 finite nonnegative values; no clipping"
+            )
+        _, forcings = self.forcing(time_s, values, illumination_limit)
+        derivative = self.column_kernel(values, forcings)
+        if not np.all(np.isfinite(derivative)):
+            raise FloatingPointError("nonfinite temporal column tendency")
+        self.evaluations += 1
+        if self.progress is not None and (
+            time_s >= self.next_progress_s or self.evaluations % 1000 == 0
+        ):
+            self.progress(time_s, self.evaluations, float(self.cycle.sza(time_s)))
+            self.next_progress_s = time_s + 1800.0
+        return derivative
 
 
 def dynamic_peroxide_bootstrap_seeds(rhs):
