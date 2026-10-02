@@ -28,6 +28,7 @@ from .historical_2020.uv_geometry import spherical_shell_paths
 from .historical_2020.uv_radiation import compute_uv_photolysis, local_forcing_from_uv
 
 
+@lru_cache(maxsize=256)
 def _reference_shell_paths(sza_deg):
     """Accepted geometry with explicit grazing-radius roundoff repair only.
 
@@ -834,11 +835,50 @@ def integrate_reference_cycle(rhs, initial_cm3, *, method="BDF", rtol=2e-6,
     return result, state
 
 
+def _positive_anderson_candidate(history, upper_cm3=None, memory=6):
+    """Secant acceleration of a day map in log coordinates; no projection.
+
+    The map itself is the full unchanged ODE integration. Damping changes only
+    numerical initial guesses, never concentrations along a physical solution.
+    """
+    x, mapped = history[-1]
+    if len(history) < 2:
+        return np.exp(mapped)
+    recent = history[-memory-1:]
+    dx = np.column_stack([(b[0]-a[0]).ravel() for a,b in zip(recent[:-1],recent[1:],strict=True)])
+    dg = np.column_stack([((b[1]-b[0])-(a[1]-a[0])).ravel()
+                          for a,b in zip(recent[:-1],recent[1:],strict=True)])
+    # Local blocks precondition the iteration only. Dynamic radiation still
+    # couples the entire column in every exact day-map evaluation.
+    blocks = x.shape[0] if x.ndim == 2 else 1
+    width = x.size//blocks
+    residual = (mapped-x).reshape(blocks,width)
+    candidate = mapped.copy().reshape(blocks,width)
+    upper = None if upper_cm3 is None else np.broadcast_to(np.log(upper_cm3),x.shape).reshape(blocks,width)
+    for level in range(blocks):
+        rows = slice(level*width,(level+1)*width)
+        gamma = np.linalg.lstsq(dg[rows],residual[level],rcond=1e-8)[0]
+        correction = -(dx[rows]+dg[rows])@gamma
+        for exponent in range(16):
+            step = correction*2.**(-exponent)
+            trial = candidate[level]+step
+            if (np.max(np.abs(step)) <= 2. and np.all(np.isfinite(trial))
+                    and np.max(np.abs(trial)) < 700
+                    and (upper is None or np.all(trial <= upper[level]))):
+                candidate[level] = trial
+                break
+    return np.exp(candidate.reshape(x.shape))
+
+
 def periodic_spinup(rhs, initial_cm3, *, max_cycles=100, tolerance=0.001,
-                    absolute_tolerance_cm3=1.0, progress=None, **solver):
+                    absolute_tolerance_cm3=1.0, progress=None, acceleration=False,
+                    certification_cycles=3, **solver):
     """Consecutive complete days; seed independence is a separate required check."""
     current = np.array(initial_cm3, dtype=float, copy=True)
     history = []
+    secants = []
+    certifications = 0
+    previous_norm = np.inf
     for day in range(1, max_cycles + 1):
         rhs.next_progress_s = 0.0
         result, states = integrate_reference_cycle(rhs, current, **solver)
@@ -850,8 +890,25 @@ def periodic_spinup(rhs, initial_cm3, *, max_cycles=100, tolerance=0.001,
             progress(day, difference)
         if (np.all(difference["relative_max"] <= tolerance)
                 and np.all(difference["near_zero_absolute_max"] <= absolute_tolerance_cm3)):
-            return dict(cycles=day, solution=result, state=states, convergence=history)
-        current = states[-1].copy()
+            certifications += 1
+            if not acceleration or certifications >= certification_cycles:
+                return dict(cycles=day, solution=result, state=states, convergence=history,
+                            acceleration=acceleration,certification_cycles=certifications)
+            current = states[-1].copy()
+            secants.clear()
+            continue
+        certifications = 0
+        if acceleration:
+            norm = np.linalg.norm(np.log(states[-1]/current))
+            if norm > 1.5*previous_norm:
+                secants.clear()
+            secants.append((np.log(current),np.log(states[-1])))
+            secants = secants[-7:]
+            upper = np.asarray(rhs.background.chemical.M_cm3)[:,None]
+            current = _positive_anderson_candidate(secants,upper)
+            previous_norm = norm
+        else:
+            current = states[-1].copy()
     raise RuntimeError("PERIODIC INITIALIZATION BLOCKER: cycle convergence not attained")
 
 

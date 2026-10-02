@@ -53,6 +53,30 @@ is permitted; a physical failure of a remaining QSSA stops this work.
   rather than a universal 1e5 cm^-3 scale. Dense segment endpoints use the
   exact accepted initial/final solver values, avoiding polynomial cancellation
   in tiny populations. No concentration clipping is used.
+- Full QA after the numerical initializer work: **732 tests + 13 subtests**;
+  ruff and the five legacy/local/odd-oxygen/M4A/M4C validators pass. The old
+  scalar OH domain-exit regression still passes as historical evidence.
+
+### Periodic initializer numerics
+
+The full-day map always integrates the unchanged 306 ODEs, dynamic UV and
+prescribed A0/B/IRA. Initial transient days are retained. To resolve slow upper
+column relaxation, optional block Anderson/secant acceleration works only on
+log-positive numerical guesses between day-map evaluations (memory six,
+rank tolerance 1e-8, damped log corrections <=2). Candidate guesses remain
+finite and below the prescribed total density; no concentrations are clipped.
+Each actual day still couples all heights through the unchanged radiation.
+These numerical iterations are **not elapsed atmospheric days**.
+
+Acceptance requires three consecutive ordinary cycles with acceleration
+disabled once the endpoint criterion is met, matching full cycles from all
+three original seed families, and ordinary base/tighter BDF plus Radau under
+the current RHS. Current endpoint target is 0.1% where relevant and 1 cm^-3
+near zero; final trajectory comparisons target 0.5% with reported absolute
+near-zero errors. Local cached spin-ups are source-hash and seed-fingerprint
+checked; their closures and periodicity are re-audited, and the independent
+final integrations must themselves remain periodic. Geometry memoization uses
+exact SZA keys and immutable original ray arrays, with no interpolation.
 
 The sections below are **historical five-coordinate diagnosis**, retained for
 provenance. Their NO-GO and 255-ODE statements are not the current M5 formulation.

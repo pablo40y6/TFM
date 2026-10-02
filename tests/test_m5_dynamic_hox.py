@@ -17,6 +17,7 @@ from tfm_photochem.m5_temporal import (
     TemporalColumnRHS,
     TemporalState,
     _CycleCoordinates,
+    _positive_anderson_candidate,
     bootstrap_seeds,
     close_temporal_chemistry,
     temporal_bootstrap_seeds,
@@ -139,3 +140,28 @@ def test_306_coordinates_and_positive_trial_rejection():
     trial[3] = -1e-20
     with pytest.raises(FloatingPointError):
         linear.decode(trial)
+
+
+def test_positive_secant_iteration_finds_known_contracting_day_map():
+    target = np.array([[4.,7.]])
+    state = np.array([[1.,2.]])
+    history = []
+    # A known log-linear contraction with a unique positive attracting root.
+    for _ in range(5):
+        mapped = .9*np.log(state)+.1*np.log(target)
+        history.append((np.log(state),mapped))
+        state = _positive_anderson_candidate(history,upper_cm3=np.array([[100.]]))
+        assert np.all(state > 0)
+    np.testing.assert_allclose(state,target,rtol=1e-12)
+
+
+def test_block_secants_handle_independent_fast_and_slow_contracting_levels():
+    target = np.array([[4.,7.],[3.,5.]])
+    state = np.ones((2,2))
+    contraction = np.array([[.999],[.1]])
+    history = []
+    for _ in range(6):
+        mapped = contraction*np.log(state)+(1-contraction)*np.log(target)
+        history.append((np.log(state),mapped))
+        state = _positive_anderson_candidate(history)
+    np.testing.assert_allclose(state,target,rtol=1e-11)

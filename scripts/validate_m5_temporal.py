@@ -297,6 +297,8 @@ def main() -> int:
     parser.add_argument("--output", type=Path, default=Path("evidence/m5_reference_cycle.npz"))
     parser.add_argument("--seed-cycles-dir", type=Path,
                         help="Reuse local spin-up trajectories; recheck physical closure, period and seeds")
+    parser.add_argument("--accelerate-periodic", action="store_true",
+                        help="Accelerate positive day-map guesses; certify three consecutive ordinary cycles")
     args = parser.parse_args()
     if args.mode == "dark-regression":
         return dark_regression(args)
@@ -353,13 +355,23 @@ def main() -> int:
     rhs.accepted_step = accepted_step
     results = []
     if args.seed_cycles_dir is not None:
+        common_times = None
+        code_sha = hashlib.sha256((Path(__file__).resolve().parents[1]/
+                                   "src/tfm_photochem/m5_temporal.py").read_bytes()).hexdigest()
         for family in range(3):
             with np.load(args.seed_cycles_dir/f"seed-{family}-converged.npz") as saved:
+                if ("code_sha256" not in saved or str(saved["code_sha256"]) != code_sha
+                        or float(saved["bootstrap_factor"]) != (1.,.1,10.)[family]):
+                    raise ValueError("spin-up cache does not match current temporal source / seed family")
                 states, times = saved["state"], saved["time"]
                 initial = saved["initial"]
                 if (states.shape != (len(times),51,6) or not np.all(np.isfinite(states))
-                        or np.any(states <= 0) or times[0] != 0 or times[-1] != 86400):
+                        or np.any(states <= 0) or times[0] != 0 or times[-1] != 86400
+                        or not np.all(np.isfinite(times)) or np.any(np.diff(times) <= 0)):
                     raise ValueError("invalid locally generated spin-up trajectory")
+                if common_times is not None and not np.array_equal(times,common_times):
+                    raise ValueError("seed trajectories require the same reference time grid")
+                common_times = times.copy()
                 np.testing.assert_allclose(states[0],initial,rtol=5e-15,atol=0)
                 error = cycle_difference(initial,states[-1])
                 if (np.max(error["relative_max"]) > .001
@@ -367,13 +379,19 @@ def main() -> int:
                     raise RuntimeError("cached trajectory is not periodic")
                 retained_closure_audit(rhs,times,states)
                 results.append(dict(cycles=int(saved["cycles"]),state=states,
-                                    convergence=[error]))
+                                    convergence=[error],
+                                    acceleration=bool(saved["acceleration"]) if "acceleration" in saved else False,
+                                    certification_cycles=int(saved["certification_cycles"])
+                                    if "certification_cycles" in saved else 1))
+                if results[-1]["acceleration"] and results[-1]["certification_cycles"] < 3:
+                    raise RuntimeError("accelerated guesses require three ordinary certification cycles")
     for family, seed in enumerate(() if results else temporal_bootstrap_seeds(rhs)):
         def progress(day, error):
             print(f"Seed {family} day {day}: relative={error['relative_max'].tolist()}",
                   file=sys.stderr, flush=True)
         try:
-            results.append(periodic_spinup(rhs, seed, progress=progress))
+            results.append(periodic_spinup(rhs, seed, progress=progress,
+                                           acceleration=args.accelerate_periodic))
         except PhysicalClosureFailure as error:
             print(json.dumps({"decision": "NO-GO / physical QSSA domain failure",
                               "seed_family": family, "time_s": error.time_s,
@@ -407,6 +425,11 @@ def main() -> int:
     _, tighter = integrate_reference_cycle(rhs,initial,rtol=2e-8,atol_log=1e-10,max_step_s=60)
     solution, independent = integrate_reference_cycle(rhs,initial,method="Radau",rtol=2e-8,
                                                        atol_log=1e-10,max_step_s=60)
+    final_periodicity = [cycle_difference(initial,trajectory[-1])
+                        for trajectory in (baseline,tighter,independent)]
+    if any(np.max(error["relative_max"]) > .001
+           or np.max(error["near_zero_absolute_max"]) > 1. for error in final_periodicity):
+        raise RuntimeError("reference cycle is not periodic under current RHS / independent solvers")
     tolerance_check = comparison(baseline,tighter)
     radau_check = comparison(tighter,independent)
     if not tolerance_check["pass"] or not radau_check["pass"]:
@@ -441,6 +464,10 @@ def main() -> int:
                         forcing_s1=frequencies,forcing_names=list(asdict(forcings[0])),
                         dawn_window_s=rhs.cycle.dawn_window_s())
     print(json.dumps({"decision":"GO M5A","cycles":[r["cycles"] for r in results],
+                      "day_map_acceleration":[r["acceleration"] for r in results],
+                      "ordinary_certification_cycles":[r["certification_cycles"] for r in results],
+                      "final_solver_periodicity":[{k:v.tolist() for k,v in error.items()}
+                                                   for error in final_periodicity],
                       "cycle_to_cycle":[{k:v.tolist() for k,v in r["convergence"][-1].items()} for r in results],
                       "seed_comparison":seed_comparison,"tighter_BDF":tolerance_check,
                       "BDF_Radau":radau_check,
