@@ -373,7 +373,10 @@ def retained_closure_audit(rhs, times, states):
     """Four QSSA only; the OH residual is now its exact temporal derivative."""
     residual_max = family_max = 0.
     for time, column in zip(times, states, strict=True):
-        _, forcings = rhs.forcing(time, column)
+        uv, forcings = rhs.forcing(time, column)
+        if any(any(value != 0. for value in asdict(f).values())
+               for f,lit in zip(forcings,uv.illuminated,strict=True) if not lit):
+            raise RuntimeError("shadow forcing is not exactly zero")
         for level, forcing in enumerate(forcings):
             c = rhs.chemistry(TemporalState(*column[level]), rhs.locals[level], forcing)
             d, a, r = c.diagnostics, c.algebraic, c.residuals
@@ -430,11 +433,80 @@ def onset_validation(rhs, cache):
                 top_OH_HO2_cm3=trajectories[-1][:,-1,3:5].tolist(),time_s=times.tolist(),**audit)
 
 
+def periodicity_regression(rhs, args):
+    """Replay the observed one-day obstruction with independent solver traces.
+
+    Matching local caches only avoid repeating completed integrations; all
+    physical closure, budget, shadow and trajectory comparisons are rechecked.
+    An empty cache recomputes the three methods from the consolidated witness.
+    """
+    evidence = json.loads((Path(__file__).resolve().parents[1]/
+                           "evidence/m5_temporal_evidence.json").read_text())
+    witness = evidence["blocker"]
+    initial = np.array(witness["initial_state_cm3"])
+    expected = np.array(witness["reference_end_state_cm3"])
+    code_sha = hashlib.sha256((Path(__file__).resolve().parents[1]/
+                              "src/tfm_photochem/m5_temporal.py").read_bytes()).hexdigest()
+    trajectories, audits, periods = [], [], []
+    common_times = None
+    for label, method, rtol, atol, step in (("base","BDF",2e-6,1e-8,120.),
+                                           ("tight","BDF",2e-8,1e-10,60.),
+                                           ("Radau","Radau",2e-8,1e-10,60.)):
+        path = args.cache/f"seven-full-day-{label}.npz"
+        saved = None
+        if path.exists():
+            with np.load(path) as data:
+                if ("source_sha256" in data and str(data["source_sha256"]) == code_sha
+                        and np.array_equal(data["initial"],initial)):
+                    saved = (data["time"].copy(),data["state"].copy())
+        if saved is None:
+            solution, states = integrate_reference_cycle(
+                rhs,initial,method=method,rtol=rtol,atol_log=atol,max_step_s=step)
+            times = solution.t
+            np.savez_compressed(path,initial=initial,time=times,state=states,source_sha256=code_sha)
+        else:
+            times, states = saved
+        if (states.shape != (len(times),51,7) or times[0] != 0 or times[-1] != 86400
+                or np.any(np.diff(times)<=0) or not np.all(np.isfinite(states))
+                or np.any(states<0)):
+            raise RuntimeError("invalid independent witness trajectory")
+        np.testing.assert_allclose(states[0],initial,rtol=5e-15,atol=0)
+        if common_times is not None and not np.array_equal(times,common_times):
+            raise RuntimeError("independent witness time grids differ")
+        common_times = times
+        audits.append(retained_closure_audit(rhs,times,states))
+        periods.append({key:value.tolist() for key,value in cycle_difference(initial,states[-1]).items()})
+        if abs(states[-1,35,1]-initial[35,1])/max(states[-1,35,1],initial[35,1])<.5:
+            raise RuntimeError("recorded 85-km alternating-day witness not reproduced")
+        endpoint = cycle_difference(expected,states[-1])
+        if (np.max(endpoint["relative_max"])>.005
+                or np.any(endpoint["near_zero_absolute_max"]>.005*endpoint["relevance_floor_cm3"])):
+            raise RuntimeError("witness endpoint differs from independent reference")
+        trajectories.append(states)
+    comparisons = []
+    reference = trajectories[1]
+    floor = np.maximum(1.,1e-6*np.max(reference,axis=(0,1)))
+    for trial in (trajectories[0],trajectories[2]):
+        relevant = np.maximum(reference,trial)>floor
+        delta = abs(trial-reference)
+        relative = np.divide(delta,np.maximum(reference,trial),out=np.zeros_like(delta),where=relevant)
+        maximum = np.max(relative,axis=(0,1))
+        absolute = np.max(np.where(relevant,0,delta),axis=(0,1))
+        if np.any(maximum>.005) or np.any(absolute>.005*floor):
+            raise RuntimeError("one-day independent solver convergence exceeds 0.5%")
+        comparisons.append(dict(relative_max=maximum.tolist(),near_zero_absolute_max_cm3=absolute.tolist()))
+    print(json.dumps(dict(decision="PASS alternating-day obstruction regression",
+                         current_M5_decision="NO-GO / 24-hour periodic initialization not certified",
+                         comparisons=comparisons,periodicity=periods,audits=audits,
+                         source_sha256=code_sha),indent=2))
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--sources", type=Path, required=True)
     parser.add_argument("--hitran", type=Path, required=True)
-    parser.add_argument("--mode", choices=("periodic", "onset", "positivity-regression", "dark-regression", "domain-regression", "forcing"), default="periodic")
+    parser.add_argument("--mode", choices=("periodic", "onset", "positivity-regression", "dark-regression", "domain-regression", "periodicity-regression", "forcing"), default="periodic")
     parser.add_argument("--cache", type=Path, default=Path(".m5-derived-cache"))
     parser.add_argument("--output", type=Path, default=Path("evidence/m5_reference_cycle.npz"))
     parser.add_argument("--seed-cycles-dir", type=Path,
@@ -478,6 +550,8 @@ def main() -> int:
         return 0
     rhs = TemporalColumnRHS(table,progress=lambda t,n,sza:
                              print(f"RHS t={t:.3f}s SZA={sza:.6f} evaluations={n}",file=sys.stderr,flush=True))
+    if args.mode == "periodicity-regression":
+        return periodicity_regression(rhs,args)
     onset = onset_validation(rhs,args.cache)
     print("Onset validation "+json.dumps(onset),file=sys.stderr,flush=True)
     if args.mode == "onset":
@@ -506,7 +580,7 @@ def main() -> int:
         code_sha = hashlib.sha256((Path(__file__).resolve().parents[1]/
                                    "src/tfm_photochem/m5_temporal.py").read_bytes()).hexdigest()
         for family in range(3):
-            with np.load(args.seed_cycles_dir/f"seed-{family}-converged.npz") as saved:
+            with np.load(args.seed_cycles_dir/f"seven-seed-{family}-converged.npz") as saved:
                 if ("code_sha256" not in saved or str(saved["code_sha256"]) != code_sha
                         or float(saved["bootstrap_factor"]) != (1.,.1,10.)[family]):
                     raise ValueError("spin-up cache does not match current temporal source / seed family")
@@ -533,7 +607,9 @@ def main() -> int:
                 if results[-1]["acceleration"] and results[-1]["certification_cycles"] < 3:
                     raise RuntimeError("accelerated guesses require three ordinary certification cycles")
     for family, seed in enumerate(() if results else temporal_bootstrap_seeds(rhs)):
+        last_error = {}
         def progress(day, error):
+            last_error.update(day=day,comparison={key:value.tolist() for key,value in error.items()})
             print(f"Seed {family} day {day}: relative={error['relative_max'].tolist()}",
                   file=sys.stderr, flush=True)
         try:
@@ -548,6 +624,14 @@ def main() -> int:
                               "forcing_s1": asdict(error.forcing),
                               "cause": str(error.cause), "NIR": audit, "onset":onset,
                               "species":TEMPORAL_SPECIES}, indent=2))
+            return 2
+        except RuntimeError as error:
+            if "cycle convergence not attained" not in str(error):
+                raise
+            print(json.dumps(dict(decision="NO-GO / 24-hour periodic initialization not certified",
+                                  seed_family=family,last_cycle=last_error,
+                                  interpretation="Finite-horizon failure; not a proof that no mathematical periodic orbit exists",
+                                  NIR=audit,onset=onset),indent=2))
             return 2
 
     def comparison(reference, trial):

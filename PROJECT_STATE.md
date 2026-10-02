@@ -14,10 +14,10 @@ This repository develops a reproducible time-dependent mesospheric ozone and O2(
 - First temporal version: no vertical transport; BDF main solver; Radau independent verification; repeated diurnal cycles to periodic convergence.
 - Delta remains dynamic: `dDelta/dt = P_Delta - L_Delta*Delta`.
 
-M5 alone now uses the authorized minimal temporal relaxation: O, O3, H, OH,
-HO2 and Delta are dynamic (306 ODEs); R_H=OH+HO2 is diagnostic; O1D, H2O2,
-B0 and B1 remain algebraic. Accepted M3/M4 and original close_local_chemistry
-are unchanged. This changes the OH/HO2 timescale assumption only.
+M5 alone uses O/O3/H/OH/HO2/H2O2/Delta (357 ODEs), with R_H=OH+HO2
+as an exact diagnostic. Only O1D/B0/B1 remain algebraic. Accepted M3/M4
+and original close_local_chemistry are unchanged; only timescale assumptions
+for OH/HO2/H2O2 have been relaxed.
 
 ## Accepted milestone ledger
 
@@ -36,21 +36,19 @@ The immutable current artifact is `artifacts/accepted/m4c-r2/tfm-photochem-miles
 
 M4D is **PROVISIONALLY CLOSED / INTEGRATION READY / NOT FROZEN** under the authorized pragmatic closure in `docs/m4d_closure_report.md`: A0 430 Voigt, B 320 Voigt, IRA 835 monomer Voigt plus historical O2-Air CIA attenuation; A1 is sensitivity only. Historical Y/Galatry/high-T/B-qSDV gates do not block integration; PR #4 is not merged.
 
-M5A is **NO-GO / POSITIVITY BLOCKER: retained H2O2 QSSA in darkness** on
-`milestone/m5-temporal`. The authorized 306-ODE OH/HO2 relaxation crosses the
-old dawn OH-root failure with unchanged chemistry (BDF/Radau 0.00055%). Its
-mandatory global OH positivity preflight fails: for dark OH->0+, HO2>0,
-peroxide elimination leaves a finite outward OH loss, and OH=0 has positive
-H2O2 production with zero loss. Base/tight BDF and Radau reproduce approach
-to this boundary under the exact natural-night forcing. Three numerical seed
-families completed 31/28/29 day-map evaluations; periodic convergence, seed
-independence and final reference dawn remain uncertified. Default periodic
-validation stops with exit 2. No further species is promoted. Full pytest
-**739 + 13 subtests**, ruff and five historical validators pass. See the single
-`docs/m5_temporal_report.md` and `evidence/m5_temporal_evidence.json`. Accepted
-M3/M4 and main are unchanged; M4C-R2 SHA is intact.
-
-The SZA=99 dark equilibrium continuum remains an accepted regression, not an operational blocker under periodic initialization. The old spectroscopy sections below remain historical provenance. Calendar ephemerides and dynamic atmosphere are not implemented in this step.
+M5A is **NO-GO / PERIODIC INITIALIZATION BLOCKER: persistent alternating-day dynamics**
+on `milestone/m5-temporal`. The authorized 357-ODE model passes seven-boundary
+positivity, three remaining QSSA, golden flux/budget comparisons, and both old
+witness crossings. Three seed families reach recorded map indices 55/54/56;
+ordinary continuations retain a large alternating-day response. A common daily
+cycle and accepted reference dawn are not certified. At 85 km the one-day O3
+change is ~65.315%; tighter BDF/Radau reproduce it while agreeing to 0.002983%
+over the full day (base/tighter BDF 0.075816%). This observed spin-up obstruction
+is not a proof that no mathematical daily orbit exists. No 48-hour policy is
+accepted and no chemistry, forcing or further species promotion is introduced.
+Full pytest **864 + 13 subtests**, ruff and five historical validators pass; old
+QSSA blockers remain regressions only. See the single report and evidence JSON.
+M3/M4/main are unchanged; M4C-R2 SHA remains intact.
 
 ## Frozen source / transition gates
 
@@ -346,7 +344,7 @@ During repository bootstrap, optional M4A background regeneration with `pymsis==
 ## Provisional roadmap after M4D
 
 1. M5A: performance-ready 51-level chemistry kernel.
-2. M5B: 255-state RHS with BDF/Radau integration.
+2. M5B: 357-state RHS with BDF/Radau integration.
 3. M6: diurnal cycle and periodic convergence.
 4. M7: scientific validation and sensitivities not already required for M4D closure.
 5. M8: Odin/retrieval/application work, if still in scope.

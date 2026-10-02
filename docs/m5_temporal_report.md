@@ -1,174 +1,92 @@
 # M5 temporal reference report
 
-## Decision
+## Current decision
 
-**NO-GO M5A / POSITIVITY BLOCKER: retained H2O2 QSSA in darkness.**
+**NO-GO M5A / PERIODIC INITIALIZATION BLOCKER: persistent alternating-day dynamics.**
 
-The authorized OH/HO2 temporal relaxation is implemented and crosses the old
-OH root failure. Its required *global OH positivity preflight* fails: the
-remaining peroxide QSSA has no finite root at OH=0, HO2>0 and J_H2O2=0, and its
-one-sided OH tendency points out of the nonnegative domain. This is a reduced
-closure obstruction, not an error in the accepted reaction network/constants.
-The user's explicit positivity STOP condition applies. No further species is
-promoted, no chemistry/forcing is changed and no final reference dawn is certified.
+Dynamic H2O2 passes the physics preflights and resolves the previous dark QSSA obstruction. The prescribed three seed families nevertheless do not obtain a common certified 24-hour cycle. Ordinary continuations show large alternating-day excursions, reproduced by tighter BDF and Radau. The reference dawn remains unaccepted because its initialization policy has not passed.
 
-This counterexample is a dark-boundary validation case, **not a claim that the
-nominal spin-up trajectory reached that boundary**. The attempted seed runs
-remained finite/nonnegative but had not attained certified periodic convergence.
+This is an observed failure of the tested daily spin-up, **not a proof that no mathematical 24-hour orbit exists**. A possible 48-hour attractor is a hypothesis from the alternating snapshots, not a newly accepted initialization policy. No chemistry, kinetic constant or forcing is changed to suppress the behavior.
 
-## Implemented model
+## Current model
 
-| Role | Definition |
-| --- | --- |
-| Dynamic state | O, O3, H, OH, HO2, Delta; 51 levels 50..100 km, 306 ODEs |
-| Family | R_H=OH+HO2, diagnostic only |
-| Remaining QSSA | Original O1D, H2O2, B0, B1 formulas and denominator checks |
-| Atmosphere | Frozen M4A T/M/O2/N2/CO2/H2O/H2 |
-| Solar reference | Equinox 45N, declination 0, 86400 s, prescribed SZA |
-| Radiation | Dynamic M4C O/O3 UV opacity; M4D A0/B/IRA with historical CIA attenuation |
-| Dynamics | No transport; Delta remains prognostic throughout |
+M5-only state: O, O3, H, OH, HO2, H2O2, Delta; 51 frozen reference levels, 357 ODEs. R_H=OH+HO2 is diagnostic. O1D/B0/B1 alone remain algebraic. Original M3/M4 modules, reactions, kinetics, photolysis and forcing are unchanged. Original close_local_chemistry and the historical five/six-species formulations remain available for regression.
 
-O/O3/H/Delta use the exact accepted event fluxes and stoichiometry. dOH/dt is
-accepted OH production minus loss; dHO2/dt=accepted dR_H/dt-dOH/dt. Independent
-registry coefficients prove this reaction by reaction. Random-state tests
-verify the family budget to machine flux precision and unchanged four-species
-tendencies. The supplied-HOx closure executes the original closure body in a
-private namespace, without mutating M3/M4. At valid old roots it reproduces all
-algebraic species, fluxes and tendencies exactly. The lean RHS omits diagnostic
-trace construction only and is bitwise equal to the fully audited RHS.
+The temporal equations retain the original O/O3/H/Delta tendencies. OH is the accepted OH production-minus-loss expression. HO2 tendency is exactly accepted dR_H-dOH. H2O2 tendency is exactly HO2_HO2-H2O2_PHOTOLYSIS-OH_H2O2, without a self-reaction factor 1/2. OH+H2O2 loses one OH and produces one HO2, with zero net R_H change. No dynamic species is reset to QSSA or clipped.
 
-## Why the required dark OH boundary fails
+Golden comparison: all fluxes and algebraic O1D/B0/B1 reproduce the original closure at old-QSSA-valid states. O/O3/H/Delta tendencies match exactly. The old OH root imposes dOH=0, not dR_H=0: hence new dHO2=old dR_H in general. All three HOx derivatives vanish at stationary family states, including the exact dark continuum. Requiring zero dHO2 for every old OH-QSSA root would contradict the accepted evolving family budget.
 
-The accepted peroxide formula is
+## Physics preflight
 
-`P_H2O2 = K(T,M)*HO2^2`
+All seven boundary tests pass at every height, with dark and nonnegative illuminated forcing and widely separated physical states. Negative event stoichiometry requires its consumed dynamic reactant; the full finite-peroxide mass-action network is quasipositive. Cancellation in dR_H-dOH is assessed against machine precision times the event-flux sum, not hidden by clipping.
 
-`H2O2 = P_H2O2 / (J_H2O2 + k_OH_H2O2*OH)`.
+Remaining QSSA losses have strictly positive radiative terms: O1D >=0.00681 s^-1, B0 >=0.0834 s^-1, B1 >=0.072 s^-1 for every physical state. Frozen backgrounds and nonnegative states add nonnegative collision losses. Sampled 51-level minima: 508.198636, 0.108614855, 38.9332194 s^-1 respectively. Frozen O2>0 also keeps the accepted Barth transfer denominator positive.
 
-In darkness, for OH>0, substitution into the accepted OH loss gives
+## Historical blockers and regressions
 
-`F_OH_H2O2 = k_OH_H2O2*OH*H2O2 = K(T,M)*HO2^2`.
+1. Dark SZA99 equilibrium continuum remains exact: [O=0,O3=c,H=0,OH=0,HO2=0,H2O2=0,Delta=0] is stationary; it does not define a unique initial profile.
+2. Original OH/HO2 QSSA root failure at 100 km / ~19223.76 s remains reproducible with its original scalar guard. The seven-state trajectory crosses the retained full-column anchor at 19222.72317 s through 19300 s. Golden algebraic difference=0; BDF base/tight maximum=0.00780354%; BDF/Radau=0.000671537%; retained QSSA scaled residual=2.094e-16.
+3. Historical six-state H2O2 QSSA singularity remains reproducible: dark OH->0+, HO2>0 yields a finite outward OH loss, and OH=0 gives positive peroxide production with zero QSSA loss. This no longer stops the dynamic-peroxide model.
 
-For the allowed boundary O=O3=H=Delta=0, HO2=c>0 and all forcing zero, OH
-production is zero and other OH losses vanish as OH tends to zero. Therefore
+The 100-km natural-night witness begins with OH=0.0155041789, HO2=1000, H2O2=1.2815680973e8 cm^-3. The new equations remain finite/nonnegative to 10000 s. At 4289.881963 s: OH=0.00575855734, HO2=999.979044, H2O2=1.28156809733e8. At 10000 s: OH=0.00154090328, HO2=999.942414, H2O2=1.28156809750e8. All eleven actual reference forcings are exactly zero throughout this interval. BDF base/tight maximum difference=0.00002009%; BDF/Radau=0.000010865% (relative for values >1e-8 cm^-3, absolute below). Peroxide is evolved freely.
 
-`lim(OH -> 0+) dOH/dt = -K(T,M)*c^2 < 0`.
+## Periodic reference and new obstruction
 
-At OH=0, peroxide production stays positive and its loss frequency is zero;
-no finite H2O2 can satisfy its stationary equation. The original solver raises
-`SingularQSSAError: H2O2 QSSA has positive production and zero loss`.
-With any *finite supplied peroxide*, the unchanged mass-action OH equation
-instead has zero OH loss at OH=0. Thus the problem is the peroxide elimination,
-not the reaction itself. Tests cover the dark limit at 50/60/70/80/90/100 km.
-The OH=HO2=0 dark continuum remains exact, including 24 h BDF persistence.
+ReferenceEquinoxSolarCycle: 45 N, declination 0, 86400 s; frozen M4A; dynamically attenuated M4C UV; M4D A0/B/IRA, including O2-Air CIA attenuation only; no transport. Three original numerical seed families (1, 0.1, 10 factors) reach recorded map indices **55 / 54 / 56** without a daily periodic PASS. These indices include candidate-map acceleration and are not physical elapsed days. The later continuations are ordinary unchanged-ODE days; the following snapshots are from one continuous ordinary stretch.
 
-The earlier OH boundary tests used the finite photolysis domain. Adding the
-mandatory dark one-sided limit invalidates their operational positivity PASS;
-the default periodic validator now performs this preflight and stops before
-starting any spin-up. No singular denominator is regularized or clipped.
+All states remain finite/nonnegative. O1D/B0/B1 keep physical positive denominators; their largest scaled full-day residual is 4.44e-16. The full-day OH+HO2 budget residual is <=1.63e-16 relative to the event-flux sum. No additional QSSA promotion is indicated.
 
-## Independent natural-night witness
+At the same midnight solar phase, 85 km, family 0:
 
-Frozen M4A at 100 km: T=185.6060638428 K, M=1.281568097278e13 cm^-3.
-Initial six-state witness:
+| Recorded map index | O3 (cm^-3) | H2O2 (cm^-3) |
+| --- | ---: | ---: |
+| 36 | 1.5041516e7 | 2465.957 |
+| 37 | 5.2171279e6 | 4676.117 |
+| 38 | 1.6244815e7 | 2326.355 |
+| 39 | 5.5511466e6 | 4271.437 |
+| 40 | 1.5329591e7 | 2430.490 |
+| 41 | 5.2930228e6 | 4578.007 |
 
-`[0, 0, 0, 0.0155041788815, 1000, 0] cm^-3`.
+The alternation persists in the later samples, including the final recorded continuations. The witness 36->37 changes O3 by **65.315%** (the larger-density denominator); all seven species participate in the phase response. This difference is far above numerical uncertainty and is not a near-zero normalization artifact. The apparent two-day recurrence still has drift and is not certified here as an exact 48-hour orbit.
 
-Its accepted initial H2O2 is 1.281568097278e8 cm^-3 (1e-5 of M). Initial
-dOH/dt=-3.579513318516e-6 cm^-3 s^-1; the dark outward limit is
--3.576538985232e-6 cm^-3 s^-1. These are model-derived validation numbers,
-not external profiles or accepted initial conditions.
+### Independent full-day verification
 
-All eleven forcing frequencies are exactly zero in the actual reference solar
-cycle over this interval (SZA 135 -> 132.297 degrees); their equality to the
-accepted column forcing is checked at both ends. No forcing is modified.
-Integrations stop at positive OH=1% of its initial value, before the singularity:
+The same full 51x7 witness initial state is integrated over 0..86400 s with BDF base, tighter BDF, and Radau. Every actual dynamic UV call and the prescribed NIR table are retained. Comparison uses a per-species relevance floor max(1 cm^-3, 1e-6 of the full time-height species peak); below it, the absolute bound is 0.005 times that declared floor.
 
-| Solver | rtol | Time to positive threshold (s) |
-| --- | --- | --- |
-| BDF | 2e-06 | 4289.881963452972 |
-| BDF | 2e-09 | 4289.881963453012 |
-| Radau | 2e-09 | 4289.881963452897 |
+| Check | Maximum relevant relative difference | Outcome |
+| --- | ---: | --- |
+| BDF base vs tighter BDF | 0.075816% | PASS |
+| Tighter BDF vs Radau | 0.002983% | PASS |
+| One-day O3 change at 85 km, all three solvers | ~65.315% | Daily periodicity FAIL |
+| Physical states / exact shadow forcing / three QSSA / family budget | finite, nonnegative; shadow exactly zero | PASS |
 
-Event-time spread is 1.15e-10 s. HO2 remains 999.984651108 cm^-3 and dOH/dt
-remains -3.576458902368e-6 cm^-3 s^-1. Concentrations stay finite/nonnegative
-through that checkpoint; H2O2 has grown to 1.28152875628e10 cm^-3. At the same
-boundary with OH=0, the original peroxide root fails. The mathematical
-log-OH continuation approaches the limiting time near 4333.23 s; its divergent
-peroxide values are explicitly **not** accepted atmospheric concentrations.
-No negative state or continuation through a singularity is accepted.
+The corresponding near-zero absolute differences pass the declared bounds; their per-species values are in the single evidence JSON. The same witness and independent trajectories are replayable with the existing validator's `periodicity-regression` mode. Matching source-fingerprinted local caches are audited again; an empty cache recomputes the three integrations.
 
-## Old dawn failure crossed by six-state dynamics
+NIR forcing uses the existing audited 276-node interpolation: maximum midpoint relative error 0.497655%, near-zero absolute error 9.837e-16 s^-1, exact geometrical shadow. This interpolation is unchanged from the accepted M5 radiation setup.
 
-The original full-column anchor is t=19222.723172994694 s. All 51 new closures
-match the old algebraic state exactly there. Six-state BDF and Radau advance
-to 19300 s across the former 19223.755728 s / SZA 96.98356 root failure.
+The current blocker is the required **common 24-hour initialization**, not the historical OH/HO2/H2O2 QSSA failures. No dawn from these states is labeled an accepted reference. A multi-day initialization, an arbitrary chosen phase, or any change of chemistry/forcing would require a new scientific decision; none is implemented.
 
-| Check | Result |
-| --- | --- |
-| BDF base vs tight max relevant difference | 0.00515135% |
-| Tight BDF vs Radau | 0.000550887% |
-| Four retained QSSA scaled residual max | 2.13427e-16 |
-| OH+HO2 budget scaled residual max | 2.21207e-20 |
-| Minimum concentration during crossing | 5.60588e-5 cm^-3 |
-| 100 km OH start -> end | 0.297371757 -> 0.389827535 cm^-3 |
-| 100 km HO2 start -> end | 5.60588e-5 -> 1.02654e-4 cm^-3 |
+## Numerical implementation and QA
 
-This establishes that relaxing OH/HO2 timescales crosses the old blocker with
-unchanged chemistry. It does not waive the newly demonstrated dark OH test.
+The current column kernel reuses accepted scalar O1D/B0/B1 and event evaluator bytecode with frozen coefficients. Joint evaluation matches the scalar temporal kernel bit-for-bit for independent random columns; scalar full traces remain the golden audit. Benchmark chemistry cost decreased ~7.8 times; this changes evaluation overhead only.
 
-## Periodic attempts and numerical work
+Full pytest: **864 tests + 13 subtests PASS**. Ruff PASS; five historical validators PASS; old OH and peroxide validator regressions PASS; the new alternating-day witness regression PASS. M4C-R2 SHA256 remains `2944c8a8e0899b320c69c45192ee6f03b9001114c4120a9db8c67a3f1bb8f1fe`. main and accepted M3/M4 code remain unchanged. M4D remains NOT FROZEN.
 
-Three seed factors 1, 0.1 and 10 completed [31, 28, 29] full ODE day-map evaluations
-(including positive numerical secant guesses); initial consecutive ordinary
-spin-up days were [10, 7, 8]. No periodic root, seed independence or final
-reference dawn was certified before the mandatory positivity stop.
+Local implementation commits: `9a461ae` dynamic peroxide; `c888fdc` identical joint column evaluation. Current evidence is consolidated in `evidence/m5_temporal_evidence.json`; generated numerical caches stay outside Git.
 
-The six-state integrator uses log coordinates in darkness and scaled physical
-coordinates when illuminated. Negative Newton trials are rejected and retried,
-never clipped. Small OH/HO2 use concentration-specific error scales. Dense
-segment endpoints use accepted solver values to avoid cancellation. Geometry
-memoization uses exact SZA keys and immutable original ray arrays. Dynamic UV
-is recomputed for the actual evolving O/O3 at every RHS call.
+## Reproduction
 
-Optional positive block secant acceleration changes numerical guesses between
-day-map evaluations only; every evaluated day uses the unchanged ODE/forcing.
-These iterations are not elapsed atmospheric days. Its acceptance design
-requires three subsequent consecutive ordinary cycles and current-RHS
-base/tight BDF plus Radau, with source-fingerprinted cached trajectories and
-0.5% full-cycle comparisons. Those final gates remain **unreached**. The
-positivity preflight prevents this option from becoming an operational bypass.
+Use the authorized local HITRAN export and frozen source directory; the raw export is not in Git. The existing `scripts/validate_m5_temporal.py` supports:
 
-## QA and immutable reference
+- `--mode domain-regression`: original OH root failure.
+- `--mode positivity-regression`: original six-state dark peroxide obstruction.
+- `--mode periodicity-regression`: current seven-state one-day obstruction, checked with base/tighter BDF and Radau.
+- `--mode periodic`: attempt the full daily seed spin-up; finite-horizon lack of convergence returns a structured NO-GO, not a claim of global orbit nonexistence.
 
-- Full pytest: **739 passed + 13 subtests passed**.
-- Ruff: PASS.
-- Legacy, local closure, odd-oxygen budget, M4A and M4C UV validators: PASS.
-- Old dark continuum and OH-domain exit regressions: retained/PASS.
-- New positivity regression: PASS as a blocker diagnosis; periodic mode exits 2.
-- NIR table: 276 nodes, max relevant interpolation error 0.497655%; all 51
-  tangencies and exact shadow retained. No NIR approximation or source change
-  was introduced for the new boundary case.
-- Accepted M3/M4 code/assets and main are unchanged. M4D is INTEGRATION READY /
-  NOT FROZEN; PR #4 remains unmerged.
-- M4C-R2 artifact SHA256:
-  `2944c8a8e0899b320c69c45192ee6f03b9001114c4120a9db8c67a3f1bb8f1fe`.
-
-The single machine-readable evidence file is `evidence/m5_temporal_evidence.json`;
-its flat probe_anchor/independent_probes/boundary_directional_diagnostic fields
-retain historical-test compatibility. The rest of the old five-state diagnosis
-is explicitly nested as history. The dark equilibrium continuum and old OH
-root blocker remain valid historical diagnoses; the current stop is H2O2.
-
-Reproduce with the existing validator (`PYTHONPATH=src`):
+For example, with `PYTHONPATH=src;.` on Windows:
 
 ```text
-python scripts/validate_m5_temporal.py --sources <frozen-source-folder> --hitran <authorized-export>
-# Expected exit 2: mandatory dark OH/peroxide positivity blocker.
-python scripts/validate_m5_temporal.py --mode positivity-regression --sources <frozen-source-folder> --hitran <authorized-export>
-# Expected exit 0: the diagnosed blocker regression is reproduced.
-python scripts/validate_m5_temporal.py --mode onset --sources <frozen-source-folder> --hitran <authorized-export> --cache <derived-cache>
-# Crossing regression only; does not certify a periodic initial condition.
-python -m pytest -q -p no:cacheprovider
-python -m ruff check src tests scripts
+python scripts/validate_m5_temporal.py --sources <frozen-m4d-sources> --hitran <authorized-guest1593878592.txt> --cache <local-derived-cache> --mode periodicity-regression
 ```
+
+The dark continuum remains a regression test; the analytic dark HO2/H2O2 limit also passes BDF and Radau at 50/75/100 km with no clipping.

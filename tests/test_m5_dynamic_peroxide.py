@@ -143,3 +143,49 @@ def test_vector_column_is_identical_to_golden_scalar_kernel():
         scalar=np.array([dynamic_peroxide_rhs(0.,state,background=b,forcing=f,chemistry=rhs.chemistry)
                          for state,b,f in zip(column,rhs.locals,forcing,strict=True)])
         np.testing.assert_array_equal(batch,scalar)
+
+
+@pytest.mark.parametrize("z", [50,75,100])
+@pytest.mark.parametrize("method", ["BDF","Radau"])
+def test_dark_peroxide_analytic_limit_without_qssa(z,method):
+    from scipy.integrate import solve_ivp
+
+    from tfm_photochem.historical_2020 import kinetics
+    b=load_baseline_background().local_background_at(z)
+    coefficient=float(kinetics.k_ho2_ho2(b.T,b.M))
+    initial=np.array([0.,0.,0.,0.,1000.,1233.,0.])
+    times=np.linspace(0.,1/(coefficient*initial[4]),31)
+    def jacobian(time,state):
+        # Newton preconditioner on the exact invariant dark subspace. Avoid
+        # finite-difference leakage into identically zero species; no clipping.
+        matrix=np.zeros((7,7))
+        matrix[4,4]=-4*coefficient*state[4]
+        matrix[5,4]=2*coefficient*state[4]
+        return matrix
+    solution=solve_ivp(lambda t,y:dynamic_peroxide_rhs(t,y,background=b,forcing=FORCING_OFF),
+                       (0.,times[-1]),initial,t_eval=times,method=method,rtol=2e-10,atol=1e-10,
+                       jac=jacobian)
+    assert solution.success and np.all(solution.y>=0)
+    expected_ho2=initial[4]/(1+2*coefficient*initial[4]*times)
+    # Integral storage uses two HO2 per peroxide; the event rate has no factor 1/2.
+    expected_peroxide=initial[5]+(initial[4]-expected_ho2)/2
+    np.testing.assert_allclose(solution.y[4],expected_ho2,rtol=2e-8,atol=1e-8)
+    np.testing.assert_allclose(solution.y[5],expected_peroxide,rtol=2e-8,atol=1e-8)
+    np.testing.assert_array_equal(solution.y[[0,1,2,3,6]],0.)
+    np.testing.assert_allclose(solution.y[4]+2*solution.y[5],initial[4]+2*initial[5],rtol=1e-12)
+
+
+def test_daily_initializer_rejects_known_stable_two_cycle(monkeypatch):
+    from types import SimpleNamespace
+
+    from tfm_photochem import m5_temporal as model
+    def day_map(rhs,initial,**kwargs):
+        mapped=initial.copy()
+        fraction=initial[:,0]/1e6
+        mapped[:,0]=1e6*3.2*fraction*(1-fraction)
+        return SimpleNamespace(),np.array([initial,mapped])
+    monkeypatch.setattr(model,"integrate_reference_cycle",day_map)
+    initial=np.full((51,7),1e6)
+    initial[:,0]=.2e6
+    with pytest.raises(RuntimeError,match="cycle convergence not attained"):
+        model.periodic_spinup(SimpleNamespace(),initial,max_cycles=40,acceleration=False)
