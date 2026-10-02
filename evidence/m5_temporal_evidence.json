@@ -1,7 +1,7 @@
 {
-  "decision": "GO M5B / real solar geometry with explicit initial state",
-  "milestone": "M5B",
-  "policy": "explicit_initial_state / frozen_reference atmosphere",
+  "decision": "GO M5C / dynamic MSIS atmosphere and approximate reference_noon initialization",
+  "milestone": "M5C",
+  "policy": "explicit initial_state or approximate reference_noon; frozen_reference or dynamic_msis",
   "species": [
     "O",
     "O3",
@@ -2539,18 +2539,74 @@
     }
   },
   "QA": {
-    "pytest_tests": 870,
+    "pytest_tests": 908,
     "pytest_subtests": 13,
     "ruff": "PASS",
-    "historical_validators": 5,
-    "M4C_R2_sha256": "2944c8a8e0899b320c69c45192ee6f03b9001114c4120a9db8c67a3f1bb8f1fe",
-    "periodicity_regression": "PASS alternating-day obstruction regression; M5 remains NO-GO",
-    "historical_OH_root_regression": "PASS",
-    "historical_H2O2_singularity_regression": "PASS",
-    "period2_lag_and_unaccelerated_chain_tests": "PASS",
-    "historical_dark_continuum_regression": "PASS",
-    "noon_native_profiles_and_fast_stationarity": "PASS",
-    "timestamp_sampling_fix": "Roundoff-collapsed final timestamp deduplicated; final identical physical state retained; ODE unchanged"
+    "historical_validators": [
+      {
+        "validator": "validate_legacy.py",
+        "returncode": 0
+      },
+      {
+        "validator": "validate_local_closure.py",
+        "returncode": 0
+      },
+      {
+        "validator": "validate_odd_oxygen_photolysis_budget.py",
+        "returncode": 0
+      },
+      {
+        "validator": "validate_historical_2020_background.py",
+        "returncode": 0
+      },
+      {
+        "validator": "validate_historical_2020_uv.py",
+        "returncode": 0
+      }
+    ],
+    "M4D_mapping": "PASS 91/70/21/59/280; full bands 430/320/835",
+    "golden_hashes": {
+      "artifacts/accepted/m4c-r2/tfm-photochem-milestone4c-r2.zip": "2944c8a8e0899b320c69c45192ee6f03b9001114c4120a9db8c67a3f1bb8f1fe",
+      "evidence/m5_reference_cycle.npz": "96ba8d5cde0775dbe20b4d0b22a3e5f82ac64a050ead443f7248b1db23553689",
+      "evidence/m5b_reference_real_geometry.npz": "2f4345c455731a3fce07c85caf1f37b7382b7e22ddf7cd6e2e473560242491bb",
+      "src/tfm_photochem/assets/m5_reference/nir_a0_b_ira.npz": "085e1238671dfe56e69e89b1e7c477bf8a2af587f452dee7f6dec97411a54b23"
+    },
+    "frozen_api_regression": {
+      "relative_max": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "near_zero_absolute_max_cm3": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "relevance_floor_cm3": [
+        598039.070159246,
+        63018.95963988981,
+        175.1645413245415,
+        64.23652617203815,
+        26.68487515105413,
+        7.996425330589667,
+        57490.113290393914
+      ],
+      "pass_": true
+    },
+    "unchanged_accepted_code": [
+      "historical_2020",
+      "m4d_reconstruction",
+      "m5_temporal.py",
+      "solar_geometry.py"
+    ]
   },
   "probe_anchor": {
     "time_s": 19222.723172994694,
@@ -49884,5 +49940,2756 @@
     }
   },
   "M5A_decision": "GO M5A / validated finite-horizon reference dawn",
-  "M5A_policy": "reference_noon_initialization"
+  "M5A_policy": "reference_noon_initialization",
+  "M5B_status": "ACCEPTED",
+  "M5C": {
+    "decision": "GO M5C",
+    "scope": "dynamic prescribed MSIS-00 atmosphere / approximate reference_noon bootstrap; 357 unchanged ODEs, no transport",
+    "atmosphere_metadata": {
+      "CO2_vmr": 0.000405,
+      "H2O_H2": "accepted prescribed VMR profiles",
+      "N2_vmr": 0.78,
+      "O2_vmr": 0.21,
+      "activity": {
+        "ap": 4.0,
+        "f107": 150.0,
+        "f107a": 150.0,
+        "policy": "explicit constant quiet reference, no downloads"
+      },
+      "end_datetime_utc": "2020-03-21T09:00:00+00:00",
+      "external_O3": "accepted SOCRATES fixed VMR times dynamic M; not date-dependent climatology",
+      "external_O_unavailable": "exact zero",
+      "interpolation": "linear native densities and temperature; no RHS MSIS calls",
+      "latitude_deg": 45,
+      "longitude_deg_east": 0,
+      "model": "NRLMSISE-00",
+      "msis_version": 0,
+      "number_density_units": "cm^-3; native m^-3 times 1e-6",
+      "options": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "ordinary_M": "sum N2/O2/O/He/H/Ar/N; unavailable=0; anomalous O excluded",
+      "policy": "dynamic_msis",
+      "pymsis_version": "0.12.0",
+      "start_datetime_utc": "2020-03-20T12:00:00+00:00",
+      "step_s": 300.0
+    },
+    "radiation_metadata": {
+      "NIR": {
+        "CIA": "historical O2-Air attenuation only",
+        "angular_audits": [
+          {
+            "cached_reference_nodes": 2,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "optimized_nodes": 0,
+            "relative_max": 0.0030466889983741573
+          },
+          {
+            "cached_reference_nodes": 2,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "optimized_nodes": 0,
+            "relative_max": 0.0030462463339929633
+          },
+          {
+            "cached_reference_nodes": 3,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 3,
+            "optimized_nodes": 0,
+            "relative_max": 0.004307187014002203
+          },
+          {
+            "cached_reference_nodes": 6,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 6,
+            "optimized_nodes": 0,
+            "relative_max": 0.0043089662495710305
+          },
+          {
+            "cached_reference_nodes": 8,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 8,
+            "optimized_nodes": 0,
+            "relative_max": 0.004312245873601901
+          },
+          {
+            "cached_reference_nodes": 14,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 14,
+            "optimized_nodes": 0,
+            "relative_max": 0.004041147350112944
+          },
+          {
+            "cached_reference_nodes": 226,
+            "dark": false,
+            "near_zero_absolute_max_s1": 9.763879078939446e-16,
+            "nodes": 226,
+            "optimized_nodes": 0,
+            "relative_max": 0.0046252331246981
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 9.8279095682247e-16,
+            "nodes": 265,
+            "optimized_nodes": 265,
+            "relative_max": 0.004952803217463063
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 55,
+            "optimized_nodes": 55,
+            "relative_max": 0.004978524395219863
+          },
+          {
+            "dark": true,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "relative_max": 0.0
+          },
+          {
+            "dark": true,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "relative_max": 0.0
+          },
+          {
+            "dark": true,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "relative_max": 0.0
+          },
+          {
+            "dark": true,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "relative_max": 0.0
+          },
+          {
+            "dark": true,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "relative_max": 0.0
+          },
+          {
+            "dark": true,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "relative_max": 0.0
+          },
+          {
+            "dark": true,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "relative_max": 0.0
+          },
+          {
+            "dark": true,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "relative_max": 0.0
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 9.789008815737286e-16,
+            "nodes": 254,
+            "optimized_nodes": 254,
+            "relative_max": 0.004997520343812277
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 9.770769691913863e-16,
+            "nodes": 273,
+            "optimized_nodes": 273,
+            "relative_max": 0.0049855078600485265
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 22,
+            "optimized_nodes": 22,
+            "relative_max": 0.004032385977804865
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 8,
+            "optimized_nodes": 8,
+            "relative_max": 0.0038119673621764944
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 4,
+            "optimized_nodes": 4,
+            "relative_max": 0.00262650534874671
+          }
+        ],
+        "atmosphere_step_s": 3600.0,
+        "numerics": {
+          "cached_reference": "validated far_order=4 / near_cm1=2 direct rates; row provenance retained",
+          "fresh_far_order": 8,
+          "fresh_near_cm1": 0.25,
+          "outputs": "nominal only; unused CIA envelope/raw evaluations omitted without equation changes"
+        },
+        "policy": "dynamic background A0/B/IRA snapshot tables; no frozen-NIR substitution",
+        "raw_hitran_distributed": false,
+        "temporal_interpolation": "linear rates between adjacent atmospheres at actual SZA"
+      },
+      "UV": "accepted M4C with current prescribed background and dynamic chemical O/O3"
+    },
+    "exact_shadow": true,
+    "remaining_QSSA_denominators_positive": true,
+    "no_clipping_reset": true,
+    "numerical_certification": {
+      "decision": "PASS numerical convergence; case/regression QA also required",
+      "background_step_s": 300.0,
+      "NIR_step_s": 3600.0,
+      "background_convergence": {
+        "native_atmosphere": {
+          "O3": {
+            "full": {
+              "max_relative": 0.0018325514446981867,
+              "p90_relative": 8.884114230271264e-05,
+              "p99_relative": 0.0002656894216715487,
+              "maximum_absolute_cm3": 323816.31939280033,
+              "near_zero_absolute_max_cm3": 0.0,
+              "floor_cm3": 63018.95963988981,
+              "maximum_case": {
+                "time_s": 43200.0,
+                "z_km": 83,
+                "SZA_deg": 134.92133563276371
+              }
+            },
+            "dawn": {
+              "max_relative": 0.0005268378535442129,
+              "p90_relative": 7.223993556353513e-05,
+              "p99_relative": 0.0003895920647285195,
+              "maximum_absolute_cm3": 53636.86148452759,
+              "near_zero_absolute_max_cm3": 0.0,
+              "floor_cm3": 63018.95963988981,
+              "maximum_case": {
+                "time_s": 66900.0,
+                "z_km": 83,
+                "SZA_deg": 85.06821822989723
+              }
+            }
+          },
+          "Delta": {
+            "full": {
+              "max_relative": 0.00012034070122285356,
+              "p90_relative": 5.204771802497816e-05,
+              "p99_relative": 7.016644963843256e-05,
+              "maximum_absolute_cm3": 128132.27578544617,
+              "near_zero_absolute_max_cm3": 4.522014977919753,
+              "floor_cm3": 57490.113290393914,
+              "maximum_case": {
+                "time_s": 63600.0,
+                "z_km": 83,
+                "SZA_deg": 94.79196075038917
+              }
+            },
+            "dawn": {
+              "max_relative": 0.00012034070122285356,
+              "p90_relative": 4.1478049394532205e-05,
+              "p99_relative": 6.502172284622046e-05,
+              "maximum_absolute_cm3": 125451.52024507523,
+              "near_zero_absolute_max_cm3": 1.2258152600516041,
+              "floor_cm3": 57490.113290393914,
+              "maximum_case": {
+                "time_s": 63600.0,
+                "z_km": 83,
+                "SZA_deg": 94.79196075038917
+              }
+            }
+          }
+        },
+        "NIR_rates": {
+          "O3": {
+            "full": {
+              "max_relative": 6.140709720799014e-06,
+              "p90_relative": 1.7286147803187008e-07,
+              "p99_relative": 1.6992090782263861e-06,
+              "maximum_absolute_cm3": 736.8558807373047,
+              "near_zero_absolute_max_cm3": 0.0,
+              "floor_cm3": 63018.95963988981,
+              "maximum_case": {
+                "time_s": 23400.0,
+                "z_km": 76,
+                "SZA_deg": 93.94560415556337
+              }
+            },
+            "dawn": {
+              "max_relative": 3.3514206303614077e-06,
+              "p90_relative": 6.813212234679003e-08,
+              "p99_relative": 1.9754890971437094e-06,
+              "maximum_absolute_cm3": 360.90666580200195,
+              "near_zero_absolute_max_cm3": 0.0,
+              "floor_cm3": 63018.95963988981,
+              "maximum_case": {
+                "time_s": 63000.0,
+                "z_km": 82,
+                "SZA_deg": 96.55261995664529
+              }
+            }
+          },
+          "Delta": {
+            "full": {
+              "max_relative": 0.0005543224522150628,
+              "p90_relative": 0.00010180910013997169,
+              "p99_relative": 0.0004124935807221799,
+              "maximum_absolute_cm3": 497238.0357732773,
+              "near_zero_absolute_max_cm3": 30.635754216498754,
+              "floor_cm3": 57490.113290393914,
+              "maximum_case": {
+                "time_s": 24500.96505506012,
+                "z_km": 50,
+                "SZA_deg": 97.17094662223651
+              }
+            },
+            "dawn": {
+              "max_relative": 0.0005220378474539512,
+              "p90_relative": 0.00015792657544954293,
+              "p99_relative": 0.00027263877946316915,
+              "maximum_absolute_cm3": 497238.0357732773,
+              "near_zero_absolute_max_cm3": 6.5263017608376686,
+              "floor_cm3": 57490.113290393914,
+              "maximum_case": {
+                "time_s": 62700.0,
+                "z_km": 79,
+                "SZA_deg": 97.43061143458316
+              }
+            }
+          }
+        }
+      },
+      "solver_comparison": {
+        "base": {
+          "relative_max": [
+            0.004236410292120427,
+            0.000378396433790681,
+            0.0019156133025398877,
+            0.0002761425148121886,
+            0.00024053457240570097,
+            0.0002068652680027266,
+            0.00023626500551014932
+          ],
+          "near_zero_absolute_max_cm3": [
+            1345.2503918523435,
+            0.0,
+            0.20655418240539802,
+            0.007238620807221707,
+            0.000317812092738734,
+            2.3223224546953247e-05,
+            4.744474120147061
+          ],
+          "relevance_floor_cm3": [
+            597773.3308114178,
+            63018.95963988981,
+            173.8771145813524,
+            64.23652617203815,
+            26.71982211172099,
+            8.014191746965137,
+            57490.113290393914
+          ],
+          "pass_": true
+        },
+        "Radau": {
+          "relative_max": [
+            9.460133546447641e-05,
+            2.6961938246357734e-05,
+            6.997046862047601e-05,
+            1.8110665569862212e-05,
+            1.6848871538389447e-05,
+            2.1878508014131365e-05,
+            6.241844170901708e-06
+          ],
+          "near_zero_absolute_max_cm3": [
+            56.863847641972825,
+            0.0,
+            0.008432715233794852,
+            0.00039523067898272757,
+            7.427129909132191e-05,
+            2.7322597846435315e-06,
+            0.08901392852567369
+          ],
+          "relevance_floor_cm3": [
+            597773.3308114178,
+            63018.95963988981,
+            173.8771145813524,
+            64.23652617203815,
+            26.71982211172099,
+            8.014191746965137,
+            57490.113290393914
+          ],
+          "pass_": true
+        }
+      },
+      "frozen_vs_dynamic": {
+        "O3": {
+          "full": {
+            "max_relative": 0.6921222301699957,
+            "p90_relative": 0.20833296976699972,
+            "p99_relative": 0.3166757529853865,
+            "maximum_absolute_cm3": 166688882.6607132,
+            "near_zero_absolute_max_cm3": 0.0,
+            "floor_cm3": 63018.95963988981,
+            "maximum_case": {
+              "time_s": 68100.0,
+              "z_km": 83,
+              "SZA_deg": 81.55145815954005
+            }
+          },
+          "dawn": {
+            "max_relative": 0.6921222301699957,
+            "p90_relative": 0.2041152847448453,
+            "p99_relative": 0.4053064381654373,
+            "maximum_absolute_cm3": 166688882.6607132,
+            "near_zero_absolute_max_cm3": 0.0,
+            "floor_cm3": 63018.95963988981,
+            "maximum_case": {
+              "time_s": 68100.0,
+              "z_km": 83,
+              "SZA_deg": 81.55145815954005
+            }
+          }
+        },
+        "Delta": {
+          "full": {
+            "max_relative": 0.24612806685158886,
+            "p90_relative": 0.161450079738464,
+            "p99_relative": 0.1922930529657074,
+            "maximum_absolute_cm3": 358054163.5278919,
+            "near_zero_absolute_max_cm3": 12089.11597515901,
+            "floor_cm3": 57490.113290393914,
+            "maximum_case": {
+              "time_s": 63300.0,
+              "z_km": 99,
+              "SZA_deg": 95.6729968566164
+            }
+          },
+          "dawn": {
+            "max_relative": 0.24612806685158886,
+            "p90_relative": 0.166901000694978,
+            "p99_relative": 0.2084400685315213,
+            "maximum_absolute_cm3": 358054163.5278919,
+            "near_zero_absolute_max_cm3": 5528.805630423798,
+            "floor_cm3": 57490.113290393914,
+            "maximum_case": {
+              "time_s": 63300.0,
+              "z_km": 99,
+              "SZA_deg": 95.6729968566164
+            }
+          }
+        }
+      }
+    },
+    "trajectory_audits": {
+      "300-nir3600-base": {
+        "retained_QSSA_scaled_max": 4.2537246161227717e-16,
+        "family_budget_scaled_max": 1.5949072995067072e-16,
+        "dynamic_H2O2_budget_scaled_max": 3.4200131952830905e-16,
+        "msis_calls": 0,
+        "solver": {
+          "method": "BDF",
+          "rtol": 2e-06,
+          "atol": 1e-08,
+          "max_step_s": 120.0,
+          "nfev": 15847,
+          "njev": 527,
+          "trial_rejections": 0,
+          "segments": 103
+        },
+        "finite_nonnegative": true,
+        "no_clipping": true
+      },
+      "300-nir3600-tight": {
+        "retained_QSSA_scaled_max": 5.169437804508151e-16,
+        "family_budget_scaled_max": 1.6090598936422726e-16,
+        "dynamic_H2O2_budget_scaled_max": 3.0188492681515444e-16,
+        "msis_calls": 1,
+        "solver": {
+          "method": "BDF",
+          "rtol": 2e-08,
+          "atol": 1e-10,
+          "max_step_s": 60.0,
+          "nfev": 56844,
+          "njev": 1491,
+          "trial_rejections": 0,
+          "segments": 103
+        },
+        "finite_nonnegative": true,
+        "no_clipping": true
+      },
+      "300-nir3600-Radau": {
+        "retained_QSSA_scaled_max": 2.427240193761784e-16,
+        "family_budget_scaled_max": 1.6066537114077397e-16,
+        "dynamic_H2O2_budget_scaled_max": 3.3292809296737683e-16,
+        "msis_calls": 0,
+        "solver": {
+          "method": "Radau",
+          "rtol": 2e-08,
+          "atol": 1e-10,
+          "max_step_s": 60.0,
+          "nfev": 106713,
+          "njev": 578,
+          "trial_rejections": 72,
+          "segments": 103
+        },
+        "finite_nonnegative": true,
+        "no_clipping": true
+      },
+      "600-nir3600-tight": {
+        "retained_QSSA_scaled_max": 3.5497754799044503e-16,
+        "family_budget_scaled_max": 1.6066521309783321e-16,
+        "dynamic_H2O2_budget_scaled_max": 3.5750688560052345e-16,
+        "msis_calls": 1,
+        "solver": {
+          "method": "BDF",
+          "rtol": 2e-08,
+          "atol": 1e-10,
+          "max_step_s": 60.0,
+          "nfev": 52706,
+          "njev": 1207,
+          "trial_rejections": 0,
+          "segments": 103
+        },
+        "finite_nonnegative": true,
+        "no_clipping": true
+      },
+      "300-nir7200-tight": {
+        "retained_QSSA_scaled_max": 3.64022335149361e-16,
+        "family_budget_scaled_max": 1.5115610901476074e-16,
+        "dynamic_H2O2_budget_scaled_max": 2.784882267560063e-16,
+        "msis_calls": 0,
+        "solver": {
+          "method": "BDF",
+          "rtol": 2e-08,
+          "atol": 1e-10,
+          "max_step_s": 60.0,
+          "nfev": 56757,
+          "njev": 1461,
+          "trial_rejections": 0,
+          "segments": 103
+        },
+        "finite_nonnegative": true,
+        "no_clipping": true
+      }
+    },
+    "cases": [
+      {
+        "case": "equinox",
+        "latitude_deg": 45,
+        "longitude_deg_east": 0,
+        "noon_utc": "2020-03-20T12:07:55.363681+00:00",
+        "bootstrap_duration_s": 60.0,
+        "requested_duration_s": 120.0,
+        "finite_nonnegative": true,
+        "minimum_state_cm3": 4.405367661936339e-08,
+        "initializer": {
+          "policy": "reference_noon; approximate bootstrap, not climatology",
+          "noon_datetime_utc": "2020-03-20T12:07:55.363681+00:00",
+          "SZA_deg": 45.14902175403246,
+          "all_51_heights_pass": true,
+          "seeds_attempted_per_height": 7,
+          "minimum_physical_convergences": 5,
+          "maximum_root_relative_spread": 1.982961257433645e-13,
+          "maximum_accepted_normalized_residual": 2.6630000949752608e-14,
+          "per_height": [
+            {
+              "z_km": 50,
+              "physical_convergences": 7,
+              "root_relative_spread": 0.0
+            },
+            {
+              "z_km": 51,
+              "physical_convergences": 7,
+              "root_relative_spread": 8.993345816703691e-15
+            },
+            {
+              "z_km": 52,
+              "physical_convergences": 7,
+              "root_relative_spread": 8.888187520336049e-15
+            },
+            {
+              "z_km": 53,
+              "physical_convergences": 6,
+              "root_relative_spread": 0.0
+            },
+            {
+              "z_km": 54,
+              "physical_convergences": 6,
+              "root_relative_spread": 0.0
+            },
+            {
+              "z_km": 55,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.5070587750671913e-15
+            },
+            {
+              "z_km": 56,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.4928503398521295e-15
+            },
+            {
+              "z_km": 57,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.2504624447364014e-14
+            },
+            {
+              "z_km": 58,
+              "physical_convergences": 5,
+              "root_relative_spread": 3.615421266335816e-15
+            },
+            {
+              "z_km": 59,
+              "physical_convergences": 5,
+              "root_relative_spread": 1.7699774422706644e-15
+            },
+            {
+              "z_km": 60,
+              "physical_convergences": 5,
+              "root_relative_spread": 3.609863297448987e-15
+            },
+            {
+              "z_km": 61,
+              "physical_convergences": 5,
+              "root_relative_spread": 0.0
+            },
+            {
+              "z_km": 62,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.606492378993699e-15
+            },
+            {
+              "z_km": 63,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.7830544671865197e-15
+            },
+            {
+              "z_km": 64,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.8397020072645912e-15
+            },
+            {
+              "z_km": 65,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.8205658227508083e-15
+            },
+            {
+              "z_km": 66,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.603265417741316e-15
+            },
+            {
+              "z_km": 67,
+              "physical_convergences": 6,
+              "root_relative_spread": 2.67810583784873e-15
+            },
+            {
+              "z_km": 68,
+              "physical_convergences": 6,
+              "root_relative_spread": 5.364685503773962e-15
+            },
+            {
+              "z_km": 69,
+              "physical_convergences": 7,
+              "root_relative_spread": 3.554282919729483e-15
+            },
+            {
+              "z_km": 70,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.8343454254882055e-15
+            },
+            {
+              "z_km": 71,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.7115891776648556e-15
+            },
+            {
+              "z_km": 72,
+              "physical_convergences": 7,
+              "root_relative_spread": 5.377432650557329e-15
+            },
+            {
+              "z_km": 73,
+              "physical_convergences": 6,
+              "root_relative_spread": 8.935917810575487e-15
+            },
+            {
+              "z_km": 74,
+              "physical_convergences": 6,
+              "root_relative_spread": 2.7028398492321358e-14
+            },
+            {
+              "z_km": 75,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.982961257433645e-13
+            },
+            {
+              "z_km": 76,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.860154244908307e-13
+            },
+            {
+              "z_km": 77,
+              "physical_convergences": 7,
+              "root_relative_spread": 2.00345934747385e-14
+            },
+            {
+              "z_km": 78,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.7673217485144972e-15
+            },
+            {
+              "z_km": 79,
+              "physical_convergences": 7,
+              "root_relative_spread": 3.5272466652201148e-15
+            },
+            {
+              "z_km": 80,
+              "physical_convergences": 7,
+              "root_relative_spread": 4.4258950320923854e-15
+            },
+            {
+              "z_km": 81,
+              "physical_convergences": 6,
+              "root_relative_spread": 8.343911892752921e-16
+            },
+            {
+              "z_km": 82,
+              "physical_convergences": 6,
+              "root_relative_spread": 9.138508909388033e-16
+            },
+            {
+              "z_km": 83,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.7172815229780843e-15
+            },
+            {
+              "z_km": 84,
+              "physical_convergences": 7,
+              "root_relative_spread": 3.670142588697478e-15
+            },
+            {
+              "z_km": 85,
+              "physical_convergences": 7,
+              "root_relative_spread": 3.4968463532998804e-15
+            },
+            {
+              "z_km": 86,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.976816994476808e-15
+            },
+            {
+              "z_km": 87,
+              "physical_convergences": 7,
+              "root_relative_spread": 3.1353670813635055e-15
+            },
+            {
+              "z_km": 88,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.4558832907598583e-15
+            },
+            {
+              "z_km": 89,
+              "physical_convergences": 7,
+              "root_relative_spread": 3.5505465485588366e-15
+            },
+            {
+              "z_km": 90,
+              "physical_convergences": 6,
+              "root_relative_spread": 2.669397035565105e-15
+            },
+            {
+              "z_km": 91,
+              "physical_convergences": 6,
+              "root_relative_spread": 4.396127487245348e-15
+            },
+            {
+              "z_km": 92,
+              "physical_convergences": 7,
+              "root_relative_spread": 7.093178986691007e-15
+            },
+            {
+              "z_km": 93,
+              "physical_convergences": 7,
+              "root_relative_spread": 8.937122366823713e-15
+            },
+            {
+              "z_km": 94,
+              "physical_convergences": 6,
+              "root_relative_spread": 8.950796332020483e-15
+            },
+            {
+              "z_km": 95,
+              "physical_convergences": 7,
+              "root_relative_spread": 2.135428070877679e-14
+            },
+            {
+              "z_km": 96,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.2416465716747412e-14
+            },
+            {
+              "z_km": 97,
+              "physical_convergences": 7,
+              "root_relative_spread": 2.1241102644627938e-14
+            },
+            {
+              "z_km": 98,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.7748801954895203e-14
+            },
+            {
+              "z_km": 99,
+              "physical_convergences": 7,
+              "root_relative_spread": 2.8421238042714014e-14
+            },
+            {
+              "z_km": 100,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.9055805818419136e-14
+            }
+          ],
+          "climatologically_validated": false,
+          "missing_native_O_H": "exact zero; no extrapolation"
+        },
+        "audit": {
+          "retained_QSSA_scaled_max": 1.779806247494751e-16,
+          "family_budget_scaled_max": 1.054806978462713e-20,
+          "dynamic_H2O2_budget_scaled_max": 2.1683225809533509e-16
+        },
+        "MSIS_precompute_calls": 1
+      },
+      {
+        "case": "summer",
+        "latitude_deg": 45,
+        "longitude_deg_east": 0,
+        "noon_utc": "2020-06-21T12:01:26.679355+00:00",
+        "bootstrap_duration_s": 60.0,
+        "requested_duration_s": 120.0,
+        "finite_nonnegative": true,
+        "minimum_state_cm3": 9.062956688880172e-09,
+        "initializer": {
+          "policy": "reference_noon; approximate bootstrap, not climatology",
+          "noon_datetime_utc": "2020-06-21T12:01:26.679355+00:00",
+          "SZA_deg": 21.54522245233831,
+          "all_51_heights_pass": true,
+          "seeds_attempted_per_height": 7,
+          "minimum_physical_convergences": 5,
+          "maximum_root_relative_spread": 2.1006055527593632e-13,
+          "maximum_accepted_normalized_residual": 7.26207367164454e-14,
+          "per_height": [
+            {
+              "z_km": 50,
+              "physical_convergences": 7,
+              "root_relative_spread": 3.654247984355113e-15
+            },
+            {
+              "z_km": 51,
+              "physical_convergences": 7,
+              "root_relative_spread": 8.874261190201689e-15
+            },
+            {
+              "z_km": 52,
+              "physical_convergences": 7,
+              "root_relative_spread": 3.636469538461068e-15
+            },
+            {
+              "z_km": 53,
+              "physical_convergences": 6,
+              "root_relative_spread": 0.0
+            },
+            {
+              "z_km": 54,
+              "physical_convergences": 6,
+              "root_relative_spread": 7.049321960652827e-15
+            },
+            {
+              "z_km": 55,
+              "physical_convergences": 6,
+              "root_relative_spread": 7.220539197546638e-15
+            },
+            {
+              "z_km": 56,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.7801321602958185e-15
+            },
+            {
+              "z_km": 57,
+              "physical_convergences": 6,
+              "root_relative_spread": 7.0847887951139375e-15
+            },
+            {
+              "z_km": 58,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.5056960834698896e-15
+            },
+            {
+              "z_km": 59,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.594008505727997e-15
+            },
+            {
+              "z_km": 60,
+              "physical_convergences": 5,
+              "root_relative_spread": 3.573240257701878e-15
+            },
+            {
+              "z_km": 61,
+              "physical_convergences": 5,
+              "root_relative_spread": 3.459360561351372e-15
+            },
+            {
+              "z_km": 62,
+              "physical_convergences": 5,
+              "root_relative_spread": 3.602242195076317e-15
+            },
+            {
+              "z_km": 63,
+              "physical_convergences": 5,
+              "root_relative_spread": 5.4726557727061984e-15
+            },
+            {
+              "z_km": 64,
+              "physical_convergences": 6,
+              "root_relative_spread": 5.330223208844237e-15
+            },
+            {
+              "z_km": 65,
+              "physical_convergences": 6,
+              "root_relative_spread": 5.308769649008195e-15
+            },
+            {
+              "z_km": 66,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.600014390215361e-15
+            },
+            {
+              "z_km": 67,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.5048689873995112e-15
+            },
+            {
+              "z_km": 68,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.7754925347556436e-15
+            },
+            {
+              "z_km": 69,
+              "physical_convergences": 6,
+              "root_relative_spread": 8.161156332065632e-16
+            },
+            {
+              "z_km": 70,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.601163174771185e-15
+            },
+            {
+              "z_km": 71,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.509634038347204e-15
+            },
+            {
+              "z_km": 72,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.625559213998894e-15
+            },
+            {
+              "z_km": 73,
+              "physical_convergences": 6,
+              "root_relative_spread": 9.652415062216634e-15
+            },
+            {
+              "z_km": 74,
+              "physical_convergences": 6,
+              "root_relative_spread": 5.145028096325877e-14
+            },
+            {
+              "z_km": 75,
+              "physical_convergences": 6,
+              "root_relative_spread": 7.59745254010964e-14
+            },
+            {
+              "z_km": 76,
+              "physical_convergences": 6,
+              "root_relative_spread": 2.1006055527593632e-13
+            },
+            {
+              "z_km": 77,
+              "physical_convergences": 7,
+              "root_relative_spread": 4.6142692432690775e-14
+            },
+            {
+              "z_km": 78,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.0672628895576325e-14
+            },
+            {
+              "z_km": 79,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.6275179939745595e-15
+            },
+            {
+              "z_km": 80,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.7029761481656988e-15
+            },
+            {
+              "z_km": 81,
+              "physical_convergences": 7,
+              "root_relative_spread": 5.4656704715803766e-15
+            },
+            {
+              "z_km": 82,
+              "physical_convergences": 7,
+              "root_relative_spread": 2.4945263758706585e-15
+            },
+            {
+              "z_km": 83,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.8853351298819545e-15
+            },
+            {
+              "z_km": 84,
+              "physical_convergences": 6,
+              "root_relative_spread": 7.872640067082247e-15
+            },
+            {
+              "z_km": 85,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.1143295690868123e-14
+            },
+            {
+              "z_km": 86,
+              "physical_convergences": 7,
+              "root_relative_spread": 5.701104008046912e-15
+            },
+            {
+              "z_km": 87,
+              "physical_convergences": 7,
+              "root_relative_spread": 2.6490776398400558e-15
+            },
+            {
+              "z_km": 88,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.7986792073963954e-15
+            },
+            {
+              "z_km": 89,
+              "physical_convergences": 7,
+              "root_relative_spread": 3.513082993873017e-15
+            },
+            {
+              "z_km": 90,
+              "physical_convergences": 7,
+              "root_relative_spread": 3.646572598766773e-15
+            },
+            {
+              "z_km": 91,
+              "physical_convergences": 7,
+              "root_relative_spread": 3.4259347501064295e-15
+            },
+            {
+              "z_km": 92,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.4153834734371303e-14
+            },
+            {
+              "z_km": 93,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.4159842833314397e-14
+            },
+            {
+              "z_km": 94,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.0577236639803386e-14
+            },
+            {
+              "z_km": 95,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.5897416035174675e-14
+            },
+            {
+              "z_km": 96,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.7732353038127203e-14
+            },
+            {
+              "z_km": 97,
+              "physical_convergences": 6,
+              "root_relative_spread": 2.4773408126631266e-14
+            },
+            {
+              "z_km": 98,
+              "physical_convergences": 6,
+              "root_relative_spread": 2.135147877739721e-14
+            },
+            {
+              "z_km": 99,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.913245665139826e-14
+            },
+            {
+              "z_km": 100,
+              "physical_convergences": 6,
+              "root_relative_spread": 9.23667925801107e-14
+            }
+          ],
+          "climatologically_validated": false,
+          "missing_native_O_H": "exact zero; no extrapolation"
+        },
+        "audit": {
+          "retained_QSSA_scaled_max": 2.0664650655031775e-16,
+          "family_budget_scaled_max": 2.710983648188197e-20,
+          "dynamic_H2O2_budget_scaled_max": 2.1962356587907268e-16
+        },
+        "MSIS_precompute_calls": 1
+      },
+      {
+        "case": "south",
+        "latitude_deg": -45,
+        "longitude_deg_east": 0,
+        "noon_utc": "2020-12-21T11:57:50.565321+00:00",
+        "bootstrap_duration_s": 60.0,
+        "requested_duration_s": 120.0,
+        "finite_nonnegative": true,
+        "minimum_state_cm3": 2.3490563404485418e-08,
+        "initializer": {
+          "policy": "reference_noon; approximate bootstrap, not climatology",
+          "noon_datetime_utc": "2020-12-21T11:57:50.565321+00:00",
+          "SZA_deg": 21.579825592618413,
+          "all_51_heights_pass": true,
+          "seeds_attempted_per_height": 7,
+          "minimum_physical_convergences": 5,
+          "maximum_root_relative_spread": 2.261252206407866e-13,
+          "maximum_accepted_normalized_residual": 3.7115514280241824e-14,
+          "per_height": [
+            {
+              "z_km": 50,
+              "physical_convergences": 7,
+              "root_relative_spread": 0.0
+            },
+            {
+              "z_km": 51,
+              "physical_convergences": 7,
+              "root_relative_spread": 0.0
+            },
+            {
+              "z_km": 52,
+              "physical_convergences": 7,
+              "root_relative_spread": 7.138192629189725e-15
+            },
+            {
+              "z_km": 53,
+              "physical_convergences": 6,
+              "root_relative_spread": 7.0606493289356296e-15
+            },
+            {
+              "z_km": 54,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.7620454549778377e-15
+            },
+            {
+              "z_km": 55,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.8128387932297515e-15
+            },
+            {
+              "z_km": 56,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.631268378735704e-15
+            },
+            {
+              "z_km": 57,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.671635710033108e-15
+            },
+            {
+              "z_km": 58,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.911918985232506e-15
+            },
+            {
+              "z_km": 59,
+              "physical_convergences": 5,
+              "root_relative_spread": 7.0112439989179794e-15
+            },
+            {
+              "z_km": 60,
+              "physical_convergences": 5,
+              "root_relative_spread": 3.581735190940973e-15
+            },
+            {
+              "z_km": 61,
+              "physical_convergences": 5,
+              "root_relative_spread": 0.0
+            },
+            {
+              "z_km": 62,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.0791918212892837e-14
+            },
+            {
+              "z_km": 63,
+              "physical_convergences": 5,
+              "root_relative_spread": 1.7624535862224558e-15
+            },
+            {
+              "z_km": 64,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.4608727827078586e-15
+            },
+            {
+              "z_km": 65,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.624526528228437e-15
+            },
+            {
+              "z_km": 66,
+              "physical_convergences": 6,
+              "root_relative_spread": 0.0
+            },
+            {
+              "z_km": 67,
+              "physical_convergences": 6,
+              "root_relative_spread": 7.106585990719908e-15
+            },
+            {
+              "z_km": 68,
+              "physical_convergences": 6,
+              "root_relative_spread": 2.6896440538784746e-15
+            },
+            {
+              "z_km": 69,
+              "physical_convergences": 6,
+              "root_relative_spread": 2.624351383740515e-15
+            },
+            {
+              "z_km": 70,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.619144400953103e-15
+            },
+            {
+              "z_km": 71,
+              "physical_convergences": 7,
+              "root_relative_spread": 2.7509624917897554e-15
+            },
+            {
+              "z_km": 72,
+              "physical_convergences": 7,
+              "root_relative_spread": 2.5980833874000284e-15
+            },
+            {
+              "z_km": 73,
+              "physical_convergences": 6,
+              "root_relative_spread": 7.13088485221941e-15
+            },
+            {
+              "z_km": 74,
+              "physical_convergences": 6,
+              "root_relative_spread": 2.397478455566632e-14
+            },
+            {
+              "z_km": 75,
+              "physical_convergences": 6,
+              "root_relative_spread": 4.534514013988221e-14
+            },
+            {
+              "z_km": 76,
+              "physical_convergences": 6,
+              "root_relative_spread": 2.261252206407866e-13
+            },
+            {
+              "z_km": 77,
+              "physical_convergences": 7,
+              "root_relative_spread": 3.8965204746769353e-14
+            },
+            {
+              "z_km": 78,
+              "physical_convergences": 6,
+              "root_relative_spread": 5.235324638045777e-15
+            },
+            {
+              "z_km": 79,
+              "physical_convergences": 7,
+              "root_relative_spread": 2.631909044133799e-15
+            },
+            {
+              "z_km": 80,
+              "physical_convergences": 7,
+              "root_relative_spread": 3.5451917575837463e-15
+            },
+            {
+              "z_km": 81,
+              "physical_convergences": 6,
+              "root_relative_spread": 0.0
+            },
+            {
+              "z_km": 82,
+              "physical_convergences": 7,
+              "root_relative_spread": 3.5493606725666884e-15
+            },
+            {
+              "z_km": 83,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.8482603646622036e-15
+            },
+            {
+              "z_km": 84,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.534646925080706e-15
+            },
+            {
+              "z_km": 85,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.8337786224556718e-15
+            },
+            {
+              "z_km": 86,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.7606749368858207e-15
+            },
+            {
+              "z_km": 87,
+              "physical_convergences": 7,
+              "root_relative_spread": 9.65320389552094e-16
+            },
+            {
+              "z_km": 88,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.5521369881301227e-15
+            },
+            {
+              "z_km": 89,
+              "physical_convergences": 7,
+              "root_relative_spread": 6.342251792548153e-15
+            },
+            {
+              "z_km": 90,
+              "physical_convergences": 5,
+              "root_relative_spread": 2.7751259807438956e-15
+            },
+            {
+              "z_km": 91,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.7764456736715463e-15
+            },
+            {
+              "z_km": 92,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.803660649608489e-15
+            },
+            {
+              "z_km": 93,
+              "physical_convergences": 6,
+              "root_relative_spread": 7.125891654645466e-15
+            },
+            {
+              "z_km": 94,
+              "physical_convergences": 7,
+              "root_relative_spread": 5.295868612098878e-15
+            },
+            {
+              "z_km": 95,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.2423628350460348e-14
+            },
+            {
+              "z_km": 96,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.2449117595009653e-14
+            },
+            {
+              "z_km": 97,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.18999517478001e-14
+            },
+            {
+              "z_km": 98,
+              "physical_convergences": 6,
+              "root_relative_spread": 2.3105973130208432e-14
+            },
+            {
+              "z_km": 99,
+              "physical_convergences": 6,
+              "root_relative_spread": 5.698881201402237e-14
+            },
+            {
+              "z_km": 100,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.197404449051468e-14
+            }
+          ],
+          "climatologically_validated": false,
+          "missing_native_O_H": "exact zero; no extrapolation"
+        },
+        "audit": {
+          "retained_QSSA_scaled_max": 2.1959439194495447e-16,
+          "family_budget_scaled_max": 4.042399257413087e-20,
+          "dynamic_H2O2_budget_scaled_max": 2.1131308702554317e-16
+        },
+        "MSIS_precompute_calls": 1
+      },
+      {
+        "case": "longitude",
+        "latitude_deg": 45,
+        "longitude_deg_east": -75,
+        "noon_utc": "2020-03-20T17:07:51.534311+00:00",
+        "bootstrap_duration_s": 60.0,
+        "requested_duration_s": 120.0,
+        "finite_nonnegative": true,
+        "minimum_state_cm3": 4.486806329321535e-08,
+        "initializer": {
+          "policy": "reference_noon; approximate bootstrap, not climatology",
+          "noon_datetime_utc": "2020-03-20T17:07:51.534311+00:00",
+          "SZA_deg": 45.06696692429047,
+          "all_51_heights_pass": true,
+          "seeds_attempted_per_height": 7,
+          "minimum_physical_convergences": 5,
+          "maximum_root_relative_spread": 3.2899361455444947e-13,
+          "maximum_accepted_normalized_residual": 5.383886742032957e-14,
+          "per_height": [
+            {
+              "z_km": 50,
+              "physical_convergences": 7,
+              "root_relative_spread": 0.0
+            },
+            {
+              "z_km": 51,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.8298552198191077e-15
+            },
+            {
+              "z_km": 52,
+              "physical_convergences": 6,
+              "root_relative_spread": 7.093095498287816e-15
+            },
+            {
+              "z_km": 53,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.4549241063231463e-15
+            },
+            {
+              "z_km": 54,
+              "physical_convergences": 6,
+              "root_relative_spread": 5.2062313895805484e-15
+            },
+            {
+              "z_km": 55,
+              "physical_convergences": 7,
+              "root_relative_spread": 3.582873172048348e-15
+            },
+            {
+              "z_km": 56,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.8200054126068723e-15
+            },
+            {
+              "z_km": 57,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.579821188116605e-15
+            },
+            {
+              "z_km": 58,
+              "physical_convergences": 5,
+              "root_relative_spread": 0.0
+            },
+            {
+              "z_km": 59,
+              "physical_convergences": 5,
+              "root_relative_spread": 3.603358441169628e-15
+            },
+            {
+              "z_km": 60,
+              "physical_convergences": 5,
+              "root_relative_spread": 0.0
+            },
+            {
+              "z_km": 61,
+              "physical_convergences": 5,
+              "root_relative_spread": 3.504375148129107e-15
+            },
+            {
+              "z_km": 62,
+              "physical_convergences": 5,
+              "root_relative_spread": 3.4813647039675394e-15
+            },
+            {
+              "z_km": 63,
+              "physical_convergences": 5,
+              "root_relative_spread": 0.0
+            },
+            {
+              "z_km": 64,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.839177188716235e-15
+            },
+            {
+              "z_km": 65,
+              "physical_convergences": 6,
+              "root_relative_spread": 0.0
+            },
+            {
+              "z_km": 66,
+              "physical_convergences": 6,
+              "root_relative_spread": 0.0
+            },
+            {
+              "z_km": 67,
+              "physical_convergences": 6,
+              "root_relative_spread": 4.472444884480739e-15
+            },
+            {
+              "z_km": 68,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.448545508465559e-15
+            },
+            {
+              "z_km": 69,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.8429878890400797e-15
+            },
+            {
+              "z_km": 70,
+              "physical_convergences": 6,
+              "root_relative_spread": 4.441383174460901e-15
+            },
+            {
+              "z_km": 71,
+              "physical_convergences": 7,
+              "root_relative_spread": 3.3631607529357966e-15
+            },
+            {
+              "z_km": 72,
+              "physical_convergences": 7,
+              "root_relative_spread": 3.5194988603244485e-15
+            },
+            {
+              "z_km": 73,
+              "physical_convergences": 6,
+              "root_relative_spread": 6.2473961817319035e-15
+            },
+            {
+              "z_km": 74,
+              "physical_convergences": 6,
+              "root_relative_spread": 2.0884486307866292e-14
+            },
+            {
+              "z_km": 75,
+              "physical_convergences": 5,
+              "root_relative_spread": 2.6874605474602293e-14
+            },
+            {
+              "z_km": 76,
+              "physical_convergences": 7,
+              "root_relative_spread": 3.2899361455444947e-13
+            },
+            {
+              "z_km": 77,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.103069431630375e-14
+            },
+            {
+              "z_km": 78,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.902331189253393e-15
+            },
+            {
+              "z_km": 79,
+              "physical_convergences": 6,
+              "root_relative_spread": 9.823910189596546e-15
+            },
+            {
+              "z_km": 80,
+              "physical_convergences": 6,
+              "root_relative_spread": 7.781369892882206e-16
+            },
+            {
+              "z_km": 81,
+              "physical_convergences": 6,
+              "root_relative_spread": 7.113488268109363e-15
+            },
+            {
+              "z_km": 82,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.830546926650683e-15
+            },
+            {
+              "z_km": 83,
+              "physical_convergences": 6,
+              "root_relative_spread": 6.606257530629688e-15
+            },
+            {
+              "z_km": 84,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.8658723579031427e-15
+            },
+            {
+              "z_km": 85,
+              "physical_convergences": 7,
+              "root_relative_spread": 7.156917431257343e-15
+            },
+            {
+              "z_km": 86,
+              "physical_convergences": 7,
+              "root_relative_spread": 2.0304140868999362e-15
+            },
+            {
+              "z_km": 87,
+              "physical_convergences": 7,
+              "root_relative_spread": 2.2136840697330776e-15
+            },
+            {
+              "z_km": 88,
+              "physical_convergences": 6,
+              "root_relative_spread": 4.879271231627962e-15
+            },
+            {
+              "z_km": 89,
+              "physical_convergences": 7,
+              "root_relative_spread": 5.371831693339216e-15
+            },
+            {
+              "z_km": 90,
+              "physical_convergences": 6,
+              "root_relative_spread": 4.436044012774047e-15
+            },
+            {
+              "z_km": 91,
+              "physical_convergences": 6,
+              "root_relative_spread": 2.5613022912519298e-15
+            },
+            {
+              "z_km": 92,
+              "physical_convergences": 6,
+              "root_relative_spread": 5.3284605552191965e-15
+            },
+            {
+              "z_km": 93,
+              "physical_convergences": 6,
+              "root_relative_spread": 8.983554841486435e-15
+            },
+            {
+              "z_km": 94,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.2529586810312411e-14
+            },
+            {
+              "z_km": 95,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.0802218191669246e-14
+            },
+            {
+              "z_km": 96,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.2416493844007092e-14
+            },
+            {
+              "z_km": 97,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.2451839582976622e-14
+            },
+            {
+              "z_km": 98,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.2418382391117117e-14
+            },
+            {
+              "z_km": 99,
+              "physical_convergences": 7,
+              "root_relative_spread": 3.1881993072729586e-14
+            },
+            {
+              "z_km": 100,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.7846066019631494e-14
+            }
+          ],
+          "climatologically_validated": false,
+          "missing_native_O_H": "exact zero; no extrapolation"
+        },
+        "audit": {
+          "retained_QSSA_scaled_max": 2.4016785406208886e-16,
+          "family_budget_scaled_max": 1.9757203162840528e-20,
+          "dynamic_H2O2_budget_scaled_max": 2.1941646536361986e-16
+        },
+        "MSIS_precompute_calls": 1
+      },
+      {
+        "case": "high_latitude",
+        "latitude_deg": 70,
+        "longitude_deg_east": 0,
+        "noon_utc": "2020-06-21T12:01:26.679355+00:00",
+        "bootstrap_duration_s": 60.0,
+        "requested_duration_s": 120.0,
+        "finite_nonnegative": true,
+        "minimum_state_cm3": 3.3461932887579056e-09,
+        "initializer": {
+          "policy": "reference_noon; approximate bootstrap, not climatology",
+          "noon_datetime_utc": "2020-06-21T12:01:26.679355+00:00",
+          "SZA_deg": 46.54522245233831,
+          "all_51_heights_pass": true,
+          "seeds_attempted_per_height": 7,
+          "minimum_physical_convergences": 5,
+          "maximum_root_relative_spread": 2.1447265975442398e-13,
+          "maximum_accepted_normalized_residual": 2.297034005953373e-14,
+          "per_height": [
+            {
+              "z_km": 50,
+              "physical_convergences": 7,
+              "root_relative_spread": 7.0805020470171964e-15
+            },
+            {
+              "z_km": 51,
+              "physical_convergences": 7,
+              "root_relative_spread": 0.0
+            },
+            {
+              "z_km": 52,
+              "physical_convergences": 7,
+              "root_relative_spread": 0.0
+            },
+            {
+              "z_km": 53,
+              "physical_convergences": 7,
+              "root_relative_spread": 0.0
+            },
+            {
+              "z_km": 54,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.458090635393292e-15
+            },
+            {
+              "z_km": 55,
+              "physical_convergences": 6,
+              "root_relative_spread": 7.161172652666159e-15
+            },
+            {
+              "z_km": 56,
+              "physical_convergences": 6,
+              "root_relative_spread": 0.0
+            },
+            {
+              "z_km": 57,
+              "physical_convergences": 6,
+              "root_relative_spread": 5.424636262820528e-15
+            },
+            {
+              "z_km": 58,
+              "physical_convergences": 6,
+              "root_relative_spread": 5.376738497277553e-15
+            },
+            {
+              "z_km": 59,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.7624792059203655e-14
+            },
+            {
+              "z_km": 60,
+              "physical_convergences": 5,
+              "root_relative_spread": 5.2214152719661715e-15
+            },
+            {
+              "z_km": 61,
+              "physical_convergences": 5,
+              "root_relative_spread": 3.504152219932858e-15
+            },
+            {
+              "z_km": 62,
+              "physical_convergences": 5,
+              "root_relative_spread": 1.7736500373726947e-15
+            },
+            {
+              "z_km": 63,
+              "physical_convergences": 5,
+              "root_relative_spread": 3.535838511335006e-15
+            },
+            {
+              "z_km": 64,
+              "physical_convergences": 5,
+              "root_relative_spread": 5.27526370672478e-15
+            },
+            {
+              "z_km": 65,
+              "physical_convergences": 5,
+              "root_relative_spread": 0.0
+            },
+            {
+              "z_km": 66,
+              "physical_convergences": 5,
+              "root_relative_spread": 0.0
+            },
+            {
+              "z_km": 67,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.5411113837946673e-15
+            },
+            {
+              "z_km": 68,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.57423836646102e-15
+            },
+            {
+              "z_km": 69,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.8112751666581527e-15
+            },
+            {
+              "z_km": 70,
+              "physical_convergences": 6,
+              "root_relative_spread": 2.7114200132828807e-15
+            },
+            {
+              "z_km": 71,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.5106425668378677e-15
+            },
+            {
+              "z_km": 72,
+              "physical_convergences": 6,
+              "root_relative_spread": 2.593791480377922e-15
+            },
+            {
+              "z_km": 73,
+              "physical_convergences": 5,
+              "root_relative_spread": 4.4104284102014e-15
+            },
+            {
+              "z_km": 74,
+              "physical_convergences": 5,
+              "root_relative_spread": 4.00283843271838e-14
+            },
+            {
+              "z_km": 75,
+              "physical_convergences": 7,
+              "root_relative_spread": 9.85338865409507e-14
+            },
+            {
+              "z_km": 76,
+              "physical_convergences": 7,
+              "root_relative_spread": 2.1447265975442398e-13
+            },
+            {
+              "z_km": 77,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.0561700007246937e-14
+            },
+            {
+              "z_km": 78,
+              "physical_convergences": 7,
+              "root_relative_spread": 3.562749670800017e-15
+            },
+            {
+              "z_km": 79,
+              "physical_convergences": 7,
+              "root_relative_spread": 3.571033612706134e-15
+            },
+            {
+              "z_km": 80,
+              "physical_convergences": 7,
+              "root_relative_spread": 3.5642593981053085e-15
+            },
+            {
+              "z_km": 81,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.7211787132987429e-15
+            },
+            {
+              "z_km": 82,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.6853445769408105e-15
+            },
+            {
+              "z_km": 83,
+              "physical_convergences": 7,
+              "root_relative_spread": 7.086698188307927e-15
+            },
+            {
+              "z_km": 84,
+              "physical_convergences": 7,
+              "root_relative_spread": 8.322381252316973e-16
+            },
+            {
+              "z_km": 85,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.8296933059956325e-15
+            },
+            {
+              "z_km": 86,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.834444295995427e-15
+            },
+            {
+              "z_km": 87,
+              "physical_convergences": 7,
+              "root_relative_spread": 2.677558874751887e-14
+            },
+            {
+              "z_km": 88,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.8948538278353916e-15
+            },
+            {
+              "z_km": 89,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.784759411256398e-15
+            },
+            {
+              "z_km": 90,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.7622954648935192e-15
+            },
+            {
+              "z_km": 91,
+              "physical_convergences": 7,
+              "root_relative_spread": 2.6764735683328462e-15
+            },
+            {
+              "z_km": 92,
+              "physical_convergences": 7,
+              "root_relative_spread": 3.4377658822943706e-15
+            },
+            {
+              "z_km": 93,
+              "physical_convergences": 7,
+              "root_relative_spread": 3.606304885626306e-15
+            },
+            {
+              "z_km": 94,
+              "physical_convergences": 7,
+              "root_relative_spread": 1.6001321855550203e-14
+            },
+            {
+              "z_km": 95,
+              "physical_convergences": 7,
+              "root_relative_spread": 5.3667658513270796e-15
+            },
+            {
+              "z_km": 96,
+              "physical_convergences": 6,
+              "root_relative_spread": 1.060040671070923e-14
+            },
+            {
+              "z_km": 97,
+              "physical_convergences": 6,
+              "root_relative_spread": 3.55686545963278e-14
+            },
+            {
+              "z_km": 98,
+              "physical_convergences": 6,
+              "root_relative_spread": 4.6133725057988426e-14
+            },
+            {
+              "z_km": 99,
+              "physical_convergences": 6,
+              "root_relative_spread": 4.976680539954163e-14
+            },
+            {
+              "z_km": 100,
+              "physical_convergences": 6,
+              "root_relative_spread": 6.748435917520022e-14
+            }
+          ],
+          "climatologically_validated": false,
+          "missing_native_O_H": "exact zero; no extrapolation"
+        },
+        "audit": {
+          "retained_QSSA_scaled_max": 1.9654349904135936e-16,
+          "family_budget_scaled_max": 9.291987039100916e-20,
+          "dynamic_H2O2_budget_scaled_max": 2.103911052841134e-16
+        },
+        "MSIS_precompute_calls": 1
+      }
+    ],
+    "full_automatic_night_to_dawn": {
+      "initializer": {
+        "policy": "reference_noon; approximate bootstrap, not climatology",
+        "noon_datetime_utc": "2020-03-20T12:07:55.363681+00:00",
+        "SZA_deg": 45.14902175403246,
+        "all_51_heights_pass": true,
+        "seeds_attempted_per_height": 7,
+        "minimum_physical_convergences": 5,
+        "maximum_root_relative_spread": 2.5362486508126917e-13,
+        "maximum_accepted_normalized_residual": 3.5997897106085034e-14,
+        "per_height": [
+          {
+            "z_km": 50,
+            "physical_convergences": 7,
+            "root_relative_spread": 0.0
+          },
+          {
+            "z_km": 51,
+            "physical_convergences": 7,
+            "root_relative_spread": 3.4260331939171085e-15
+          },
+          {
+            "z_km": 52,
+            "physical_convergences": 7,
+            "root_relative_spread": 3.5182395926096483e-15
+          },
+          {
+            "z_km": 53,
+            "physical_convergences": 7,
+            "root_relative_spread": 0.0
+          },
+          {
+            "z_km": 54,
+            "physical_convergences": 6,
+            "root_relative_spread": 5.3409724116209175e-15
+          },
+          {
+            "z_km": 55,
+            "physical_convergences": 6,
+            "root_relative_spread": 3.653186057767439e-15
+          },
+          {
+            "z_km": 56,
+            "physical_convergences": 6,
+            "root_relative_spread": 5.43331649627155e-15
+          },
+          {
+            "z_km": 57,
+            "physical_convergences": 6,
+            "root_relative_spread": 3.619753785961644e-15
+          },
+          {
+            "z_km": 58,
+            "physical_convergences": 5,
+            "root_relative_spread": 3.6457960066972154e-15
+          },
+          {
+            "z_km": 59,
+            "physical_convergences": 5,
+            "root_relative_spread": 3.5179601588508356e-15
+          },
+          {
+            "z_km": 60,
+            "physical_convergences": 5,
+            "root_relative_spread": 3.473771920081692e-15
+          },
+          {
+            "z_km": 61,
+            "physical_convergences": 5,
+            "root_relative_spread": 1.7998172038992596e-15
+          },
+          {
+            "z_km": 62,
+            "physical_convergences": 5,
+            "root_relative_spread": 3.4517909267453664e-15
+          },
+          {
+            "z_km": 63,
+            "physical_convergences": 6,
+            "root_relative_spread": 3.5660840556360876e-15
+          },
+          {
+            "z_km": 64,
+            "physical_convergences": 6,
+            "root_relative_spread": 0.0
+          },
+          {
+            "z_km": 65,
+            "physical_convergences": 6,
+            "root_relative_spread": 0.0
+          },
+          {
+            "z_km": 66,
+            "physical_convergences": 6,
+            "root_relative_spread": 0.0
+          },
+          {
+            "z_km": 67,
+            "physical_convergences": 6,
+            "root_relative_spread": 3.514977341101009e-15
+          },
+          {
+            "z_km": 68,
+            "physical_convergences": 6,
+            "root_relative_spread": 2.619932846250933e-15
+          },
+          {
+            "z_km": 69,
+            "physical_convergences": 7,
+            "root_relative_spread": 0.0
+          },
+          {
+            "z_km": 70,
+            "physical_convergences": 6,
+            "root_relative_spread": 2.6809319800431164e-15
+          },
+          {
+            "z_km": 71,
+            "physical_convergences": 6,
+            "root_relative_spread": 1.9255105143792555e-15
+          },
+          {
+            "z_km": 72,
+            "physical_convergences": 7,
+            "root_relative_spread": 1.792451197745736e-15
+          },
+          {
+            "z_km": 73,
+            "physical_convergences": 6,
+            "root_relative_spread": 1.5929067290351662e-14
+          },
+          {
+            "z_km": 74,
+            "physical_convergences": 7,
+            "root_relative_spread": 3.6295319589378225e-14
+          },
+          {
+            "z_km": 75,
+            "physical_convergences": 6,
+            "root_relative_spread": 3.944160866631923e-14
+          },
+          {
+            "z_km": 76,
+            "physical_convergences": 7,
+            "root_relative_spread": 2.5362486508126917e-13
+          },
+          {
+            "z_km": 77,
+            "physical_convergences": 7,
+            "root_relative_spread": 2.4165615790513954e-14
+          },
+          {
+            "z_km": 78,
+            "physical_convergences": 6,
+            "root_relative_spread": 3.1357973715917106e-15
+          },
+          {
+            "z_km": 79,
+            "physical_convergences": 7,
+            "root_relative_spread": 8.818148120903247e-16
+          },
+          {
+            "z_km": 80,
+            "physical_convergences": 7,
+            "root_relative_spread": 3.621199854468862e-15
+          },
+          {
+            "z_km": 81,
+            "physical_convergences": 6,
+            "root_relative_spread": 1.807849171214972e-15
+          },
+          {
+            "z_km": 82,
+            "physical_convergences": 6,
+            "root_relative_spread": 6.94526381514111e-15
+          },
+          {
+            "z_km": 83,
+            "physical_convergences": 7,
+            "root_relative_spread": 4.1214691925733e-15
+          },
+          {
+            "z_km": 84,
+            "physical_convergences": 7,
+            "root_relative_spread": 4.442788368772146e-15
+          },
+          {
+            "z_km": 85,
+            "physical_convergences": 7,
+            "root_relative_spread": 6.993656271366021e-15
+          },
+          {
+            "z_km": 86,
+            "physical_convergences": 7,
+            "root_relative_spread": 4.094805204283061e-15
+          },
+          {
+            "z_km": 87,
+            "physical_convergences": 7,
+            "root_relative_spread": 5.2805673084435224e-15
+          },
+          {
+            "z_km": 88,
+            "physical_convergences": 6,
+            "root_relative_spread": 5.274701843639696e-15
+          },
+          {
+            "z_km": 89,
+            "physical_convergences": 7,
+            "root_relative_spread": 3.5505021307050756e-15
+          },
+          {
+            "z_km": 90,
+            "physical_convergences": 6,
+            "root_relative_spread": 3.5591404123851734e-15
+          },
+          {
+            "z_km": 91,
+            "physical_convergences": 6,
+            "root_relative_spread": 8.792071757939296e-15
+          },
+          {
+            "z_km": 92,
+            "physical_convergences": 7,
+            "root_relative_spread": 1.2509505350108089e-14
+          },
+          {
+            "z_km": 93,
+            "physical_convergences": 7,
+            "root_relative_spread": 1.588782271465466e-14
+          },
+          {
+            "z_km": 94,
+            "physical_convergences": 6,
+            "root_relative_spread": 7.218200731985112e-15
+          },
+          {
+            "z_km": 95,
+            "physical_convergences": 7,
+            "root_relative_spread": 5.388318441207236e-15
+          },
+          {
+            "z_km": 96,
+            "physical_convergences": 7,
+            "root_relative_spread": 3.011579968044282e-14
+          },
+          {
+            "z_km": 97,
+            "physical_convergences": 7,
+            "root_relative_spread": 2.6635007198262862e-14
+          },
+          {
+            "z_km": 98,
+            "physical_convergences": 6,
+            "root_relative_spread": 1.586919132421227e-14
+          },
+          {
+            "z_km": 99,
+            "physical_convergences": 7,
+            "root_relative_spread": 3.195762444483722e-14
+          },
+          {
+            "z_km": 100,
+            "physical_convergences": 6,
+            "root_relative_spread": 6.744583403275718e-14
+          }
+        ],
+        "climatologically_validated": false,
+        "missing_native_O_H": "exact zero; no extrapolation"
+      },
+      "bootstrap_duration_s": 28324.636319,
+      "bootstrap_solver": {
+        "atol": 1e-10,
+        "max_step_s": 60.0,
+        "method": "BDF",
+        "nfev": 23064,
+        "njev": 665,
+        "rtol": 2e-08,
+        "segments": 52,
+        "trial_rejections": 0
+      },
+      "requested_start_utc": "2020-03-20T20:00:00+00:00",
+      "requested_end_utc": "2020-03-21T09:00:00+00:00",
+      "requested_duration_s": 46800.0,
+      "solver": {
+        "atol": 1e-10,
+        "max_step_s": 60.0,
+        "method": "BDF",
+        "nfev": 34088,
+        "njev": 838,
+        "rtol": 2e-08,
+        "segments": 52,
+        "trial_rejections": 0
+      },
+      "finite_nonnegative": true,
+      "audit": {
+        "retained_QSSA_scaled_max": 3.563348778461785e-16,
+        "family_budget_scaled_max": 1.5496458758229564e-16,
+        "dynamic_H2O2_budget_scaled_max": 3.220981579499166e-16
+      },
+      "no_clipping_reset": true
+    },
+    "frozen_vs_dynamic_by_height": {
+      "60": {
+        "O3": {
+          "max_relative": 0.021376506243472274,
+          "p90_relative": 0.018065596237244082,
+          "p99_relative": 0.02110539330615845,
+          "maximum_absolute_cm3": 18271378.952558517,
+          "near_zero_absolute_max_cm3": 0.0
+        },
+        "Delta": {
+          "max_relative": 0.01839448198920412,
+          "p90_relative": 0.01739089513859808,
+          "p99_relative": 0.018330755190117086,
+          "maximum_absolute_cm3": 76259349.43816948,
+          "near_zero_absolute_max_cm3": 2.2168296027365622e-14
+        }
+      },
+      "70": {
+        "O3": {
+          "max_relative": 0.03242857057830211,
+          "p90_relative": 0.025377222576692234,
+          "p99_relative": 0.030744242851268044,
+          "maximum_absolute_cm3": 2646429.9549978375,
+          "near_zero_absolute_max_cm3": 0.0
+        },
+        "Delta": {
+          "max_relative": 0.04170327957956977,
+          "p90_relative": 0.014156583617095366,
+          "p99_relative": 0.04115060157632829,
+          "maximum_absolute_cm3": 44650420.844353676,
+          "near_zero_absolute_max_cm3": 120.20843807888332
+        }
+      },
+      "80": {
+        "O3": {
+          "max_relative": 0.21314385426432292,
+          "p90_relative": 0.21306843688350882,
+          "p99_relative": 0.2131041023630033,
+          "maximum_absolute_cm3": 1960881.18324887,
+          "near_zero_absolute_max_cm3": 0.0
+        },
+        "Delta": {
+          "max_relative": 0.10972175619693342,
+          "p90_relative": 0.05581572609713882,
+          "p99_relative": 0.10496272157759907,
+          "maximum_absolute_cm3": 77037816.74350381,
+          "near_zero_absolute_max_cm3": 892.298661878056
+        }
+      },
+      "90": {
+        "O3": {
+          "max_relative": 0.2109527911582527,
+          "p90_relative": 0.2100865542859201,
+          "p99_relative": 0.21091858880709285,
+          "maximum_absolute_cm3": 94135570.65712255,
+          "near_zero_absolute_max_cm3": 0.0
+        },
+        "Delta": {
+          "max_relative": 0.18834500590396056,
+          "p90_relative": 0.18780350026502832,
+          "p99_relative": 0.18832851409233808,
+          "maximum_absolute_cm3": 326632809.11716866,
+          "near_zero_absolute_max_cm3": 0.0
+        }
+      },
+      "100": {
+        "O3": {
+          "max_relative": 0.2819557253349079,
+          "p90_relative": 0.2793533418920768,
+          "p99_relative": 0.28170264827472075,
+          "maximum_absolute_cm3": 51582000.82932304,
+          "near_zero_absolute_max_cm3": 0.0
+        },
+        "Delta": {
+          "max_relative": 0.24569210618192572,
+          "p90_relative": 0.17865567532619925,
+          "p99_relative": 0.24505834744314484,
+          "maximum_absolute_cm3": 37605386.99754658,
+          "near_zero_absolute_max_cm3": 0.0
+        }
+      }
+    },
+    "initial_condition_for_sensitivity": "identical explicit M5B golden noon state; isolates evolving background",
+    "coarse_grid_failed": {
+      "native_and_NIR_step_s": [
+        7200,
+        3600
+      ],
+      "O3_max_relative": 0.03935607376845436,
+      "Delta_max_relative": 0.014863150533729722
+    },
+    "interpolation_direct_MSIS_audit": [
+      {
+        "step_s": 3600,
+        "interpolation": "linear",
+        "M": 0.003666319052706797,
+        "T": 0.002559275639754126,
+        "O3_production_coefficient": 0.008660072226424068
+      },
+      {
+        "step_s": 3600,
+        "interpolation": "pchip",
+        "M": 0.0032910970263131684,
+        "T": 0.0018776732833862921,
+        "O3_production_coefficient": 0.008590381327238912
+      },
+      {
+        "step_s": 1800,
+        "interpolation": "linear",
+        "M": 0.0031993971680856327,
+        "T": 0.0011191238036005365,
+        "O3_production_coefficient": 0.008399207374949934
+      },
+      {
+        "step_s": 1800,
+        "interpolation": "pchip",
+        "M": 0.003283512759843383,
+        "T": 0.0011298639981381026,
+        "O3_production_coefficient": 0.008487140404261725
+      },
+      {
+        "step_s": 900,
+        "interpolation": "linear",
+        "M": 0.0030853221720814642,
+        "T": 0.0010793461144124417,
+        "O3_production_coefficient": 0.008099886748139235
+      },
+      {
+        "step_s": 900,
+        "interpolation": "pchip",
+        "M": 0.003253130837606001,
+        "T": 0.001100726459835811,
+        "O3_production_coefficient": 0.00835098400378454
+      },
+      {
+        "step_s": 600,
+        "interpolation": "linear",
+        "M": 0.0029740366410431454,
+        "T": 0.0010401821882463796,
+        "O3_production_coefficient": 0.007806760513722916
+      },
+      {
+        "step_s": 600,
+        "interpolation": "pchip",
+        "M": 0.003203617545570722,
+        "T": 0.001062091913862091,
+        "O3_production_coefficient": 0.008236549941757258
+      },
+      {
+        "step_s": 300,
+        "interpolation": "linear",
+        "M": 0.002642964425741297,
+        "T": 0.000923961776007953,
+        "O3_production_coefficient": 0.0069342043086249965
+      },
+      {
+        "step_s": 300,
+        "interpolation": "pchip",
+        "M": 0.002955011298275697,
+        "T": 0.0009535298188919966,
+        "O3_production_coefficient": 0.007639364008471785
+      }
+    ],
+    "NIR_numerical_optimization": {
+      "exact_profiles": [
+        {
+          "case": "initializer-equinox",
+          "band": "A",
+          "nodes": 2579,
+          "shells": 11,
+          "relative_max": 9.407867224763126e-07,
+          "approx_min": 1.5053364659503392e-37
+        },
+        {
+          "case": "initializer-equinox",
+          "band": "B",
+          "nodes": 1919,
+          "shells": 11,
+          "relative_max": 9.063181123583342e-07,
+          "approx_min": 3.106076390377796e-38
+        },
+        {
+          "case": "initializer-equinox",
+          "band": "IRA",
+          "nodes": 5009,
+          "shells": 11,
+          "relative_max": 5.122059043769054e-06,
+          "approx_min": 1.2313512853704275e-39
+        },
+        {
+          "case": "initializer-high_latitude",
+          "band": "A",
+          "nodes": 2579,
+          "shells": 11,
+          "relative_max": 1.8287303237428652e-06,
+          "approx_min": 1.2791902085017756e-37
+        },
+        {
+          "case": "initializer-high_latitude",
+          "band": "B",
+          "nodes": 1919,
+          "shells": 11,
+          "relative_max": 1.0106395524078057e-06,
+          "approx_min": 2.886931255754393e-38
+        },
+        {
+          "case": "initializer-high_latitude",
+          "band": "IRA",
+          "nodes": 5009,
+          "shells": 11,
+          "relative_max": 6.764108842286921e-06,
+          "approx_min": 1.0215289593381146e-39
+        },
+        {
+          "case": "initializer-longitude",
+          "band": "A",
+          "nodes": 2579,
+          "shells": 11,
+          "relative_max": 8.849935971315708e-07,
+          "approx_min": 1.4839806653220687e-37
+        },
+        {
+          "case": "initializer-longitude",
+          "band": "B",
+          "nodes": 1919,
+          "shells": 11,
+          "relative_max": 8.847807679013424e-07,
+          "approx_min": 3.084053069632561e-38
+        },
+        {
+          "case": "initializer-longitude",
+          "band": "IRA",
+          "nodes": 5009,
+          "shells": 11,
+          "relative_max": 4.983951344134084e-06,
+          "approx_min": 1.2115967337671325e-39
+        },
+        {
+          "case": "initializer-south",
+          "band": "A",
+          "nodes": 2579,
+          "shells": 11,
+          "relative_max": 7.408518089448886e-07,
+          "approx_min": 1.4326318118309166e-37
+        },
+        {
+          "case": "initializer-south",
+          "band": "B",
+          "nodes": 1919,
+          "shells": 11,
+          "relative_max": 8.578748698957784e-07,
+          "approx_min": 3.3206300024610344e-38
+        },
+        {
+          "case": "initializer-south",
+          "band": "IRA",
+          "nodes": 5009,
+          "shells": 11,
+          "relative_max": 4.69834651863463e-06,
+          "approx_min": 1.1356605650903708e-39
+        },
+        {
+          "case": "initializer-summer",
+          "band": "A",
+          "nodes": 2579,
+          "shells": 11,
+          "relative_max": 7.479388658360496e-07,
+          "approx_min": 1.321153856350667e-37
+        },
+        {
+          "case": "initializer-summer",
+          "band": "B",
+          "nodes": 1919,
+          "shells": 11,
+          "relative_max": 9.336899960130631e-07,
+          "approx_min": 3.0002292423568944e-38
+        },
+        {
+          "case": "initializer-summer",
+          "band": "IRA",
+          "nodes": 5009,
+          "shells": 11,
+          "relative_max": 4.902826705252123e-06,
+          "approx_min": 1.0532395623441182e-39
+        }
+      ],
+      "complete_noon_rates": [
+        {
+          "case": "initializer-equinox",
+          "relative_max_by_band": [
+            3.990086724224707e-16,
+            1.4937523089148374e-16,
+            0.0
+          ],
+          "max_absolute": 1.2407709188295415e-24,
+          "elapsed_s": 96.01955103874207
+        },
+        {
+          "case": "initializer-high_latitude",
+          "relative_max_by_band": [
+            5.89323534086751e-16,
+            1.5198754926915858e-16,
+            1.7924097773578784e-16
+          ],
+          "max_absolute": 1.6543612251060553e-24,
+          "elapsed_s": 192.12295532226562
+        },
+        {
+          "case": "initializer-longitude",
+          "relative_max_by_band": [
+            4.1845871770590377e-16,
+            3.0000793109256717e-16,
+            0.0
+          ],
+          "max_absolute": 1.6543612251060553e-24,
+          "elapsed_s": 301.42558097839355
+        },
+        {
+          "case": "initializer-south",
+          "relative_max_by_band": [
+            5.906999368895668e-16,
+            1.5004385198935093e-16,
+            0.0
+          ],
+          "max_absolute": 2.0679515313825692e-24,
+          "elapsed_s": 413.70660638809204
+        },
+        {
+          "case": "initializer-summer",
+          "relative_max_by_band": [
+            4.75845014477447e-16,
+            2.9569912219679496e-16,
+            0.0
+          ],
+          "max_absolute": 1.6543612251060553e-24,
+          "elapsed_s": 515.4349591732025
+        }
+      ],
+      "twilight": {
+        "SZA_deg": [
+          95.0,
+          97.0,
+          99.0
+        ],
+        "relative_max_by_band": [
+          1.4762311682103956e-10,
+          5.871890064425484e-10,
+          7.736736073166825e-11
+        ],
+        "absolute_max_s1": 3.9895631801771438e-22
+      },
+      "retained_nominal_outputs_bit_identical_test": true
+    },
+    "artifact": {
+      "path": "evidence/m5c_reference_dynamic_msis.npz",
+      "sha256": "0c8efafdaaedabab819ecabc027370b054c39f1b44badbc1897501d75467cb57"
+    },
+    "QA": {
+      "pytest_tests": 908,
+      "pytest_subtests": 13,
+      "ruff": "PASS",
+      "historical_validators": [
+        {
+          "validator": "validate_legacy.py",
+          "returncode": 0
+        },
+        {
+          "validator": "validate_local_closure.py",
+          "returncode": 0
+        },
+        {
+          "validator": "validate_odd_oxygen_photolysis_budget.py",
+          "returncode": 0
+        },
+        {
+          "validator": "validate_historical_2020_background.py",
+          "returncode": 0
+        },
+        {
+          "validator": "validate_historical_2020_uv.py",
+          "returncode": 0
+        }
+      ],
+      "M4D_mapping": "PASS 91/70/21/59/280; full bands 430/320/835",
+      "golden_hashes": {
+        "artifacts/accepted/m4c-r2/tfm-photochem-milestone4c-r2.zip": "2944c8a8e0899b320c69c45192ee6f03b9001114c4120a9db8c67a3f1bb8f1fe",
+        "evidence/m5_reference_cycle.npz": "96ba8d5cde0775dbe20b4d0b22a3e5f82ac64a050ead443f7248b1db23553689",
+        "evidence/m5b_reference_real_geometry.npz": "2f4345c455731a3fce07c85caf1f37b7382b7e22ddf7cd6e2e473560242491bb",
+        "src/tfm_photochem/assets/m5_reference/nir_a0_b_ira.npz": "085e1238671dfe56e69e89b1e7c477bf8a2af587f452dee7f6dec97411a54b23"
+      },
+      "frozen_api_regression": {
+        "relative_max": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "near_zero_absolute_max_cm3": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "relevance_floor_cm3": [
+          598039.070159246,
+          63018.95963988981,
+          175.1645413245415,
+          64.23652617203815,
+          26.68487515105413,
+          7.996425330589667,
+          57490.113290393914
+        ],
+        "pass_": true
+      },
+      "unchanged_accepted_code": [
+        "historical_2020",
+        "m4d_reconstruction",
+        "m5_temporal.py",
+        "solar_geometry.py"
+      ]
+    },
+    "implementation_sha256": {
+      "src/tfm_photochem/dynamic_atmosphere.py": "39f6455feebd5eb0cf3d254e5a1bed0a6229ac7b1e8a078fc5513e30a163cdea",
+      "src/tfm_photochem/dynamic_radiation.py": "a10349b2feff18ceb786672f8a45753db4675ad23e7d5fce962e029982f684c5",
+      "src/tfm_photochem/m5_dynamic.py": "b67903459938b2fa3bdac25020a0891f176da5a7e5ebab068c06cfd6b8f93fec",
+      "src/tfm_photochem/m5_simulation.py": "1367a831b962530bb915e3dfe40c55ffc048d3302135c2da96932f96e608c63e"
+    }
+  },
+  "historical_QA_357_ODE_baseline": {
+    "pytest_tests": 870,
+    "pytest_subtests": 13,
+    "ruff": "PASS",
+    "historical_validators": 5,
+    "M4C_R2_sha256": "2944c8a8e0899b320c69c45192ee6f03b9001114c4120a9db8c67a3f1bb8f1fe",
+    "periodicity_regression": "PASS alternating-day obstruction regression; M5 remains NO-GO",
+    "historical_OH_root_regression": "PASS",
+    "historical_H2O2_singularity_regression": "PASS",
+    "period2_lag_and_unaccelerated_chain_tests": "PASS",
+    "historical_dark_continuum_regression": "PASS",
+    "noon_native_profiles_and_fast_stationarity": "PASS",
+    "timestamp_sampling_fix": "Roundoff-collapsed final timestamp deduplicated; final identical physical state retained; ODE unchanged"
+  },
+  "implementation_commit": "d5ba59a"
 }

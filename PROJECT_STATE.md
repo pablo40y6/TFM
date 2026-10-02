@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This repository develops a reproducible time-dependent mesospheric ozone and O2(a1Delta) photochemical model. The accepted implementation currently ends at the SZA-resolved direct-beam UV/VUV radiation baseline, M4C-R2.
+This repository develops a reproducible time-dependent mesospheric ozone and O2(a1Delta) photochemical model. M5A/M5B are accepted finite-horizon temporal and real-solar-geometry baselines. M5C adds a validated prescribed dynamic atmosphere and an approximate reference-noon bootstrap.
 
 ## Accepted M3/M4 reference architecture
 
@@ -43,17 +43,32 @@ M5A is **ACCEPTED / CLOSED**. Its reference-noon policy, seven-species source
 and m5_reference_cycle.npz are unchanged golden regressions. Periodic spin-up
 and prior OH/HO2/H2O2 QSSA blockers remain historical, outside the current path.
 
-M5B is **GO / REAL SOLAR GEOMETRY + EXPLICIT INITIAL-STATE API**, on
+M5B is **ACCEPTED / REAL SOLAR GEOMETRY + EXPLICIT INITIAL-STATE API**, on
 milestone/m5-temporal. NOAA UTC date/latitude/east-positive longitude supplies
 geometric SZA; accepted shell geometry supplies height-dependent shadow.
-simulate requires initial_state; frozen_reference atmosphere is explicit.
-There is no arbitrary-date chemical initializer or dynamic atmosphere.
+The M5B baseline uses explicit initial_state and frozen_reference atmosphere.
+M5C adds the dynamic background and approximate initializer described below.
 The general API reproduces M5A within 0.000966%; real-geometry 21-hour BDF
 base/tight and BDF tight/Radau differences are 0.247077% / 0.011719%.
 QA: **887 tests + 13 subtests**, ruff, five historical validators and M4D
 mapping PASS. M3/M4/main and M4C-R2 SHA remain unchanged. See the single
 M5 temporal report and existing evidence JSON. The source/design sections
 below are retained historical provenance, not new operational acceptance gates.
+
+M5C is **GO / DYNAMIC MSIS-00 + APPROXIMATE REFERENCE-NOON BOOTSTRAP**.
+The unchanged 357-ODE model now supports quiet or explicit activity drivers,
+precomputed 300-s native backgrounds and 3600-s NIR snapshots, or the golden
+frozen_reference route. Explicit initial_state bypasses the automatic route.
+Reference-noon is approximate, never labelled climatology. Five geographical/
+seasonal cases and a full noon-to-night-to-next-dawn automatic run pass.
+Background 600/300-s O3/Delta differences: 0.1833% / 0.0120%; NIR 2/1-hour
+Delta difference 0.0554%; BDF base/tight and tight/Radau all-species maxima
+0.4236% / 0.00946%. Frozen/dynamic dawn sensitivity is 69.21% O3 / 24.61% Delta
+with identical initial state; it is a resolved model sensitivity.
+QA: **908 tests + 13 subtests**, ruff, five historical validators and mapping
+PASS. Golden files/M3/M4/M4D/main remain unchanged. Details and derived output
+are in the single M5 report and existing evidence JSON. Stop here; the next
+work is scientific consolidation/results/figures/TFM, after independent review.
 
 ## Frozen source / transition gates
 

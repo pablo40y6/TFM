@@ -280,3 +280,74 @@ Atmosphere is precomputed on an explicit UTC time grid and linearly interpolated
 Automatic reference_noon finds the preceding local apparent solar noon, builds that background, seeds SOCRATES O3/native O/H (unavailable atoms exactly zero), solves the accepted four fast stationary equations with multistart positivity, and integrates to the requested start. This is an approximate reference bootstrap, never a validated climatology. An explicit initial_state skips it completely. Exactly one initialization route must be selected. Additional cases cover season, hemisphere, longitude and high latitude. Stop only for the authorized physical/numerical/initializer failures; do not reopen historical spin-up/QSSA decisions.
 
 Runtime NIR numerical optimization, verified before adoption: retain accepted moment/Voigt equations, use far_order=8 / near_cm1=0.25 for fresh rates, and reuse verified direct far_order=4 / near_cm1=2 cache values with per-row provenance. All five complete noon rate profiles agree to rounding; frozen twilight SZA95/97/99 differs by at most 5.872e-10 relative. Exact-Voigt audits sample every historical transition core, both sides of the 0.25-cm^-1 boundary and inter-line midpoints at eleven shells, across five backgrounds; maximum relative cross-section difference is 6.765e-6. The runtime computes nominal outputs only by removing unused CIA envelope/raw diagnostic evaluations from a privately compiled copy of the accepted function; tests require bit-identical retained outputs. Frozen M4D source and frozen M5B provider remain unchanged.
+
+## M5C closure: dynamic prescribed atmosphere and automatic reference bootstrap
+
+**GO M5C.** The accepted 357-ODE chemistry, remaining O1D/B0/B1 QSSA, M5A/M5B goldens, frozen M4A assets and M3/M4/M4D source are unchanged. This is a finite-horizon model with prescribed MSIS variability and no transport. It does not establish a climatological initial state or periodic attractor. No further large block is started.
+
+DynamicMSISAtmosphere precomputes MSIS-00 (pymsis 0.12.0, accepted all-one option vector) over 0..150 km. The API uses 300-s native-background nodes and exact-subset 3600-s NIR snapshots, with linear interpolation and no RHS MSIS/source-file calls. Every runtime kinetic coefficient is evaluated at the current interpolated T/M. QuietReferenceActivity defaults to F107=150, F107a=150, Ap=4; ActivityDrivers accepts explicit UTC series with declared previous-day/81-day-mean/daily-Ap semantics and rejects missing coverage. No space-weather lookup/download occurs.
+
+The accepted O2/N2/CO2 and prescribed H2O/H2 VMR conventions are retained. Ordinary M excludes anomalous oxygen; unavailable native trace values contribute exact zero while their availability remains recorded. M4C uses dynamic chemical O/O3 inside 50..100 km and the dynamic native-O/SOCRATES-VMR exterior. The exterior O3 profile is explicitly a reference VMR, not a date-dependent climatology. Dynamic NIR remains A0/B/IRA with historical CIA attenuation and unchanged nominal CIA temperature policy.
+
+reference_noon finds the previous apparent solar noon, takes current native O/H and reference O3, solves the accepted four fast equations with seven positive multistart seeds, then integrates continuously to the requested start. Every tested height has at least five physical convergences to the same root. The initializer is applied only at noon; all seven species evolve freely afterwards. The API requires exactly one initialization route; supplying initial_state skips noon/root/bootstrap completely.
+
+```python
+from tfm_photochem.dynamic_atmosphere import QuietReferenceActivity
+from tfm_photochem.dynamic_radiation import HistoricalNIRInputs
+from tfm_photochem.m5_simulation import simulate
+
+inputs = HistoricalNIRInputs(sources_dir, authorized_hitran_file)
+result = simulate(start_datetime, end_datetime, latitude, longitude,
+                  atmosphere="dynamic_msis", initialization="reference_noon",
+                  activity=QuietReferenceActivity(), radiation_inputs=inputs,
+                  cache=local_cache, background_step_s=300, radiation_step_s=3600)
+result.save("trajectory.npz")
+```
+
+Alternatively supply initial_state (51x7, cm^-3), omitting initialization. atmosphere="frozen_reference" preserves the golden path. Dynamic radiation needs the authorized historical local sources or an explicitly precomputed DynamicNIRForcing; raw HITRAN is never packaged. Install the existing background-gen optional dependency for pinned pymsis. Datetimes are aware UTC, longitude east-positive; initialization is labelled approximate reference bootstrap in output metadata.
+
+### Numerical certification
+
+The continuous 21-hour equinox run uses the same explicit M5B golden noon state for all interpolation/solver comparisons. Relative differences use max(1 cm^-3, 1e-6 of the species peak) as the relevance floor and a symmetric denominator; below that floor the absolute difference is assessed. The original coupled 2-hour/1-hour grids fail (O3 3.94%, Delta 1.49%). Refining native atmosphere separately fixes that numerical error; a direct 1-minute MSIS audit did not support replacing linear interpolation by PCHIP.
+
+| Comparison, full 21-hour trajectory | O3 max (%) | Delta max (%) | Outcome |
+| --- | ---: | ---: | --- |
+| Native background 600 / 300 s, NIR fixed 3600 s | 0.183255 | 0.0120341 | PASS |
+| NIR snapshots 7200 / 3600 s, background fixed 300 s | 0.000614071 | 0.0554322 | PASS |
+| BDF base / tighter BDF | 0.0378396 | 0.0236265 | PASS |
+| Tighter BDF / tighter Radau | 0.00269619 | 0.000624184 | PASS |
+
+Maximum over all seven relevant species: BDF base/tight 0.423641%; BDF tight/Radau 0.00946013%. All near-zero absolute bounds pass. Controls: base BDF rtol=2e-6/atol=1e-8/max_step=120 s; tighter BDF/Radau 2e-8/1e-10/60 s. Direct NIR angular midpoint audits remain below 0.5%. Radau rejects 72 invalid Newton trial states using the existing step-retry mechanism; accepted states stay nonnegative without projection/reset.
+
+All completed reference trajectories retain finite/nonnegative state, strictly positive remaining QSSA denominators, exact solar shadow and exact R_H=OH+HO2. Normalized remaining-QSSA/family/peroxide residuals are below 5.2e-16. Exact-Voigt, original numerical-control and frozen twilight checks certify the NIR performance optimization; no spectral line, reaction, physical constant or forcing definition was changed.
+
+### Automatic-route cases
+
+Each location below runs an actual noon multistart solve, a 60-s bootstrap and a 120-s requested integration. These smoke cases complement the full reference day; they are not global climatological validation.
+
+| Case | Latitude / east longitude | UTC apparent noon | max root spread | Outcome |
+| --- | --- | --- | ---: | --- |
+| equinox | 45 / 0 | 2020-03-20T12:07:55.363681+00:00 | 1.98e-13 | PASS |
+| summer | 45 / 0 | 2020-06-21T12:01:26.679355+00:00 | 2.1e-13 | PASS |
+| south | -45 / 0 | 2020-12-21T11:57:50.565321+00:00 | 2.26e-13 | PASS |
+| longitude | 45 / -75 | 2020-03-20T17:07:51.534311+00:00 | 3.29e-13 | PASS |
+| high_latitude | 70 / 0 | 2020-06-21T12:01:26.679355+00:00 | 2.14e-13 | PASS |
+
+The full automatic example starts 2020-03-20 20:00 UTC and ends 2020-03-21 09:00 UTC at 45N/0E. Its preceding noon is 12:07:55.363681 UTC: bootstrap 28324.636319 s, followed by 46800 s of requested simulation through the next dawn. All states remain physical; maximum normalized QSSA/family/peroxide residual is 3.56e-16. This exercises the full automatic route rather than only the root solver.
+
+### Frozen versus dynamic background sensitivity
+
+Both runs begin with the identical explicit golden state, separating the evolving-background effect from initialization. Dawn statistics select SZA in [60,99] over all 51 heights; the accepted 21-hour real-geometry reference stops at 09:00 UTC, approximately SZA 61.2 degrees. The large differences below are resolved model sensitivity, not an interpolation/solver failure.
+
+| Species | max (%) | p90 (%) | p99 (%) | max absolute (cm^-3) | max relevant z / SZA |
+| --- | ---: | ---: | ---: | ---: | --- |
+| O3 | 69.2122 | 20.4115 | 40.5306 | 1.666889e+08 | 83 km / 81.551 deg |
+| Delta | 24.6128 | 16.6901 | 20.844 | 3.580542e+08 | 99 km / 95.673 deg |
+
+Near-zero maximum absolute differences: O3 0, Delta 5528.81 cm^-3; relative percentages are not assigned there. Detailed 60/70/80/90/100-km sensitivity statistics, convergence distributions/cases, per-height root convergence and budgets are retained in the existing evidence JSON.
+
+The derived [m5c_reference_dynamic_msis.npz](../evidence/m5c_reference_dynamic_msis.npz) saves time, height, SZA, seven dynamic species, exact R_H, O1D/B0/B1, eleven forcings, all requested chemical background fields, exterior radiative fields and geometry/atmosphere/activity/initialization/solver metadata. Native unavailable O/H remain NaN-labelled availability data; chemical states and prescribed physical backgrounds are finite. Artifact SHA256: 0c8efafdaaedabab819ecabc027370b054c39f1b44badbc1897501d75467cb57.
+
+Final QA: **908 tests + 13 subtests PASS**, ruff PASS, five historical validators PASS, historical M4D mapping PASS. All previous dark/OH/H2O2/periodicity diagnostic regressions remain passing and historical. The full frozen API regression is bit-identical to M5B (all seven species maximum difference zero). M5A/M5B golden NPZ, frozen NIR and M4C-R2 hashes are unchanged; M4C-R2 remains 2944c8a8e0899b320c69c45192ee6f03b9001114c4120a9db8c67a3f1bb8f1fe. main is unchanged.
+
+Reproduce using scripts/validate_m5c_temporal.py: prepare with --step 3600 and 7200 plus authorized --sources/--hitran; run --step 300 --nir-step 3600 --solver base/tight/Radau, then 600/3600/tight and 300/7200/tight; assess --step 300 --nir-step 3600 --comparison-step 600 --comparison-nir-step 7200. Run cases with the local sources; bootstrap --step 300 --nir-step 3600 --start 2020-03-20T20:00:00+00:00 --solver tight. Supply the same --cache directory. numerics independently reproduces exact-profile/control audits using the five initializer cases. No periodic-search or automatic space-weather mode is called.
