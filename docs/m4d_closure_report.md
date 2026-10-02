@@ -3,7 +3,7 @@
 ## Authorized policy and reproducible definitions
 
 This report supersedes the old universal 0.1% gate for the operational closure
-path. Accepted M1–M4C-R2 remain frozen. M4D is not frozen; M5 is not implemented.
+path. Accepted M1–M4C-R2 remain frozen. M4D is CLOSED / ACCEPTED for the temporal model after the final downstream A0/A1 validation below.
 PR #4 is preserved independently and is not merged by this work.
 
 A0 uses all 430 HITRAN2016 lines with classic Voigt, frozen TIPS-2017 strengths,
@@ -57,7 +57,7 @@ its `monomer` result; IRA uses `cia_nominal`; A1 supplies `drouin=parse_drouin(.
 and uses `monomer`. The older `a_band.compute_a_rates` remains the explicitly
 blocked *advanced LM/Galatry* experiment and is not the A0/A1 entry point.
 
-## Results and provisional decision
+## Original closure results and provisional decision (historical)
 
 **GO provisional M4D → M5 under the authorized A0/B/IRA baseline.** M4D remains NOT FROZEN pending acceptance; M5 is unchanged. All 359 cases were computed: 328 illuminated, 31 shadowed. Every rate output is finite/nonnegative and every shadow output is exactly zero.
 
@@ -137,3 +137,7 @@ python -m ruff check src tests scripts
 ```
 
 Only `evidence/m4d_closure.json` is the new public numerical evidence. Local checkpoints contain derived rates and are not committed.
+
+## Final downstream temporal validation
+
+**CLOSED / ACCEPTED for temporal model.** A0/A1 reference-noon-to-next-dawn runs use identical chemistry, native atomic initial policy, frozen atmosphere, dynamic UV and tighter BDF controls. Each model has a consistent four-species noon fast root; B/IRA remain identical A0 providers. Dawn maximum relevant changes are O3 0.000122437% and Delta 0.233878%, with p90/p99 and absolute differences at all heights and 60/70/80/90/100 km in the single temporal report and existing evidence JSON. O3 differences lie below the established numerical error bound. A0 remains nominal; LM/Galatry are optional advanced sensitivities, not operational blockers. M3/M4C accepted code and archives remain unchanged.

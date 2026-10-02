@@ -2,7 +2,7 @@
 
 ## Current decision
 
-**GO M5A - validated finite-horizon temporal initial-value simulation of the reference dawn.**
+**M5A ACCEPTED / CLOSED - validated finite-horizon reference temporal simulation. M5B GO - real solar geometry with explicit initial state.**
 
 The accepted scope is the reference noon -> afternoon -> night -> next dawn -> SZA=60 trajectory, lasting **75600 s (21 hours)**. Asymptotic periodicity is not required. The former 90-day experiment is closed as a historical diagnosis of alternating response plus slow multi-day drift; no additional spin-up days are executed.
 
@@ -191,17 +191,78 @@ The complete continuous nominal time-height fields, dawn mask, reference date/lo
 | 60 | 90 | 6.173e-09 | 3.57886e-10 | 1.45689e-10 |
 | 60 | 100 | 6.189e-09 | 3.57669e-10 | 1.45569e-10 |
 
-## Historical diagnostics and QA
+## M5A historical diagnostics and acceptance QA
 
 The dark SZA99 continuum, old OH/HO2 QSSA root failure and old H2O2 dark singularity remain reproducible regressions. Dynamic OH/HO2/H2O2 resolved the temporal QSSA assumptions without changing reactions. The 90 additional ordinary spin-up days remain historical evidence of slow multi-day drift and no certified attractor in that horizon. This reduced frozen-atmosphere/no-transport drift is not asserted as atmospheric behavior and is no longer an M5A gate. Further spin-up modes are disabled in the public validator.
 
 Full pytest: **870 tests + 13 subtests PASS**. Ruff and five historical validators PASS. M4C-R2 SHA256 remains 2944c8a8e0899b320c69c45192ee6f03b9001114c4120a9db8c67a3f1bb8f1fe. M3/M4 accepted code and main are unchanged; M4D remains NOT FROZEN. The raw HITRAN export and intermediate caches remain outside Git.
 
-## Reproduction and next scope
+## M5A reproduction and original handoff scope (historical)
 
 The existing validator defaults to noon. Run nominal with --noon-solver base, tight and Radau; low, high and missing_bound variants with --noon-variant. Mode noon-assessment rechecks the six complete cached trajectories, initial fast roots, physical budgets and convergence before exporting the nominal artifact and returning GO. Use PYTHONPATH=src;. on Windows.
 
     python scripts/validate_m5_temporal.py --sources <frozen-m4d-sources> --hitran <authorized-HITRAN2016-export> --cache <derived-cache> --mode noon --noon-variant nominal --noon-solver base
     python scripts/validate_m5_temporal.py --sources <frozen-m4d-sources> --hitran <authorized-HITRAN2016-export> --cache <derived-cache> --mode noon-assessment
 
-The next scientific scope is real date/latitude/longitude solar geometry while retaining this reference-noon case as regression. Atmospheric dynamics are not implemented here. The final API should permit explicit initial_state injection in addition to any future automatic initialization policy.
+The original M5A handoff scope was real date/latitude/longitude solar geometry while retaining this reference-noon case as regression. Atmospheric dynamics are not implemented here. The final API should permit explicit initial_state injection in addition to any future automatic initialization policy.
+
+
+## M4D final downstream A0/A1 validation
+
+**M4D CLOSED / ACCEPTED for temporal model.** A0 remains the baseline; A1 changes exactly 91 principal d lines to Drouin SDV, with 339 Voigt lines and no LM/Galatry. The continuous 21-hour reference run is repeated with identical atmosphere, dynamic UV, native O/O3/H initial policy, chemistry and tighter BDF controls. A1 re-solves the four noon fast equations; its initializer has at least five physical seed convergences per height, maximum residual 2.53e-14, and no distinct roots. B/IRA use exactly the A0 provider, including interpolation.
+
+Statistics below use symmetric relative difference for concentrations above max(1 cm^-3, 1e-6 of the full nominal time-height species peak), with absolute reporting below that floor. Max/p90/p99 apply to relevant dawn samples, SZA 99 -> 60, over 51 heights. Near-zero concentrations are not assigned relative errors.
+
+| Species | max (%) | p90 (%) | p99 (%) | max absolute (cm^-3) | max relevant case z / SZA |
+| --- | ---: | ---: | ---: | ---: | --- |
+| O3 | 0.000122437 | 7.28844e-06 | 3.5645e-05 | 334.47203 | 81 km / 94.415 deg |
+| Delta | 0.233878 | 0.0244668 | 0.218352 | 120329.66 | 77 km / 97.3656 deg |
+
+| z (km) | O3 max / p90 / p99 (%) | O3 max abs (cm^-3) | Delta max / p90 / p99 (%) | Delta max abs (cm^-3) |
+| ---: | --- | ---: | --- | ---: |
+| 60 | 2.33909e-06 / 6.852e-07 / 1.55153e-06 | 23.57984 | 0.155388 / 0.0238025 / 0.122829 | 49612.936 |
+| 70 | 3.63983e-05 / 3.5645e-05 / 3.5811e-05 | 62.702043 | 0.195432 / 0.103141 / 0.182882 | 7150.6138 |
+| 80 | 8.4457e-05 / 8.107e-06 / 7.46966e-05 | 1.4264135 | 0.223441 / 0.196352 / 0.222038 | 677.78837 |
+| 90 | 2.80043e-05 / 1.01797e-07 / 1.20228e-05 | 36.30762 | 0.000604216 / 0.000383798 / 0.000565569 | 95.874046 |
+| 100 | 5.31764e-05 / 9.27117e-08 / 1.70422e-05 | 22.134077 | 0.000148709 / 0.000138053 / 0.000148613 | 29.58157 |
+
+Near-zero maximum absolute differences: O3 0, Delta 116.802 cm^-3. The very small O3 difference is below the established solver error bound and should not be interpreted as a resolved physical effect. Delta remains below 1%; optional LM/Galatry spectroscopy does not delay the temporal model. No PR #4 merge or new advanced-spectroscopy assumptions are made.
+
+## M5B real solar geometry and explicit initial-value API
+
+**GO M5B. M5A is ACCEPTED / CLOSED.** The reference-noon run and m5_reference_cycle.npz are unchanged golden regressions. Spin-up, previous QSSA relaxations and the accepted noon initialization policy are not reopened.
+
+The implemented algorithm is the documented [NOAA fractional-year solar equations](https://gml.noaa.gov/grad/solcalc/solareqns.PDF). It computes declination and equation of time from the UTC fractional year (366-day denominator in leap years), then true solar time/hour angle and geometric SZA from latitude. All datetimes must be timezone-aware and are normalized to UTC; longitude is east-positive [-180,180], latitude [-90,90], and SZA is in degrees. No civil timezone, refraction or solar-disk correction enters the SZA. This is the published Fourier approximation, not a precision ephemeris; no global sub-degree accuracy claim is made.
+
+Polar day/night follow directly from the geometric SZA. The accepted spherical M4C/M4D shell geometry alone determines shadow by height. The temporal engine brackets the 51 tangent crossings, including narrow grazing twilight by independently finding extrema, and retains the accepted segment solver and positivity rejection. Exact zero initial values also work in polar darkness; no clipping, reset or extra prognostic species is introduced.
+
+```python
+from tfm_photochem.m5_simulation import simulate
+
+result = simulate(start_datetime, end_datetime, latitude, longitude,
+                  initial_state, atmosphere="frozen_reference")
+result.save("trajectory.npz")
+```
+
+initial_state is mandatory and explicit, shape (51,7), in cm^-3 and species order O/O3/H/OH/HO2/H2O2/Delta. Geometry never determines the chemical initial state. reference_noon_initialization remains exclusively a reference regression mode. The default radiation provider is a SHA-verified derived A0/B/IRA table spanning SZA=0 through the highest shell tangent, with direct midpoint interpolation audit <=0.5%; it contains no raw HITRAN. An explicitly supplied verified NIR provider can override it. The frozen M4A atmosphere remains the 2020-03-20 45N/0E reference even for other geometry locations, recorded by atmosphere_tracks_location=False. No dynamic atmosphere or climatological initializer is implemented.
+
+SimulationResult/save retain elapsed time from the metadata UTC origin, altitude, SZA, all seven dynamic fields, exact R_H, O1D/B0/B1, eleven forcings and geometry/atmosphere/initialization/solver metadata. The completed real-geometry 21-hour example is saved in [m5b_reference_real_geometry.npz](../evidence/m5b_reference_real_geometry.npz); it explicitly injects the M5A golden noon state and does not assert equilibrium at actual astronomical noon.
+
+### Validation and numerical regression
+
+| Check over 21 hours / full seven-species time-height state | Maximum relevant difference | Outcome |
+| --- | ---: | --- |
+| A0 repeat vs M5A golden | 0% | PASS |
+| General API + explicit golden geometry vs M5A NPZ | 0.000965912% | PASS |
+| Real geometry BDF base vs tighter BDF | 0.247077% | PASS |
+| Real geometry tighter BDF vs tighter Radau | 0.0117191% | PASS |
+
+Absolute near-zero bounds also pass. All completed trajectories are finite/nonnegative with remaining QSSA and family/peroxide budget residuals below 1e-12, plus exact shadow. Radau rejects 72 invalid Newton trial states using the existing M5A step-retry strategy; all accepted states remain physical, and there is no concentration projection or physical reset.
+
+Geometry tests cover equinox 45N approximate agreement with the old trajectory, noon/midnight, geometric sunrise/sunset, longitude shifts, UTC equivalent instants, hemisphere reversal, solstices, polar day/night, grazing twilight, leap-date continuity and invalid inputs. At 2020-03-20 12:00Z /45N/0E, SZA=45.18534 degrees and equation of time=-7.92441 minutes; geometric ground horizon crossings are about 06:08:59 and 18:07:39 UTC.
+
+Real geometry is not expected to reproduce the artificial trajectory at identical UTC timestamps: equation of time and declination shift the onset. The very large relative differences possible near that onset are phase/forcing changes, not solver nonconvergence. Solver agreement is evaluated using the same real geometry; the original toy trajectory is retained by an explicit ReferenceElapsedGeometry adapter without changing ReferenceEquinoxSolarCycle.
+
+Final QA: **887 tests + 13 subtests PASS**, ruff PASS, five historical validators PASS, M4D mapping PASS (91/70/21/59/280, no unmatched/duplicate/ambiguous lines). M4C-R2 retains SHA256 2944c8a8e0899b320c69c45192ee6f03b9001114c4120a9db8c67a3f1bb8f1fe. M3/M4 accepted code, M5A source and golden NPZ, reaction/constant/forcing definitions and main are unchanged.
+
+Reproduce with scripts/validate_m5b_temporal.py --mode downstream --a-model A0/A1; --mode geometry --geometry golden/real --solver base/tight/Radau; --mode nir for the full-SZA frozen provider; then --mode assess. Supply the verified historical --sources, authorized --hitran and local --cache for trajectory reproduction. Assessment reads the derived cache and returns the combined downstream/geometry decision. No periodic-search mode is invoked.

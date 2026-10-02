@@ -34,6 +34,7 @@ tfm_photochem = [
   "assets/legacy_2017/*.json",
   "assets/historical_2020/*.csv",
   "assets/historical_2020/*.json",
+  "assets/m5_reference/*.npz",
 ]
 
 [tool.pytest.ini_options]

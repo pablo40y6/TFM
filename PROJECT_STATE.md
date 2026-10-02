@@ -34,22 +34,26 @@ The immutable current artifact is `artifacts/accepted/m4c-r2/tfm-photochem-miles
 
 ## Current next milestone
 
-M4D is **PROVISIONALLY CLOSED / INTEGRATION READY / NOT FROZEN** under the authorized pragmatic closure in `docs/m4d_closure_report.md`: A0 430 Voigt, B 320 Voigt, IRA 835 monomer Voigt plus historical O2-Air CIA attenuation; A1 is sensitivity only. Historical Y/Galatry/high-T/B-qSDV gates do not block integration; PR #4 is not merged.
+M4D is **CLOSED / ACCEPTED for temporal model**: A0 430 Voigt, B 320
+Voigt, IRA 835 monomer Voigt with historical O2-Air CIA attenuation. The final
+A1 downstream sensitivity changes relevant dawn O3 by at most 0.000122% and
+Delta by 0.233878%; LM/Galatry remain optional. PR #4 is not merged.
 
-M5A is **GO / VALIDATED FINITE-HORIZON REFERENCE DAWN** on milestone/m5-temporal.
-The 357-ODE baseline is unchanged; O1D/B0/B1 remain QSSA. Reference noon uses
-frozen M4A O3/native O/H, declared missing-atom zeros at 50..72 km, and a
-multistart stationary OH/HO2/H2O2/Delta subsystem only at t0. All six trajectories
-complete the 21-hour noon -> next-dawn -> SZA60 interval without resets/clipping.
-BDF base/tight differ by 0.045420%; tighter BDF/Radau by 0.001248%.
-O3/Delta initialization sensitivities are quantified and material; they are a
-climatological-initialization limitation, not a chemistry-change gate. Periodic
-spin-up is closed as a historical diagnostic and no longer required. Full
-reference time-height fields and dawn tables are saved. Pytest **870 + 13
-subtests**, ruff and five historical validators pass. M3/M4/main and M4C-R2 SHA
-are unchanged; M4D remains NOT FROZEN. Next scope: real solar geometry with
-explicit initial_state support; atmospheric dynamics remain outside this change.
-See the single temporal report and existing evidence JSON.
+M5A is **ACCEPTED / CLOSED**. Its reference-noon policy, seven-species source
+and m5_reference_cycle.npz are unchanged golden regressions. Periodic spin-up
+and prior OH/HO2/H2O2 QSSA blockers remain historical, outside the current path.
+
+M5B is **GO / REAL SOLAR GEOMETRY + EXPLICIT INITIAL-STATE API**, on
+milestone/m5-temporal. NOAA UTC date/latitude/east-positive longitude supplies
+geometric SZA; accepted shell geometry supplies height-dependent shadow.
+simulate requires initial_state; frozen_reference atmosphere is explicit.
+There is no arbitrary-date chemical initializer or dynamic atmosphere.
+The general API reproduces M5A within 0.000966%; real-geometry 21-hour BDF
+base/tight and BDF tight/Radau differences are 0.247077% / 0.011719%.
+QA: **887 tests + 13 subtests**, ruff, five historical validators and M4D
+mapping PASS. M3/M4/main and M4C-R2 SHA remain unchanged. See the single
+M5 temporal report and existing evidence JSON. The source/design sections
+below are retained historical provenance, not new operational acceptance gates.
 
 ## Frozen source / transition gates
 

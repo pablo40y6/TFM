@@ -141,6 +141,14 @@ def dark_regression(args) -> int:
 def prepare_nir(args):
     """Direct rates plus midpoint refinement; derived cache never holds raw HITRAN."""
     bands = load_bands(args.hitran)
+    advanced = getattr(args, "a_model", "A0") == "A1"
+    minimum_sza = float(getattr(args, "minimum_sza", 45.))
+    if not 0 <= minimum_sza <= 45:
+        raise ValueError("minimum NIR SZA must lie in [0,45]")
+    drouin = None
+    if advanced:
+        from tfm_photochem.m4d_reconstruction.mapping import parse_drouin
+        drouin = parse_drouin(args.sources / "PMC5103325.xml")
     sources = SpectralSources(
         *load_tips(args.sources / "hapi.py"), load_solar(args.sources / "wehrli85.txt")
     )
@@ -148,10 +156,13 @@ def prepare_nir(args):
     root = Path(__file__).resolve().parents[1]
     code = {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest()
             for p in (root / "src/tfm_photochem/m4d_reconstruction").glob("*.py")}
-    fingerprint = hashlib.sha256(json.dumps(
+    identity = (
         {"code": code, "controls": [0.125, 64, 12, 3.84, 4, 0.0625],
-         "edition": "verified HITRAN2016/TIPS2017/Wehrli1985/historical CIA"},
-        sort_keys=True).encode()).hexdigest()
+         "edition": "verified HITRAN2016/TIPS2017/Wehrli1985/historical CIA"})
+    opacity_fingerprint = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
+    if advanced:
+        identity["A_model"] = "A1:91 Drouin SDV +339 Voigt; no LM/Galatry"
+    fingerprint = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
     args.cache.mkdir(parents=True, exist_ok=True)
     known = {}
     closure = json.loads((root / "evidence/m4d_closure.json").read_text())
@@ -160,7 +171,7 @@ def prepare_nir(args):
             indices = [closure["cases_z_sza"].index([float(z), angle]) for z in range(50, 101)]
             known[angle] = np.column_stack([
                 np.array(closure["rates"][model]["base"][field])[indices]
-                for model, field in (("A0", "monomer"), ("B", "monomer"), ("IRA", "cia_nominal"))
+                for model, field in (("A1" if advanced else "A0", "monomer"), ("B", "monomer"), ("IRA", "cia_nominal"))
             ])
     cache_file = args.cache / f"nir-direct-{fingerprint}.npz"
     if cache_file.exists():
@@ -179,7 +190,7 @@ def prepare_nir(args):
             self.output_shell_mask = self.used_shells
             self.used_shells = None
             super().__post_init__()
-            digest = hashlib.sha256(fingerprint.encode())
+            digest = hashlib.sha256(opacity_fingerprint.encode())
             for value in (self.nu, self.strength, self.sigma, self.gamma, self.shift, self.gamma2):
                 digest.update(np.ascontiguousarray(value).tobytes())
             self.opacity_identity = digest.hexdigest()
@@ -210,6 +221,7 @@ def prepare_nir(args):
                 result = cached_rates(
                     bands[band], sources, cases, core_order=64, wing_order=12,
                     support=3.84, far_order=4, cia=cia if band == "IRA" else None,
+                    drouin=drouin if band == "A" else None,
                 )
                 return result["cia_nominal" if band == "IRA" else "monomer"]
             print(f"Computing direct NIR: {len(missing)} new SZA nodes", file=sys.stderr, flush=True)
@@ -225,6 +237,8 @@ def prepare_nir(args):
     nodes = sorted(set([45.0, 60.0, 75.0, 85.0, 89.0, 89.9, 90.0, 92.0, 94.0,
                         95.0, 96.0, 97.0, 98.0, 99.0, 100.0, tangent, tangent + 1e-7]
                        + (180-np.rad2deg(np.arcsin(6370/(6370+np.arange(50,101))))).tolist()))
+    if minimum_sza < 45:
+        nodes = sorted(set(nodes + [minimum_sza, 15., 30.]))
     audit = None
     for _ in range(10):
         direct = evaluate(nodes)

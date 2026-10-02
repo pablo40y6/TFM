@@ -1,7 +1,7 @@
 {
-  "decision": "GO M5A / validated finite-horizon reference dawn",
-  "milestone": "M5A",
-  "policy": "reference_noon_initialization",
+  "decision": "GO M5B / real solar geometry with explicit initial state",
+  "milestone": "M5B",
+  "policy": "explicit_initial_state / frozen_reference atmosphere",
   "species": [
     "O",
     "O3",
@@ -49274,5 +49274,615 @@
       "source_ast_sha256": "366ef6bc9f6b26eaa862013f8d3af49cf7034b719ebaec596fb87e37b930a687"
     },
     "limitation": "Initial-state sensitivity is a model limitation for later climatological initialization; not a chemistry-change gate."
-  }
+  },
+  "M5A_status": "ACCEPTED / CLOSED",
+  "M5B": {
+    "decision": "GO M5B",
+    "M4D_decision": "CLOSED / ACCEPTED for temporal model",
+    "downstream": {
+      "O3": {
+        "all_heights": {
+          "max_relative": 1.2243742295203153e-06,
+          "p90_relative": 7.288440471488164e-08,
+          "p99_relative": 3.5644994713590767e-07,
+          "maximum_absolute_difference_cm3": 334.47203254699707,
+          "near_zero_absolute_max_cm3": 0.0,
+          "relevance_floor_cm3": 63018.95963988981,
+          "maximum_case": {
+            "time_s": 106500.0,
+            "z_km": 81,
+            "SZA_deg": 94.41502598393865
+          }
+        },
+        "selected_heights": {
+          "60": {
+            "max_relative": 2.3390913654921523e-08,
+            "p90_relative": 6.8519983293409584e-09,
+            "p99_relative": 1.5515339480737032e-08,
+            "maximum_absolute_difference_cm3": 23.579839944839478,
+            "near_zero_absolute_max_cm3": 0.0,
+            "relevance_floor_cm3": 63018.95963988981,
+            "maximum_index": [
+              38
+            ]
+          },
+          "70": {
+            "max_relative": 3.639827473992628e-07,
+            "p90_relative": 3.5644996462976965e-07,
+            "p99_relative": 3.5810998755085414e-07,
+            "maximum_absolute_difference_cm3": 62.70204293727875,
+            "near_zero_absolute_max_cm3": 0.0,
+            "relevance_floor_cm3": 63018.95963988981,
+            "maximum_index": [
+              35
+            ]
+          },
+          "80": {
+            "max_relative": 8.445696571307891e-07,
+            "p90_relative": 8.107000659000644e-08,
+            "p99_relative": 7.46966486584998e-07,
+            "maximum_absolute_difference_cm3": 1.426413471577689,
+            "near_zero_absolute_max_cm3": 0.0,
+            "relevance_floor_cm3": 63018.95963988981,
+            "maximum_index": [
+              37
+            ]
+          },
+          "90": {
+            "max_relative": 2.800434183160028e-07,
+            "p90_relative": 1.017970444242382e-09,
+            "p99_relative": 1.202279632687097e-07,
+            "maximum_absolute_difference_cm3": 36.307620376348495,
+            "near_zero_absolute_max_cm3": 0.0,
+            "relevance_floor_cm3": 63018.95963988981,
+            "maximum_index": [
+              35
+            ]
+          },
+          "100": {
+            "max_relative": 5.317643868046497e-07,
+            "p90_relative": 9.271166419314829e-10,
+            "p99_relative": 1.7042220646689403e-07,
+            "maximum_absolute_difference_cm3": 22.134076602756977,
+            "near_zero_absolute_max_cm3": 0.0,
+            "relevance_floor_cm3": 63018.95963988981,
+            "maximum_index": [
+              34
+            ]
+          }
+        }
+      },
+      "Delta": {
+        "all_heights": {
+          "max_relative": 0.002338780563177982,
+          "p90_relative": 0.00024466786301012274,
+          "p99_relative": 0.00218352437060092,
+          "maximum_absolute_difference_cm3": 120329.66225528717,
+          "near_zero_absolute_max_cm3": 116.80244140666036,
+          "relevance_floor_cm3": 57490.113290393914,
+          "maximum_case": {
+            "time_s": 105493.06244736514,
+            "z_km": 77,
+            "SZA_deg": 97.36555865022925
+          }
+        },
+        "selected_heights": {
+          "60": {
+            "max_relative": 0.001553877489099794,
+            "p90_relative": 0.00023802499911494698,
+            "p99_relative": 0.0012282926497791536,
+            "maximum_absolute_difference_cm3": 49612.93575286865,
+            "near_zero_absolute_max_cm3": 14.503018538860488,
+            "relevance_floor_cm3": 57490.113290393914,
+            "maximum_index": [
+              34
+            ]
+          },
+          "70": {
+            "max_relative": 0.0019543197679935762,
+            "p90_relative": 0.001031410885868758,
+            "p99_relative": 0.0018288229775244992,
+            "maximum_absolute_difference_cm3": 7150.613761663437,
+            "near_zero_absolute_max_cm3": 20.00662831110094,
+            "relevance_floor_cm3": 57490.113290393914,
+            "maximum_index": [
+              33
+            ]
+          },
+          "80": {
+            "max_relative": 0.002234408236305973,
+            "p90_relative": 0.001963520203133451,
+            "p99_relative": 0.0022203763188607386,
+            "maximum_absolute_difference_cm3": 677.7883688085712,
+            "near_zero_absolute_max_cm3": 97.67403407295933,
+            "relevance_floor_cm3": 57490.113290393914,
+            "maximum_index": [
+              26
+            ]
+          },
+          "90": {
+            "max_relative": 6.042162554074221e-06,
+            "p90_relative": 3.837983747544059e-06,
+            "p99_relative": 5.655694218020987e-06,
+            "maximum_absolute_difference_cm3": 95.87404644489288,
+            "near_zero_absolute_max_cm3": 0.0,
+            "relevance_floor_cm3": 57490.113290393914,
+            "maximum_index": [
+              33
+            ]
+          },
+          "100": {
+            "max_relative": 1.4870881271774464e-06,
+            "p90_relative": 1.38052773864441e-06,
+            "p99_relative": 1.4861309246959907e-06,
+            "maximum_absolute_difference_cm3": 29.581569880247116,
+            "near_zero_absolute_max_cm3": 0.0,
+            "relevance_floor_cm3": 57490.113290393914,
+            "maximum_index": [
+              25
+            ]
+          }
+        }
+      }
+    },
+    "A0_golden_regression": {
+      "relative_max": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "near_zero_absolute_max_cm3": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "relevance_floor_cm3": [
+        597901.2091589087,
+        63018.95963988981,
+        175.02193807686973,
+        64.23652617203815,
+        26.688291826643553,
+        7.996576246146229,
+        57490.113290393914
+      ],
+      "pass_": true
+    },
+    "M5B_golden_regression": {
+      "relative_max": [
+        9.659119783792265e-06,
+        5.21497875544876e-06,
+        9.174758782773534e-06,
+        2.4840412449177792e-06,
+        4.846659838394084e-07,
+        3.6020515538179763e-07,
+        3.7078656172907367e-06
+      ],
+      "near_zero_absolute_max_cm3": [
+        6.366980477119796,
+        0.0,
+        0.0005616423335794707,
+        4.8387093755764e-05,
+        6.089369009032453e-09,
+        7.67138406132517e-08,
+        0.04161447466321988
+      ],
+      "relevance_floor_cm3": [
+        597901.2091589087,
+        63018.95963988981,
+        175.02193807686973,
+        64.23652617203815,
+        26.688291826643553,
+        7.996576246146229,
+        57490.113290393914
+      ],
+      "pass_": true
+    },
+    "real_geometry_solver_comparison": {
+      "base_tight": {
+        "relative_max": [
+          0.0024707713715408984,
+          0.000216468025170682,
+          0.002121303085209833,
+          0.00023597223511646285,
+          8.503421984247815e-05,
+          1.8980466912518775e-05,
+          0.0002854853123009405
+        ],
+        "near_zero_absolute_max_cm3": [
+          1343.6219586622901,
+          0.0,
+          0.23806052482669315,
+          0.009500049784357145,
+          1.4783035950927115e-06,
+          1.6884581261145115e-05,
+          2.4114845278818393
+        ],
+        "relevance_floor_cm3": [
+          598039.070159246,
+          63018.95963988981,
+          175.1645413245415,
+          64.23652617203815,
+          26.68487515105413,
+          7.996425330589667,
+          57490.113290393914
+        ],
+        "pass_": true
+      },
+      "tight_Radau": {
+        "relative_max": [
+          0.0001171908002970543,
+          9.693522217518069e-06,
+          0.00010753275981058713,
+          8.410358770385476e-06,
+          2.556682611493413e-06,
+          2.8362183944287834e-06,
+          4.461953979168744e-06
+        ],
+        "near_zero_absolute_max_cm3": [
+          73.356856811326,
+          0.0,
+          0.0054139067237883864,
+          0.0005910451345769729,
+          2.0381946796987904e-08,
+          1.8510965524853873e-06,
+          0.14093244546529604
+        ],
+        "relevance_floor_cm3": [
+          598039.070159246,
+          63018.95963988981,
+          175.1645413245415,
+          64.23652617203815,
+          26.68487515105413,
+          7.996425330589667,
+          57490.113290393914
+        ],
+        "pass_": true
+      }
+    },
+    "downstream_audits": {
+      "A0": {
+        "retained_QSSA_scaled_max": 3.6629396831603993e-16,
+        "family_budget_scaled_max": 1.5749666304966182e-16,
+        "dynamic_H2O2_budget_scaled_max": 4.0002118519812254e-16
+      },
+      "A1": {
+        "retained_QSSA_scaled_max": 3.481330411804394e-16,
+        "family_budget_scaled_max": 1.5596898978237387e-16,
+        "dynamic_H2O2_budget_scaled_max": 3.792222813453527e-16
+      }
+    },
+    "geometry_audits": {
+      "golden-tight": {
+        "retained_QSSA_scaled_max": 4.050119429256888e-16,
+        "family_budget_scaled_max": 1.5270174859748186e-16,
+        "dynamic_H2O2_budget_scaled_max": 4.3125232969521164e-16,
+        "golden_comparison": {
+          "relative_max": [
+            9.659119783792265e-06,
+            5.21497875544876e-06,
+            9.174758782773534e-06,
+            2.4840412449177792e-06,
+            4.846659838394084e-07,
+            3.6020515538179763e-07,
+            3.7078656172907367e-06
+          ],
+          "near_zero_absolute_max_cm3": [
+            6.366980477119796,
+            0.0,
+            0.0005616423335794707,
+            4.8387093755764e-05,
+            6.089369009032453e-09,
+            7.67138406132517e-08,
+            0.04161447466321988
+          ],
+          "relevance_floor_cm3": [
+            597901.2091589087,
+            63018.95963988981,
+            175.02193807686973,
+            64.23652617203815,
+            26.688291826643553,
+            7.996576246146229,
+            57490.113290393914
+          ],
+          "pass_": true
+        },
+        "solver": {
+          "method": "BDF",
+          "rtol": 2e-08,
+          "atol": 1e-10,
+          "max_step_s": 60,
+          "nfev": 44091,
+          "njev": 782,
+          "trial_rejections": 0,
+          "segments": 103
+        },
+        "NIR": {
+          "nodes": 276,
+          "relative_max": 0.004976554194973857,
+          "near_zero_absolute_max_s1": 9.836573758954561e-16,
+          "method": "direct midpoint audit; adaptive piecewise linear SZA; all 51 tangent nodes; exact shadow"
+        }
+      },
+      "real-base": {
+        "retained_QSSA_scaled_max": 3.4859956718084947e-16,
+        "family_budget_scaled_max": 1.6090282302109622e-16,
+        "dynamic_H2O2_budget_scaled_max": 4.3442449847088686e-16,
+        "golden_comparison": {
+          "relative_max": [
+            0.9999999744984175,
+            0.9018767171272274,
+            0.9995893595204527,
+            0.9861120388579205,
+            0.9674768503201671,
+            0.09124068654022481,
+            1.0
+          ],
+          "near_zero_absolute_max_cm3": [
+            594559.6020485893,
+            0.0,
+            158.81991737811947,
+            9.063380720007935,
+            0.029831029876230986,
+            0.16959760291511294,
+            57452.83199537323
+          ],
+          "relevance_floor_cm3": [
+            597901.2091589087,
+            63018.95963988981,
+            175.02193807686973,
+            64.23652617203815,
+            26.688291826643553,
+            7.996576246146229,
+            57490.113290393914
+          ],
+          "pass_": false
+        },
+        "solver": {
+          "method": "BDF",
+          "rtol": 2e-06,
+          "atol": 1e-08,
+          "max_step_s": 120,
+          "nfev": 14595,
+          "njev": 420,
+          "trial_rejections": 0,
+          "segments": 103
+        },
+        "NIR": {
+          "nodes": 276,
+          "relative_max": 0.004976554194973857,
+          "near_zero_absolute_max_s1": 9.836573758954561e-16,
+          "method": "direct midpoint audit; adaptive piecewise linear SZA; all 51 tangent nodes; exact shadow"
+        }
+      },
+      "real-tight": {
+        "retained_QSSA_scaled_max": 3.4244447264405713e-16,
+        "family_budget_scaled_max": 1.554923591218438e-16,
+        "dynamic_H2O2_budget_scaled_max": 3.769161770949635e-16,
+        "golden_comparison": {
+          "relative_max": [
+            0.9999999744984679,
+            0.901878614097355,
+            0.9995893765613361,
+            0.9861121103891357,
+            0.9674776887629012,
+            0.09123744854620353,
+            1.0
+          ],
+          "near_zero_absolute_max_cm3": [
+            594559.6021483088,
+            0.0,
+            158.82048154192918,
+            9.063844769461411,
+            0.029832144952944617,
+            0.1695977528675634,
+            57452.83199537323
+          ],
+          "relevance_floor_cm3": [
+            597901.2091589087,
+            63018.95963988981,
+            175.02193807686973,
+            64.23652617203815,
+            26.688291826643553,
+            7.996576246146229,
+            57490.113290393914
+          ],
+          "pass_": false
+        },
+        "solver": {
+          "method": "BDF",
+          "rtol": 2e-08,
+          "atol": 1e-10,
+          "max_step_s": 60,
+          "nfev": 44423,
+          "njev": 828,
+          "trial_rejections": 0,
+          "segments": 103
+        },
+        "NIR": {
+          "nodes": 276,
+          "relative_max": 0.004976554194973857,
+          "near_zero_absolute_max_s1": 9.836573758954561e-16,
+          "method": "direct midpoint audit; adaptive piecewise linear SZA; all 51 tangent nodes; exact shadow"
+        }
+      },
+      "real-Radau": {
+        "retained_QSSA_scaled_max": 4.1240304842475423e-16,
+        "family_budget_scaled_max": 1.6108694884842926e-16,
+        "dynamic_H2O2_budget_scaled_max": 3.9124440078262557e-16,
+        "golden_comparison": {
+          "relative_max": [
+            0.9999999744984794,
+            0.9018786554123843,
+            0.9995893765331821,
+            0.9861121157562369,
+            0.9674777048525365,
+            0.09123872011977618,
+            1.0
+          ],
+          "near_zero_absolute_max_cm3": [
+            594559.6021519416,
+            0.0,
+            158.82050931026194,
+            9.063852623018711,
+            0.029832154290971857,
+            0.16959738587961493,
+            57452.83199537323
+          ],
+          "relevance_floor_cm3": [
+            597901.2091589087,
+            63018.95963988981,
+            175.02193807686973,
+            64.23652617203815,
+            26.688291826643553,
+            7.996576246146229,
+            57490.113290393914
+          ],
+          "pass_": false
+        },
+        "solver": {
+          "method": "Radau",
+          "rtol": 2e-08,
+          "atol": 1e-10,
+          "max_step_s": 60,
+          "nfev": 99919,
+          "njev": 488,
+          "trial_rejections": 72,
+          "segments": 103
+        },
+        "NIR": {
+          "nodes": 276,
+          "relative_max": 0.004976554194973857,
+          "near_zero_absolute_max_s1": 9.836573758954561e-16,
+          "method": "direct midpoint audit; adaptive piecewise linear SZA; all 51 tangent nodes; exact shadow"
+        }
+      }
+    },
+    "golden_npz_sha256": "96ba8d5cde0775dbe20b4d0b22a3e5f82ac64a050ead443f7248b1db23553689",
+    "A1_initialization": {
+      "policy": "reference_noon_initialization",
+      "minimum_physical_seed_convergences_per_height": 5,
+      "maximum_normalized_residual": 2.5305453875362353e-14,
+      "maximum_root_relative_spread": 1.612374508168387e-13,
+      "all_51_heights_pass": true,
+      "B_IRA_identical_A0": true
+    },
+    "golden_reference_policy": "M5A ACCEPTED / CLOSED; binary golden unchanged; no reopening initialization/QSSA/spin-up",
+    "frozen_reference_nir_asset": {
+      "path": "src/tfm_photochem/assets/m5_reference/nir_a0_b_ira.npz",
+      "sha256": "085e1238671dfe56e69e89b1e7c477bf8a2af587f452dee7f6dec97411a54b23",
+      "A": "430 HITRAN2016 classic Voigt",
+      "B": "320 HITRAN2016 classic Voigt",
+      "IRA": "835 monomer Voigt; historical O2-Air CIA attenuation only",
+      "atmosphere": "frozen M4A reference",
+      "audit": {
+        "method": "direct midpoint audit; adaptive piecewise linear SZA; all 51 tangent nodes; exact shadow",
+        "near_zero_absolute_max_s1": 9.836573758954561e-16,
+        "nodes": 281,
+        "relative_max": 0.004976554194973857
+      },
+      "code_sha256": {
+        "__init__.py": "aa538af50f7edcfa347f8aba00a75f60d5526c466401e9e98f24f94a75f922de",
+        "a_band.py": "38bf44faec655fa333d82deb814b382410887d1777003745c68a0f536aa4f11c",
+        "cia.py": "5340fc225972cc78ccf0b33a8daf382fcb348d477dd6e02d2a7a3c4b44e11385",
+        "mapping.py": "0a5d3bd6d72286f3ea3b9ddfea69ce64dbab03d7e29f6098a0e62fd06fb84c0c",
+        "sources.py": "36c391f87fbd67fefe71378f65a320b3f719cc639083e820fea013380d633304",
+        "spectroscopy.py": "d0128c31fb86c529db63d736a142b34d13ef7ba831f50d0e6832082e46e7fd80",
+        "transfer.py": "1ada89e93697ba7b21bcf42c11e82bd5f05fcb11723bc3defa3d1a19ffa07c46"
+      },
+      "controls": {
+        "cia_step_km": 0.0625,
+        "core_order": 64,
+        "far_order": 4,
+        "step_km": 0.125,
+        "support_cm1": 3.84,
+        "wing_order": 12
+      },
+      "hitran_sha256": "6b4acbc01cb649891f2d8597875c9cd8e4805cfdd4d3b7841c2d18cbf718de12",
+      "maximum_sza_deg": 100.086638484027,
+      "minimum_sza_deg": 0.0,
+      "model": "A0/B/IRA",
+      "sources": "HITRAN2016/TIPS2017/Wehrli1985/ historical Mate CIA"
+    },
+    "real_time_height_output": {
+      "path": "evidence/m5b_reference_real_geometry.npz",
+      "sha256": "2f4345c455731a3fce07c85caf1f37b7382b7e22ddf7cd6e2e473560242491bb",
+      "duration_s": 75600,
+      "initial_state": "explicit M5A golden noon state",
+      "comparison_utc": "2020-03-20T12:00Z to 2020-03-21T09:00Z",
+      "all_fields": [
+        "time_s",
+        "altitude_km",
+        "sza_deg",
+        "O",
+        "O3",
+        "H",
+        "OH",
+        "HO2",
+        "H2O2",
+        "Delta",
+        "R_H",
+        "O1D",
+        "B0",
+        "B1",
+        "11 forcings",
+        "geometry/atmosphere/initialization metadata"
+      ]
+    },
+    "solar_validation": {
+      "source": "https://gml.noaa.gov/grad/solcalc/solareqns.PDF",
+      "algorithm": "fractional-year Fourier approximation",
+      "equinox_noon": {
+        "sza_deg": 45.18533575678696,
+        "declination_deg": -0.15118934701062225,
+        "equation_of_time_min": -7.9244120815331875
+      },
+      "equinox_geometric_horizon_hours_UTC": [
+        6.14979763319876,
+        18.127395291819997
+      ],
+      "cases_pass": [
+        "aware UTC equivalence",
+        "east-positive longitude shift",
+        "latitude/longitude invalid domains",
+        "noon/midnight",
+        "equinox old trajectory within 1.6 degrees",
+        "hemisphere reversal",
+        "June/December solstices",
+        "north/south polar day/night",
+        "geometric horizon crossings",
+        "short grazing twilight",
+        "leap midnight continuity",
+        "polar-night BDF/Radau dark continuum",
+        "polar-day real forcing",
+        "explicit initial-state API"
+      ]
+    },
+    "QA": {
+      "pytest_passed": 887,
+      "subtests_passed": 13,
+      "ruff": "PASS",
+      "historical_validators": [
+        "legacy",
+        "local_closure",
+        "odd_oxygen_photolysis_budget",
+        "historical_2020_background",
+        "historical_2020_uv"
+      ],
+      "mapping": "PASS 91/70/21/59/280; no unmatched/duplicate/ambiguous",
+      "M4C_R2_SHA256": "2944c8a8e0899b320c69c45192ee6f03b9001114c4120a9db8c67a3f1bb8f1fe",
+      "M3_M4_accepted_code_unchanged": true,
+      "M5A_code_and_golden_unchanged": true,
+      "main_unchanged": true
+    }
+  },
+  "M5A_decision": "GO M5A / validated finite-horizon reference dawn",
+  "M5A_policy": "reference_noon_initialization"
 }
