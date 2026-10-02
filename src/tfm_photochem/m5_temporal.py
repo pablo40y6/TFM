@@ -282,6 +282,56 @@ def temporal_rhs(time_s, concentrations, *, background, forcing,
     return result
 
 
+class TemporalPositivityBlocker(RuntimeError):
+    """An unchanged remaining QSSA prevents the required nonnegative domain."""
+
+    def __init__(self, evidence):
+        super().__init__("POSITIVITY BLOCKER: retained H2O2 QSSA has no finite dark OH=0, HO2>0 root")
+        self.evidence = evidence
+
+
+def dark_oh_positivity_preflight(background=None):
+    """Required OH boundary check, including the accepted dark peroxide limit.
+
+    The full finite-peroxide reaction network has OH loss proportional to OH.
+    Eliminating H2O2 in darkness cancels that factor: its OH loss approaches
+    k_HO2_HO2*HO2**2 > 0. This is an obstruction in the reduced closure, not a
+    reaction or coefficient error; it must be reported rather than extended.
+    """
+    local = (load_baseline_background().local_background_at(100)
+             if background is None else background)
+    dark = LocalForcing(**{field.name:0. for field in fields(LocalForcing)})
+    ho2 = 1000.
+    production = float(kinetics.k_ho2_ho2(local.T,local.M)*ho2**2)
+    initial_peroxide = 1e-5*local.M
+    oh = production/(kinetics.k_oh_h2o2()*initial_peroxide)
+    witnesses = []
+    for factor in (1.,.01,.0001):
+        state = TemporalState(0.,0.,0.,oh*factor,ho2,0.)
+        closure = close_temporal_chemistry(state,local,dark)
+        witnesses.append(dict(OH=state.OH,HO2=state.HO2,H2O2=closure.algebraic.H2O2,
+                              P_OH=closure.diagnostics.P_OH,
+                              OH_H2O2_flux=closure.fluxes["OH_H2O2"],
+                              dOH=closure.diagnostics.P_OH-closure.diagnostics.L_OH))
+    boundary = TemporalState(0.,0.,0.,0.,ho2,0.)
+    try:
+        close_temporal_chemistry(boundary,local,dark)
+    except qssa.SingularQSSAError as error:
+        boundary_error = str(error)
+    else:
+        raise AssertionError("dark peroxide boundary changed; re-audit accepted QSSA")
+    if not all(w["P_OH"] == 0 and w["dOH"] < -0.99*production for w in witnesses):
+        raise AssertionError("dark OH limit changed; re-audit accepted event equations")
+    raise TemporalPositivityBlocker(dict(
+        decision="NO-GO M5A / POSITIVITY BLOCKER: retained H2O2 QSSA",
+        condition="OH=0, HO2>0, J_H2O2=0: positive peroxide production, zero loss",
+        dark_OH_one_sided_limit_cm3_s1=-production,
+        initial_state_cm3=[0.,0.,0.,oh,ho2,0.],
+        initial_H2O2_cm3=initial_peroxide,
+        positive_precursors=witnesses,boundary_error=boundary_error,
+        chemistry_changed=False,additional_species_promoted=False))
+
+
 @dataclass(frozen=True)
 class ReferenceEquinoxSolarCycle:
     """Frozen reference, not calendar astronomy: 45N, declination 0, LST 0..24h."""

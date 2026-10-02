@@ -36,18 +36,19 @@ The immutable current artifact is `artifacts/accepted/m4c-r2/tfm-photochem-miles
 
 M4D is **PROVISIONALLY CLOSED / INTEGRATION READY / NOT FROZEN** under the authorized pragmatic closure in `docs/m4d_closure_report.md`: A0 430 Voigt, B 320 Voigt, IRA 835 monomer Voigt plus historical O2-Air CIA attenuation; A1 is sensitivity only. Historical Y/Galatry/high-T/B-qSDV gates do not block integration; PR #4 is not merged.
 
-M5A is **UNDER PERIODIC VALIDATION / SIX-SPECIES ONSET PREFLIGHT PASS** on
-`milestone/m5-temporal`. The former OH/HO2 domain exit is a valid historical
-diagnosis, operationally superseded by the authorized M5-only relaxation.
-The 306-ODE model crosses the recorded 19223.756 s / SZA 96.98356 boundary
-without negativity or singularity; BDF base/tight difference 0.0052%, tight
-BDF/Radau 0.00055%; retained QSSA scaled residual <2.2e-16. Three seed families
-are undergoing repeated full days with frozen M4A, equinox 45N, dynamic M4C UV
-and M4D A0/B/IRA. Periodic convergence and final reference dawn are not yet
-certified. Full pytest **730 + 13 subtests**, ruff and five historical validators
-pass. See the single `docs/m5_temporal_report.md`; old domain-exit evidence is
-retained in `evidence/m5_temporal_evidence.json`. Main and accepted assets/code
-are unchanged; M4C-R2 SHA is intact.
+M5A is **NO-GO / POSITIVITY BLOCKER: retained H2O2 QSSA in darkness** on
+`milestone/m5-temporal`. The authorized 306-ODE OH/HO2 relaxation crosses the
+old dawn OH-root failure with unchanged chemistry (BDF/Radau 0.00055%). Its
+mandatory global OH positivity preflight fails: for dark OH->0+, HO2>0,
+peroxide elimination leaves a finite outward OH loss, and OH=0 has positive
+H2O2 production with zero loss. Base/tight BDF and Radau reproduce approach
+to this boundary under the exact natural-night forcing. Three numerical seed
+families completed 31/28/29 day-map evaluations; periodic convergence, seed
+independence and final reference dawn remain uncertified. Default periodic
+validation stops with exit 2. No further species is promoted. Full pytest
+**739 + 13 subtests**, ruff and five historical validators pass. See the single
+`docs/m5_temporal_report.md` and `evidence/m5_temporal_evidence.json`. Accepted
+M3/M4 and main are unchanged; M4C-R2 SHA is intact.
 
 The SZA=99 dark equilibrium continuum remains an accepted regression, not an operational blocker under periodic initialization. The old spectroscopy sections below remain historical provenance. Calendar ephemerides and dynamic atmosphere are not implemented in this step.
 
@@ -242,7 +243,7 @@ A profile-independent lower-bound test also finds four illuminated SZA 99 deg ca
 
 The previous **monomer-only attenuation baseline candidate failed the retained-rate gate**. At 50 km / SZA 95 degrees the refined monomer-only rate is `6.7194715555556325e-12 s^-1`, and the historical CIA rate is `6.699880907505247e-12 s^-1`. Both exceed the floor. Counterexample refinement maxima are 0.03885055038% spatial, 0.000214008794% quadrature order and 0.007189447952% target support, all below 0.1%.
 
-The mandatory stop was then independently reviewed. The resolved M4D baseline keeps the 835-line monomer system as the **only excitation source** but includes historical MatÃƒÆ’Ã‚Â©/HITRAN2016 O2-Air CIA as a separate opacity in IRA direct-beam attenuation. Do not add a separate O2-O2 term on top of O2-Air. The nominal historical temperature clamp/interpolation, measured-source envelope and raw/noise sensitivity remain required. This resolves the CIA scope decision without freezing M4D or changing M4C-R2. See `docs/m4d_ira_cia_post_stop_resolution.md`.
+The mandatory stop was then independently reviewed. The resolved M4D baseline keeps the 835-line monomer system as the **only excitation source** but includes historical MatÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©/HITRAN2016 O2-Air CIA as a separate opacity in IRA direct-beam attenuation. Do not add a separate O2-O2 term on top of O2-Air. The nominal historical temperature clamp/interpolation, measured-source envelope and raw/noise sensitivity remain required. This resolves the CIA scope decision without freezing M4D or changing M4C-R2. See `docs/m4d_ira_cia_post_stop_resolution.md`.
 
 Numerical CIA rules now selected:
 
@@ -325,7 +326,7 @@ Earlier forensics/research notes remain provenance evidence even where their old
 
 ## Immediate next gate
 
-1. CIA post-stop review is complete: include historical MatÃƒÆ’Ã‚Â©/HITRAN2016 O2-Air CIA in the IRA attenuation baseline; keep excitation monomer-only and retain nominal/envelope/raw CIA sensitivities.
+1. CIA post-stop review is complete: include historical MatÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©/HITRAN2016 O2-Air CIA in the IRA attenuation baseline; keep excitation monomer-only and retain nominal/envelope/raw CIA sensitivities.
 2. Resolve the documented A LM normalization, high-temperature and historical
    Galatry convention blockers before completing nominal SDV+LM/Galatry transfer
    and its low-temperature/no-Y/quadrupole retained-rate sensitivities.

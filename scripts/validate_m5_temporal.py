@@ -31,8 +31,10 @@ from tfm_photochem.m5_temporal import (
     NIRForcingTable,
     PhysicalClosureFailure,
     TemporalColumnRHS,
+    TemporalPositivityBlocker,
     TemporalState,
     cycle_difference,
+    dark_oh_positivity_preflight,
     integrate_reference_cycle,
     local_rhs,
     periodic_spinup,
@@ -226,6 +228,65 @@ def prepare_nir(args):
     raise RuntimeError("NIR interpolation refinement did not reach 0.5%")
 
 
+def positivity_preflight():
+    """Mandatory stop: a real retained QSSA obstruction in natural reference night."""
+    rhs = TemporalColumnRHS()
+    local = rhs.background.local_background_at(100)
+    try:
+        dark_oh_positivity_preflight(local)
+    except TemporalPositivityBlocker as error:
+        evidence = error.evidence
+    else:
+        raise AssertionError("expected explicit dark OH/peroxide domain obstruction")
+    initial = np.asarray(evidence["initial_state_cm3"])
+    target = initial[3]*.01
+    column = np.broadcast_to(initial,(51,6)).copy()
+    _, forcings = rhs.forcing(0.,column)
+    dark = forcings[-1]
+    assert all(v == 0. for forcing in forcings for v in asdict(forcing).values())
+    probes = []
+    for method,tolerance in (("BDF",2e-6),("BDF",2e-9),("Radau",2e-9)):
+        def derivative(time,state):
+            return temporal_rhs(time,state,background=local,forcing=dark)
+        def event(time,state):
+            return state[3]-target
+        event.terminal = True
+        event.direction = -1
+        result = solve_ivp(derivative,(0.,10000.),initial,method=method,rtol=tolerance,
+                           atol=[1e-16,1e-16,1e-16,tolerance*1e-3,tolerance,1e-16],
+                           max_step=10.,events=event)
+        if (not result.success or len(result.t_events[0]) != 1
+                or not np.all(np.isfinite(result.y)) or np.any(result.y < 0)):
+            raise RuntimeError("independent dark-boundary integration failed")
+        time = float(result.t[-1])
+        state = result.y[:,-1]
+        _, actual = rhs.forcing(time,np.broadcast_to(state,(51,6)))
+        assert all(v == 0. for f in actual for v in asdict(f).values())
+        closure = rhs.chemistry(TemporalState(*state),local,dark)
+        boundary = state.copy()
+        boundary[3] = 0.
+        try:
+            rhs.chemistry(TemporalState(*boundary),local,dark)
+        except Exception as error:
+            from tfm_photochem.historical_2020.qssa import SingularQSSAError
+            if not isinstance(error,SingularQSSAError):
+                raise
+            boundary_error = str(error)
+        else:
+            raise AssertionError("missing retained H2O2 boundary failure")
+        probes.append(dict(method=method,rtol=tolerance,time_s=time,
+                           SZA_deg=float(rhs.cycle.sza(time)),state_cm3=state.tolist(),
+                           dOH_cm3_s1=float(derivative(time,state)[3]),
+                           H2O2_cm3=closure.algebraic.H2O2,boundary_error=boundary_error,
+                           nfev=result.nfev))
+    spread = max(p["time_s"] for p in probes)-min(p["time_s"] for p in probes)
+    assert spread < .005*probes[-1]["time_s"]
+    return dict(**evidence,threshold_OH_cm3=target,probes=probes,
+                independent_event_time_spread_s=spread,
+                forcing="exact natural dark portion of ReferenceEquinoxSolarCycle, all 11 frequencies zero",
+                interpretation="Boundary preflight counterexample; not a claim of domain exit in nominal spin-up")
+
+
 def retained_closure_audit(rhs, times, states):
     """Four QSSA only; the OH residual is now its exact temporal derivative."""
     residual_max = family_max = 0.
@@ -292,7 +353,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--sources", type=Path, required=True)
     parser.add_argument("--hitran", type=Path, required=True)
-    parser.add_argument("--mode", choices=("periodic", "onset", "dark-regression", "domain-regression", "forcing"), default="periodic")
+    parser.add_argument("--mode", choices=("periodic", "onset", "positivity-regression", "dark-regression", "domain-regression", "forcing"), default="periodic")
     parser.add_argument("--cache", type=Path, default=Path(".m5-derived-cache"))
     parser.add_argument("--output", type=Path, default=Path("evidence/m5_reference_cycle.npz"))
     parser.add_argument("--seed-cycles-dir", type=Path,
@@ -300,6 +361,9 @@ def main() -> int:
     parser.add_argument("--accelerate-periodic", action="store_true",
                         help="Accelerate positive day-map guesses; certify three consecutive ordinary cycles")
     args = parser.parse_args()
+    if args.mode in ("periodic","positivity-regression"):
+        print(json.dumps(positivity_preflight(),indent=2))
+        return 0 if args.mode == "positivity-regression" else 2
     if args.mode == "dark-regression":
         return dark_regression(args)
     if args.mode == "domain-regression":

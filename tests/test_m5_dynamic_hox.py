@@ -15,11 +15,13 @@ from tfm_photochem.historical_2020.stoichiometry import TENDENCY_COEFFICIENTS
 from tfm_photochem.m5_temporal import (
     OH_EVENT_COEFFICIENTS,
     TemporalColumnRHS,
+    TemporalPositivityBlocker,
     TemporalState,
     _CycleCoordinates,
     _positive_anderson_candidate,
     bootstrap_seeds,
     close_temporal_chemistry,
+    dark_oh_positivity_preflight,
     temporal_bootstrap_seeds,
     temporal_rhs,
 )
@@ -88,6 +90,28 @@ def test_dark_peroxide_singularity_is_not_silently_regularized():
     with pytest.raises(SingularQSSAError):
         close_temporal_chemistry(TemporalState(1., 1., 1., 0., 1., 1.),
                                 BASE_BACKGROUND, FORCING_OFF)
+
+
+@pytest.mark.parametrize("altitude", [50,60,70,80,90,100])
+def test_dark_oh_outward_boundary_is_an_explicit_scientific_blocker(altitude):
+    local = load_baseline_background().local_background_at(altitude)
+    with pytest.raises(TemporalPositivityBlocker) as caught:
+        dark_oh_positivity_preflight(local)
+    evidence = caught.value.evidence
+    assert evidence["dark_OH_one_sided_limit_cm3_s1"] < 0.
+    assert evidence["chemistry_changed"] is False
+    for witness in evidence["positive_precursors"]:
+        assert witness["OH"] > 0 and witness["HO2"] > 0
+        assert np.isfinite(witness["H2O2"]) and witness["H2O2"] > 0
+        assert witness["OH_H2O2_flux"] == pytest.approx(-evidence["dark_OH_one_sided_limit_cm3_s1"])
+
+
+def test_accepted_finite_peroxide_network_has_zero_oh_loss_at_oh_zero():
+    from tfm_photochem.historical_2020.qssa import _oh_production_loss
+
+    state = TemporalState(0.,0.,0.,0.,1000.,0.)
+    production,loss = _oh_production_loss(state,BASE_BACKGROUND,FORCING_OFF,0.,0.,1000.,1e8)
+    assert production == loss == 0.
 
 
 @pytest.mark.parametrize("altitude", range(50, 101))
