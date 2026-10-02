@@ -1,5 +1,62 @@
 # M5 temporal reference cycle
 
+## Authorized minimal temporal relaxation (current work)
+
+The previous OH/HO2 domain exit is accepted as a scientific diagnosis and is
+superseded operationally by the authorized M5-only timescale relaxation.
+Current status: six-species implementation and onset preflight PASS;
+periodic spin-up and seed independence are still being evaluated.
+
+State: O, O3, H, OH, HO2, Delta (306 ODEs); R_H=OH+HO2 is diagnostic.
+The four O/O3/H/Delta tendencies retain accepted event fluxes and stoichiometry.
+dOH/dt is the exact accepted OH production-minus-loss expression;
+dHO2/dt=accepted dR_H/dt-dOH/dt. Units remain molecule cm^-3 and seconds.
+O1D, H2O2, B0 and B1 retain their exact accepted QSSA, including all singular
+denominator checks. M3/M4 and original close_local_chemistry remain untouched.
+No reaction, coefficient, photolysis frequency or forcing changes are authorized.
+
+Validation gates: per-event/random-state family budget, original-root golden
+agreement, analytic and tested physical boundary directions, dark continuum,
+crossing the recorded dawn onset, then periodic convergence with three seeds,
+base/stricter BDF and Radau (practical 0.5%). No clipping or further promotion
+is permitted; a physical failure of a remaining QSSA stops this work.
+
+### Six-species preflight evidence
+
+- 108 specific tests pass: per-reaction OH/HO2 coefficients independently
+  reconstructed from the reaction registry; 100 random positive states;
+  preserved O/O3/H/Delta tendencies; exact family identity to machine flux
+  precision; 100 boundary states for each HOx species; 153 golden night roots
+  (three seeds at all 51 heights); exact dark continuum at all 51 heights.
+- The lean ODE evaluation uses the original scalar QSSA and flux evaluators
+  and accepted stoichiometric coefficients, omitting diagnostic trace objects
+  only. Its six derivatives are bitwise equal to the fully audited closure
+  in random-state tests. Original M3 functions/modules are never mutated.
+- OH=0 in the finite closure domain: every accepted OH loss contains OH,
+  hence dOH/dt=P_OH>=0. HO2=0: H2O2=0 and the independent registry gives
+  dHO2/dt=F(H+O2+M)+F(OH+O3)>=0. In complete darkness, OH=0 with HO2>0
+  has positive peroxide production and zero loss; the original H2O2 singular
+  check is retained and tested, with no artificial extension of that domain.
+- The new exact dark root [0,c,0,0,0,0] persists for 86400 s under BDF;
+  a constant Newton preconditioner avoids inadmissible off-manifold numerical
+  perturbations and does not alter the zero physical RHS.
+- Starting from the original full-column anchor at 19222.723172994694 s,
+  all 51 supplied-HOx closures reproduce the original algebraic species
+  exactly. Integration reaches 19300 s through the former 19223.755728 s
+  failure: BDF base/tight max relevant difference 0.00515135%; tight BDF/Radau
+  0.000550887%. All concentrations stay positive (minimum 5.6058809e-5 cm^-3).
+  Four retained QSSA scaled max 2.13427e-16; family identity scaled max
+  2.21207e-20. At 100 km OH/HO2 change from 0.297371757/5.60588091e-5 to
+  0.389827535/1.02653705e-4 cm^-3. This directly relaxes a timescale assumption,
+  without changing a chemical event or forcing.
+- Illuminated OH/HO2 use concentration-specific error scales (minimum 1 cm^-3)
+  rather than a universal 1e5 cm^-3 scale. Dense segment endpoints use the
+  exact accepted initial/final solver values, avoiding polynomial cancellation
+  in tiny populations. No concentration clipping is used.
+
+The sections below are **historical five-coordinate diagnosis**, retained for
+provenance. Their NO-GO and 255-ODE statements are not the current M5 formulation.
+
 ## Decision
 
 **NO-GO provisional M5A / PERIODIC INITIALIZATION BLOCKER: accepted OH/HO2 QSSA

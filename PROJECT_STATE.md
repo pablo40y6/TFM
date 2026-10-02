@@ -4,17 +4,20 @@
 
 This repository develops a reproducible time-dependent mesospheric ozone and O2(a1Delta) photochemical model. The accepted implementation currently ends at the SZA-resolved direct-beam UV/VUV radiation baseline, M4C-R2.
 
-## Accepted architecture
+## Accepted M3/M4 reference architecture
 
 - Dynamic state at each chemistry level: O, O3, H, `R_H = OH + HO2`, and Delta = O2(a1Delta_g).
 - Chemistry grid: 50-100 km at 1 km spacing, 51 levels.
-- Future full system: 255 ODEs.
+- Golden M3/M4 basis: 255 dynamic coordinates across 51 levels.
 - Algebraic/QSSA species: O(1D), OH, HO2, H2O2, B0 = O2(b1Sigma_g+, v=0), and B1 = O2(b1Sigma_g+, v=1).
 - Prescribed fields: T, M, O2, N2, CO2, H2O, and H2.
 - First temporal version: no vertical transport; BDF main solver; Radau independent verification; repeated diurnal cycles to periodic convergence.
 - Delta remains dynamic: `dDelta/dt = P_Delta - L_Delta*Delta`.
 
-These statements describe the accepted architecture and provisional continuation. They do not mean M4D or the later temporal solver has been implemented.
+M5 alone now uses the authorized minimal temporal relaxation: O, O3, H, OH,
+HO2 and Delta are dynamic (306 ODEs); R_H=OH+HO2 is diagnostic; O1D, H2O2,
+B0 and B1 remain algebraic. Accepted M3/M4 and original close_local_chemistry
+are unchanged. This changes the OH/HO2 timescale assumption only.
 
 ## Accepted milestone ledger
 
@@ -33,7 +36,18 @@ The immutable current artifact is `artifacts/accepted/m4c-r2/tfm-photochem-miles
 
 M4D is **PROVISIONALLY CLOSED / INTEGRATION READY / NOT FROZEN** under the authorized pragmatic closure in `docs/m4d_closure_report.md`: A0 430 Voigt, B 320 Voigt, IRA 835 monomer Voigt plus historical O2-Air CIA attenuation; A1 is sensitivity only. Historical Y/Galatry/high-T/B-qSDV gates do not block integration; PR #4 is not merged.
 
-M5A is **NO-GO provisional / PERIODIC INITIALIZATION BLOCKER: OH/HO2 QSSA domain exit** on `milestone/m5-temporal`. The authorized `reference_periodic_diurnal_spinup` is implemented with frozen M4A, reference equinox at latitude 45 degrees, 255 dynamic variables, dynamic O/O3 UV opacity and precomputed M4D A0/B/IRA. The 276-node NIR table passes 0.5%. The nominal bootstrap fails before completing day one at t=19223.756 s, SZA=96.98356, 100 km; the original scalar closure has no physical OH/R_H root. Tighter BDF and Radau reproduce the domain exit at 99-100 km with small pre-boundary differences. Three seeds are defined, only nominal attempted, zero completed days; no periodic convergence, seed independence or final dawn is certified. Full pytest **622 + 13 subtests**, ruff, five historical validators and both regressions pass. See the single `docs/m5_temporal_report.md` and `evidence/m5_temporal_evidence.json`. Main and accepted chemistry/assets remain unchanged; M4C-R2 SHA is intact.
+M5A is **UNDER PERIODIC VALIDATION / SIX-SPECIES ONSET PREFLIGHT PASS** on
+`milestone/m5-temporal`. The former OH/HO2 domain exit is a valid historical
+diagnosis, operationally superseded by the authorized M5-only relaxation.
+The 306-ODE model crosses the recorded 19223.756 s / SZA 96.98356 boundary
+without negativity or singularity; BDF base/tight difference 0.0052%, tight
+BDF/Radau 0.00055%; retained QSSA scaled residual <2.2e-16. Three seed families
+are undergoing repeated full days with frozen M4A, equinox 45N, dynamic M4C UV
+and M4D A0/B/IRA. Periodic convergence and final reference dawn are not yet
+certified. Full pytest **730 + 13 subtests**, ruff and five historical validators
+pass. See the single `docs/m5_temporal_report.md`; old domain-exit evidence is
+retained in `evidence/m5_temporal_evidence.json`. Main and accepted assets/code
+are unchanged; M4C-R2 SHA is intact.
 
 The SZA=99 dark equilibrium continuum remains an accepted regression, not an operational blocker under periodic initialization. The old spectroscopy sections below remain historical provenance. Calendar ephemerides and dynamic atmosphere are not implemented in this step.
 

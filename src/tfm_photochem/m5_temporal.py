@@ -16,7 +16,14 @@ from .historical_2020 import fluxes, kinetics, local_closure, qssa, uv_geometry
 from .historical_2020.background import load_baseline_background
 from .historical_2020.config import DYNAMIC_SPECIES
 from .historical_2020.local_closure import close_local_chemistry
-from .historical_2020.local_types import LocalBackground, LocalForcing, LocalState
+from .historical_2020.local_types import (
+    AlgebraicState,
+    LocalBackground,
+    LocalForcing,
+    LocalState,
+    _validate_scalar,
+)
+from .historical_2020.stoichiometry import TENDENCY_COEFFICIENTS
 from .historical_2020.uv_geometry import spherical_shell_paths
 from .historical_2020.uv_radiation import compute_uv_photolysis, local_forcing_from_uv
 
@@ -171,6 +178,109 @@ class CachedLocalClosure:
         self.close = replacements["close_local_chemistry"]
 
 
+TEMPORAL_SPECIES = ("O", "O3", "H", "OH", "HO2", "Delta")
+OH_EVENT_COEFFICIENTS = {
+    "H_O3":1., "O_HO2":1., "HO2_O3":1., "H_HO2_2OH":2.,
+    "H2O2_PHOTOLYSIS":2., "H2O_PHOTOLYSIS_A":1., "O1D_H2O":2., "O1D_H2":1.,
+    "O_OH":-1., "OH_O3":-1., "OH_H2":-1., "OH_OH":-2.,
+    "OH_HO2":-1., "OH_H2O2":-1.,
+}
+
+
+@dataclass(frozen=True)
+class TemporalState:
+    """M5-only six prognostic species, exact OH+HO2 family diagnostic."""
+
+    O: float  # noqa: E741
+    O3: float
+    H: float
+    OH: float
+    HO2: float
+    Delta: float
+
+    @property
+    def R_H(self):
+        return self.OH+self.HO2
+
+    def __post_init__(self):
+        for name in TEMPORAL_SPECIES:
+            _validate_scalar(f"temporal_state.{name}", getattr(self, name))
+        _validate_scalar("temporal_state.R_H", self.R_H)
+
+
+class TemporalClosure:
+    """Original closure body with supplied OH/HO2, four original QSSA retained."""
+
+    def __init__(self):
+        namespace = dict(CachedLocalClosure().close.__globals__)
+        original_hox_globals = namespace["solve_hox_qssa"].__globals__
+        peroxide = original_hox_globals["solve_h2o2_qssa"]
+        oh_equation = original_hox_globals["_oh_production_loss"]
+
+        def supplied_hox(state, background, forcing, o1d):
+            result = peroxide(state.OH, state.HO2, background, forcing)
+            production, loss = oh_equation(state, background, forcing, o1d,
+                                          state.OH, state.HO2, result.value)
+            return qssa.HoxQSSA(
+                state.OH, state.HO2, result.value, production, loss,
+                result.production, result.loss_frequency, production-loss,
+                result.residual, 0., state.R_H==0.)
+
+        namespace["LocalState"] = TemporalState
+        namespace["solve_hox_qssa"] = supplied_hox
+        self.close = FunctionType(close_local_chemistry.__code__, namespace)
+        coefficients = {
+            species:tuple((event,row[species]) for event,row in TENDENCY_COEFFICIENTS.items()
+                          if row[species] != 0.)
+            for species in DYNAMIC_SPECIES}
+
+        def velocity(state, background, forcing):
+            # Same accepted scalar solvers and event evaluator; omit only the
+            # large diagnostic/contribution trace on routine ODE evaluations.
+            o1d = namespace["solve_o1d_qssa"](state,background,forcing)
+            h2o2 = peroxide(state.OH,state.HO2,background,forcing)
+            b1 = namespace["solve_b1_qssa"](state,background,forcing,o1d.value)
+            _, barth = namespace["barth_sources"](state,background)
+            b0 = namespace["solve_b0_qssa"](state,background,forcing,o1d.value,b1.value,barth)
+            algebraic = AlgebraicState(o1d.value,state.OH,state.HO2,h2o2.value,b0.value,b1.value)
+            events = namespace["evaluate_fluxes"](state,background,forcing,algebraic)
+            totals = {species:sum(events[event]*weight for event,weight in rows)
+                      for species,rows in coefficients.items()}
+            production = sum(events[event]*weight for event,weight in OH_EVENT_COEFFICIENTS.items()
+                             if weight > 0)
+            loss = sum(events[event]*(-weight) for event,weight in OH_EVENT_COEFFICIENTS.items()
+                       if weight < 0)
+            oh = production-loss
+            return np.array([totals["O"],totals["O3"],totals["H"],oh,totals["R_H"]-oh,
+                             totals["Delta"]])
+
+        self.close.temporal_velocity = velocity
+
+
+close_temporal_chemistry = TemporalClosure().close
+
+
+def temporal_rhs(time_s, concentrations, *, background, forcing,
+                 chemistry=close_temporal_chemistry):
+    """Six-species RHS; only the accepted OH equilibrium timescale is relaxed."""
+    if not np.isfinite(time_s):
+        raise ValueError("time_s must be finite")
+    values = np.asarray(concentrations, dtype=float)
+    if values.shape != (6,):
+        raise ValueError("temporal concentrations must have shape (6,)")
+    state = TemporalState(*values)
+    if hasattr(chemistry,"temporal_velocity"):
+        result = chemistry.temporal_velocity(state,background,forcing)
+    else:
+        closure = chemistry(state, background, forcing)
+        old = closure.tendencies
+        oh = closure.diagnostics.P_OH-closure.diagnostics.L_OH
+        result = np.array([old.O, old.O3, old.H, oh, old.R_H-oh, old.Delta])
+    if not np.all(np.isfinite(result)):
+        raise FloatingPointError("nonfinite temporal tendency")
+    return result
+
+
 @dataclass(frozen=True)
 class ReferenceEquinoxSolarCycle:
     """Frozen reference, not calendar astronomy: 45N, declination 0, LST 0..24h."""
@@ -252,6 +362,9 @@ class ReferenceColumnRHS:
     bytecode and root guard are accepted originals with memoized coefficients.
     """
 
+    species_count = 5
+    local_velocity = staticmethod(local_rhs)
+
     def __init__(self, nir_provider=None, background=None, cycle=None, progress=None):
         self.background = load_baseline_background() if background is None else background
         self.cycle = ReferenceEquinoxSolarCycle() if cycle is None else cycle
@@ -306,7 +419,7 @@ class ReferenceColumnRHS:
         self.evaluations += 1
         for i, (bg, forcing) in enumerate(zip(self.locals, forcings, strict=True)):
             try:
-                derivative[i] = local_rhs(time_s, concentration[i], background=bg,
+                derivative[i] = self.local_velocity(time_s, concentration[i], background=bg,
                                           forcing=forcing, chemistry=self.chemistry)
             except qssa.QSSAError as error:
                 failure = PhysicalClosureFailure(time_s, i + 50, concentration[i], forcing, error)
@@ -346,6 +459,47 @@ class ReferenceColumnRHS:
         return block_diag([csc_matrix(block) for block in blocks], format="csc")
 
 
+class TemporalColumnRHS(ReferenceColumnRHS):
+    """M5-only 306 equations; accepted radiation and four retained QSSA."""
+
+    species_count = 6
+    local_velocity = staticmethod(temporal_rhs)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.chemistry = TemporalClosure().close
+
+    def __call__(self, time_s, log_state):
+        values = np.asarray(log_state, dtype=float)
+        if values.shape != (306,) or not np.all(np.isfinite(values)):
+            raise ValueError("log_state must have 306 finite values")
+        if np.any(np.abs(values) > 700):
+            raise FloatingPointError("log-state representation range exceeded; no clipping")
+        concentration = np.exp(values).reshape(51, 6)
+        return (self.physical_tendencies(time_s, concentration)/concentration).ravel()
+
+    def newton_jacobian(self, time_s, log_state):
+        coordinates = _CycleCoordinates(self, np.zeros(51, dtype=bool),
+                                        linear_species=())
+        return coordinates.newton_jacobian(time_s, log_state)
+
+
+def temporal_bootstrap_seeds(rhs):
+    """Partition numerical night seeds using the golden closure, never a closure in time."""
+    result = []
+    for old in bootstrap_seeds(rhs.background):
+        _, forcings = rhs.forcing(0., old)
+        six = np.empty((51, 6))
+        for level, forcing in enumerate(forcings):
+            algebraic = close_local_chemistry(
+                LocalState(*old[level]), rhs.locals[level], forcing).algebraic
+            six[level] = [*old[level, :3], algebraic.OH, algebraic.HO2, old[level, 4]]
+        if np.any(six <= 0):
+            raise ValueError("night bootstrap needs positive OH/HO2 seeds")
+        result.append(six)
+    return tuple(result)
+
+
 class _CycleCoordinates:
     """Exact coordinate change: selected illuminated species linear, others log.
 
@@ -356,22 +510,24 @@ class _CycleCoordinates:
 
     def __init__(self, rhs, illuminated, delta_scale=1e6, linear_species=(4,)):
         self.rhs = rhs
-        self.linear = np.zeros((51, 5), dtype=bool)
+        self.shape = (51, getattr(rhs, "species_count", 5))
+        self.illuminated = np.asarray(illuminated)
+        self.linear = np.zeros(self.shape, dtype=bool)
         self.linear[:, list(linear_species)] = np.asarray(illuminated)[:,None]
-        self.scale = np.broadcast_to(delta_scale, (51, 5))
+        self.scale = np.broadcast_to(delta_scale, self.shape)
 
     def encode(self, concentration):
-        result = np.empty((51, 5))
+        result = np.empty(self.shape)
         result[~self.linear] = np.log(concentration[~self.linear])
         result[self.linear] = concentration[self.linear]/self.scale[self.linear]
         return result.ravel()
 
     def decode(self, values):
-        values = np.asarray(values).reshape(51, 5)
+        values = np.asarray(values).reshape(self.shape)
         if (np.any(values[self.linear] < 0) or not np.all(np.isfinite(values))
                 or np.any(np.abs(values[~self.linear]) > 700)):
             raise FloatingPointError("invalid coordinate trial; no clipping")
-        result = np.empty((51, 5))
+        result = np.empty(self.shape)
         result[~self.linear] = np.exp(values[~self.linear])
         result[self.linear] = values[self.linear]*self.scale[self.linear]
         return result
@@ -379,13 +535,13 @@ class _CycleCoordinates:
     def __call__(self, time, values):
         state = self.decode(values)
         denominator = np.where(self.linear, self.scale, state)
-        return (self.rhs.physical_tendencies(time, state, self.linear[:,4])/denominator).ravel()
+        return (self.rhs.physical_tendencies(time, state, self.illuminated)/denominator).ravel()
 
     def newton_jacobian(self, time, values):
         from scipy.sparse import block_diag, csc_matrix
 
         state = self.decode(values)
-        _, forcings = self.rhs.forcing(time, state, self.linear[:,4])
+        _, forcings = self.rhs.forcing(time, state, self.illuminated)
         blocks = []
         for level, (background, forcing) in enumerate(zip(self.rhs.locals, forcings, strict=True)):
             def velocity(coordinates):
@@ -394,15 +550,15 @@ class _CycleCoordinates:
                                                self.scale[level,self.linear[level]])
                 denominator = np.where(self.linear[level], self.scale[level], physical)
                 try:
-                    return local_rhs(time, physical, background=background, forcing=forcing,
+                    return self.rhs.local_velocity(time, physical, background=background, forcing=forcing,
                                      chemistry=self.rhs.chemistry)/denominator
                 except qssa.QSSAError as error:
                     raise PhysicalClosureFailure(time, level+50, physical, forcing, error) from error
 
-            coordinates = np.asarray(values).reshape(51, 5)[level]
+            coordinates = np.asarray(values).reshape(self.shape)[level]
             base = velocity(coordinates)
-            block = np.empty((5, 5))
-            for column in range(5):
+            block = np.empty((self.shape[1], self.shape[1]))
+            for column in range(self.shape[1]):
                 increment = (max(1e-10, abs(coordinates[column])*1e-4)
                              if self.linear[level,column] else 1e-4)
                 block[:, column] = _domain_difference(velocity, coordinates, column, increment, base)
@@ -453,8 +609,8 @@ class NIRForcingTable:
 def cycle_difference(reference, trial, absolute_floor_cm3=1.0):
     """Per-species max relative/absolute error with a declared near-zero floor."""
     a, b = np.asarray(reference), np.asarray(trial)
-    if a.shape != (51, 5) or b.shape != a.shape:
-        raise ValueError("cycle states must have shape (51,5)")
+    if a.ndim != 2 or a.shape[0] != 51 or a.shape[1] not in (5, 6) or b.shape != a.shape:
+        raise ValueError("cycle states must have shape (51,5) or (51,6)")
     floor = np.maximum(absolute_floor_cm3, 1e-6 * np.max(a, axis=0))
     relevant = np.maximum(a, b) > floor
     absolute = np.abs(b - a)
@@ -583,7 +739,8 @@ def _integrate_physical_segment(rhs, start, end, initial, *, method, rtol,
         njev += solver.njev
         if not restart:
             break
-    return SimpleNamespace(y=state[:, None], sol=OdeSolution(times, interpolants),
+    return SimpleNamespace(t=np.asarray(times),initial_y=initial.copy(),
+                           y=state[:, None], sol=OdeSolution(times, interpolants),
                            nfev=nfev, njev=njev, trial_rejections=rejections,
                            success=True)
 
@@ -595,18 +752,20 @@ def integrate_reference_cycle(rhs, initial_cm3, *, method="BDF", rtol=2e-6,
     from scipy.sparse import csr_matrix, eye, kron
 
     initial = np.asarray(initial_cm3, dtype=float)
-    if initial.shape != (51, 5) or not np.all(np.isfinite(initial)) or np.any(initial <= 0):
-        raise ValueError("log-coordinate initial state must be finite and positive (51,5)")
+    count = getattr(rhs, "species_count", 5)
+    dimension = 51*count
+    if initial.shape != (51, count) or not np.all(np.isfinite(initial)) or np.any(initial <= 0):
+        raise ValueError(f"log-coordinate initial state must be finite and positive (51,{count})")
     if method not in ("BDF", "Radau"):
         raise ValueError("use BDF or Radau")
     if not 0 <= start_time_s < end_time_s <= 86400:
         raise ValueError("integration interval must lie inside one reference day")
     # UV depends on every O/O3 node. Other local state variables only couple
     # their own height. This structural sparsity keeps all radiation feedback.
-    pattern = np.zeros((255, 255), dtype=bool)
-    pattern[:, np.arange(255) % 5 < 2] = True
+    pattern = np.zeros((dimension, dimension), dtype=bool)
+    pattern[:, np.arange(dimension) % count < 2] = True
     for level in range(51):
-        pattern[level*5:(level+1)*5, level*5:(level+1)*5] = True
+        pattern[level*count:(level+1)*count, level*count:(level+1)*count] = True
     # Restart at every physical tangent event to change coordinates exactly.
     shadow_sza = 180-np.rad2deg(np.arcsin(6370/(6370+np.arange(50,101))))
     morning = ((0.5-np.arccos(np.cos(np.deg2rad(shadow_sza)) /
@@ -615,14 +774,21 @@ def integrate_reference_cycle(rhs, initial_cm3, *, method="BDF", rtol=2e-6,
     boundaries = np.r_[start_time_s,
                        boundaries[(boundaries>start_time_s)&(boundaries<end_time_s)],
                        end_time_s]
-    block = kron(eye(51), csr_matrix(np.ones((5,5))), format="csc")
+    block = kron(eye(51), csr_matrix(np.ones((count,count))), format="csc")
     current = initial.copy()
     segments = []
     for index, (start, end) in enumerate(zip(boundaries[:-1], boundaries[1:], strict=True)):
         illuminated = _reference_shell_paths(float(rhs.cycle.sza((start+end)/2))).illuminated
+        scales = ([1e10,1e10,1e4,1e5,1e6] if count == 5 else
+                  [1e10,1e10,1e4,1e5,1e5,1e6])
+        if count == 6:
+            # Control small OH/HO2 directly instead of imposing a 0.001 cm^-3
+            # absolute error on populations many orders of magnitude below it.
+            scales = np.broadcast_to(scales, (51,6)).copy()
+            scales[:,3:5] = np.maximum(1.,current[:,3:5])
         coordinates = _CycleCoordinates(rhs, illuminated,
-                                        delta_scale=np.array([1e10,1e10,1e4,1e5,1e6]),
-                                        linear_species=range(5))
+                                        delta_scale=np.array(scales),
+                                        linear_species=range(count))
         part = _integrate_physical_segment(
             coordinates, start, end, coordinates.encode(current), method=method,
             rtol=rtol, atol=atol_log, max_step=max_step_s,
@@ -636,13 +802,23 @@ def integrate_reference_cycle(rhs, initial_cm3, *, method="BDF", rtol=2e-6,
         query = np.atleast_1d(np.asarray(time_s, dtype=float))
         if np.any(query < start_time_s) or np.any(query > end_time_s):
             raise ValueError("dense query outside reference cycle")
-        result = np.empty((255, len(query)))
+        result = np.empty((dimension, len(query)))
         for index, (part, coordinates) in enumerate(segments):
             mask = (query >= boundaries[index]) & (query <= boundaries[index+1])
             if np.any(mask):
-                result[:,mask] = np.column_stack([
-                    np.log(coordinates.decode(value)).ravel()
-                    for value in part.sol(query[mask]).T])
+                columns = []
+                for time, value in zip(query[mask],part.sol(query[mask]).T,strict=True):
+                    if time == part.t[0]:
+                        value = part.initial_y
+                    elif time == part.t[-1]:
+                        value = part.y[:,-1]
+                    physical = coordinates.decode(value)
+                    if np.any(physical == 0):
+                        raise FloatingPointError(
+                            f"zero dense concentration at t={time}; indices "
+                            f"{np.argwhere(physical == 0).tolist()}; no clipping")
+                    columns.append(np.log(physical).ravel())
+                result[:,mask] = np.column_stack(columns)
         return result[:,0] if np.ndim(time_s)==0 else result
 
     times = (np.unique(np.r_[np.arange(0,86401,300), rhs.cycle.dawn_window_s(), boundaries])
@@ -652,7 +828,7 @@ def integrate_reference_cycle(rhs, initial_cm3, *, method="BDF", rtol=2e-6,
                              nfev=sum(p.nfev for p, _ in segments),
                              njev=sum(p.njev for p, _ in segments), success=True)
     result.trial_rejections = sum(p.trial_rejections for p, _ in segments)
-    state = np.exp(result.y).T.reshape(-1, 51, 5)
+    state = np.exp(result.y).T.reshape(-1, 51, count)
     if not np.all(np.isfinite(state)) or np.any(state <= 0):
         raise FloatingPointError("invalid physical cycle state")
     return result, state
@@ -668,6 +844,8 @@ def periodic_spinup(rhs, initial_cm3, *, max_cycles=100, tolerance=0.001,
         result, states = integrate_reference_cycle(rhs, current, **solver)
         difference = cycle_difference(current, states[-1], absolute_tolerance_cm3)
         history.append(difference)
+        if hasattr(rhs,"cycle_completed"):
+            rhs.cycle_completed(day,states[-1],difference)
         if progress is not None:
             progress(day, difference)
         if (np.all(difference["relative_max"] <= tolerance)

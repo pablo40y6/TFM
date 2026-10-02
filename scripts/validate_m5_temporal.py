@@ -26,16 +26,20 @@ from tfm_photochem.m4d_reconstruction.sources import load_bands, load_solar, loa
 from tfm_photochem.m4d_reconstruction.spectroscopy import SpectralSources
 from tfm_photochem.m4d_reconstruction.transfer import VoigtColumn, compute_classic_rates
 from tfm_photochem.m5_temporal import (
+    TEMPORAL_SPECIES,
     InitializationBlocker,
     NIRForcingTable,
     PhysicalClosureFailure,
-    ReferenceColumnRHS,
-    bootstrap_seeds,
+    TemporalColumnRHS,
+    TemporalState,
+    cycle_difference,
     integrate_reference_cycle,
     local_rhs,
     periodic_spinup,
     qssa_domain_witness,
     reject_nonunique_dark_equilibrium,
+    temporal_bootstrap_seeds,
+    temporal_rhs,
 )
 
 
@@ -222,13 +226,77 @@ def prepare_nir(args):
     raise RuntimeError("NIR interpolation refinement did not reach 0.5%")
 
 
+def retained_closure_audit(rhs, times, states):
+    """Four QSSA only; the OH residual is now its exact temporal derivative."""
+    residual_max = family_max = 0.
+    for time, column in zip(times, states, strict=True):
+        _, forcings = rhs.forcing(time, column)
+        for level, forcing in enumerate(forcings):
+            c = rhs.chemistry(TemporalState(*column[level]), rhs.locals[level], forcing)
+            d, a, r = c.diagnostics, c.algebraic, c.residuals
+            residual = [r.res_O1D, r.res_H2O2, r.res_B1, r.res_B0]
+            scales = [max(d.P_O1D,d.L_O1D*a.O1D,1e-20),
+                      max(d.P_H2O2,d.L_H2O2*a.H2O2,1e-20),
+                      max(d.P_B1,d.L_B1*a.B1,1e-20),
+                      max(d.P_B0,d.L_B0*a.B0,1e-20)]
+            residual_max = max(residual_max,float(np.max(np.abs(residual)/scales)))
+            dy = temporal_rhs(time,column[level],background=rhs.locals[level],
+                              forcing=forcing,chemistry=rhs.chemistry)
+            flux_scale = max(sum(abs(v) for v in c.fluxes.values()),1e-20)
+            family_max = max(family_max,abs(dy[3]+dy[4]-c.tendencies.R_H)/flux_scale)
+    if residual_max > 1e-10 or family_max > 1e-12:
+        raise RuntimeError("retained QSSA / dynamic HOx budget audit failed")
+    return dict(retained_QSSA_scaled_max=residual_max, family_budget_scaled_max=family_max)
+
+
+def onset_validation(rhs, cache):
+    """Reproduce the old anchor, then evolve OH/HO2 through the former domain exit."""
+    evidence = json.loads((Path(__file__).resolve().parents[1]/
+                           "evidence/m5_temporal_evidence.json").read_text())
+    anchor = evidence["probe_anchor"]
+    time = anchor["time_s"]
+    old = np.array(anchor["column_state_cm3"])
+    _, forcings = rhs.forcing(time,old)
+    initial = np.empty((51,6))
+    golden_max = 0.
+    for level, forcing in enumerate(forcings):
+        golden = close_local_chemistry(LocalState(*old[level]),rhs.locals[level],forcing)
+        initial[level] = [*old[level,:3],golden.algebraic.OH,golden.algebraic.HO2,old[level,4]]
+        new = rhs.chemistry(TemporalState(*initial[level]),rhs.locals[level],forcing)
+        golden_max = max(golden_max,max(abs(getattr(new.algebraic,k)-v)
+                                       for k,v in asdict(golden.algebraic).items()))
+    times = np.unique(np.r_[np.linspace(time,19300.,61),19223.755728382974,19260.])
+    trajectories = []
+    for method, rtol, atol in (("BDF",2e-6,1e-8),("BDF",2e-8,1e-10),("Radau",2e-8,1e-10)):
+        solution, states = integrate_reference_cycle(
+            rhs,initial,method=method,rtol=rtol,atol_log=atol,start_time_s=time,
+            end_time_s=19300.,output_times_s=times,max_step_s=1.)
+        trajectories.append(states)
+    audit = retained_closure_audit(rhs,times,trajectories[-1])
+    comparisons = []
+    for trial in (trajectories[0],trajectories[2]):
+        comparisons.append(max(float(np.max(cycle_difference(a,b)["relative_max"]))
+                               for a,b in zip(trajectories[1],trial,strict=True)))
+    if max(comparisons) > .005:
+        raise RuntimeError("onset numerical convergence exceeds 0.5%")
+    np.savez_compressed(cache/"six-species-onset.npz",time_s=times,state_cm3=trajectories[-1],
+                        state_names=TEMPORAL_SPECIES)
+    return dict(decision="PASS old dawn blocker crossed",start_time_s=time,end_time_s=19300.,
+                golden_algebraic_absolute_max=golden_max,
+                BDF_base_tight_relative_max=comparisons[0], BDF_Radau_relative_max=comparisons[1],
+                physical_min_cm3=float(trajectories[-1].min()),
+                top_OH_HO2_cm3=trajectories[-1][:,-1,3:5].tolist(),time_s=times.tolist(),**audit)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--sources", type=Path, required=True)
     parser.add_argument("--hitran", type=Path, required=True)
-    parser.add_argument("--mode", choices=("periodic", "dark-regression", "domain-regression", "forcing"), default="periodic")
+    parser.add_argument("--mode", choices=("periodic", "onset", "dark-regression", "domain-regression", "forcing"), default="periodic")
     parser.add_argument("--cache", type=Path, default=Path(".m5-derived-cache"))
     parser.add_argument("--output", type=Path, default=Path("evidence/m5_reference_cycle.npz"))
+    parser.add_argument("--seed-cycles-dir", type=Path,
+                        help="Reuse local spin-up trajectories; recheck physical closure, period and seeds")
     args = parser.parse_args()
     if args.mode == "dark-regression":
         return dark_regression(args)
@@ -252,14 +320,20 @@ def main() -> int:
             else:
                 raise AssertionError("original scalar closure no longer rejects the recorded state")
         print(json.dumps({"decision":"PASS recorded OH/HO2 domain-exit regression",
-                          "M5_decision":"NO-GO", "independent_cases":len(cases)}))
+                          "historical_M5_decision":"NO-GO before temporal OH/HO2 relaxation",
+                          "independent_cases":len(cases)}))
         return 0
     table, audit = prepare_nir(args)
     if args.mode == "forcing":
         print(json.dumps({"decision": "PASS forcing preparation only", "NIR": audit}))
         return 0
-    rhs = ReferenceColumnRHS(table,progress=lambda t,n,sza:
+    rhs = TemporalColumnRHS(table,progress=lambda t,n,sza:
                              print(f"RHS t={t:.3f}s SZA={sza:.6f} evaluations={n}",file=sys.stderr,flush=True))
+    onset = onset_validation(rhs,args.cache)
+    print("Onset validation "+json.dumps(onset),file=sys.stderr,flush=True)
+    if args.mode == "onset":
+        print(json.dumps(onset,indent=2))
+        return 0
     def rejected_trial(t, state, step, error, count):
         if count <= 10 or count & (count-1) == 0:
             print(f"Rejected trial {count}: accepted t={t:.12g}s step={step:.6g}s "
@@ -278,7 +352,23 @@ def main() -> int:
                   file=sys.stderr,flush=True)
     rhs.accepted_step = accepted_step
     results = []
-    for family, seed in enumerate(bootstrap_seeds(rhs.background)):
+    if args.seed_cycles_dir is not None:
+        for family in range(3):
+            with np.load(args.seed_cycles_dir/f"seed-{family}-converged.npz") as saved:
+                states, times = saved["state"], saved["time"]
+                initial = saved["initial"]
+                if (states.shape != (len(times),51,6) or not np.all(np.isfinite(states))
+                        or np.any(states <= 0) or times[0] != 0 or times[-1] != 86400):
+                    raise ValueError("invalid locally generated spin-up trajectory")
+                np.testing.assert_allclose(states[0],initial,rtol=5e-15,atol=0)
+                error = cycle_difference(initial,states[-1])
+                if (np.max(error["relative_max"]) > .001
+                        or np.max(error["near_zero_absolute_max"]) > 1.):
+                    raise RuntimeError("cached trajectory is not periodic")
+                retained_closure_audit(rhs,times,states)
+                results.append(dict(cycles=int(saved["cycles"]),state=states,
+                                    convergence=[error]))
+    for family, seed in enumerate(() if results else temporal_bootstrap_seeds(rhs)):
         def progress(day, error):
             print(f"Seed {family} day {day}: relative={error['relative_max'].tolist()}",
                   file=sys.stderr, flush=True)
@@ -291,10 +381,8 @@ def main() -> int:
                               "altitude_km": error.altitude_km,
                               "physical_state_cm3": error.state.tolist(),
                               "forcing_s1": asdict(error.forcing),
-                              "cause": str(error.cause), "NIR": audit,
-                              "original_QSSA":qssa_domain_witness(
-                                  LocalState(*error.state),
-                                  rhs.background.local_background_at(error.altitude_km),error.forcing)}, indent=2))
+                              "cause": str(error.cause), "NIR": audit, "onset":onset,
+                              "species":TEMPORAL_SPECIES}, indent=2))
             return 2
 
     def comparison(reference, trial):
@@ -327,21 +415,13 @@ def main() -> int:
         return 2
     algebraic = np.empty((len(solution.t),51,6))
     frequencies = np.empty((len(solution.t),51,11))
-    residual_max = 0.0
     hydrogen_budget_max = 0.0
     for time_index, (time_s, state) in enumerate(zip(solution.t,independent,strict=True)):
         uv, forcings = rhs.forcing(time_s,state)
         for level, forcing in enumerate(forcings):
-            closure = rhs.chemistry(LocalState(*state[level]),rhs.locals[level],forcing)
+            closure = rhs.chemistry(TemporalState(*state[level]),rhs.locals[level],forcing)
             algebraic[time_index,level]=list(asdict(closure.algebraic).values())
             frequencies[time_index,level]=list(asdict(forcing).values())
-            d=closure.diagnostics
-            scales=[max(d.P_O1D,d.L_O1D*closure.algebraic.O1D,1e-20),
-                    max(d.P_OH,d.L_OH,1e-20),max(state[level,3],1.0),
-                    max(d.P_H2O2,d.L_H2O2*closure.algebraic.H2O2,1e-20),
-                    max(d.P_B1,d.L_B1*closure.algebraic.B1,1e-20),
-                    max(d.P_B0,d.L_B0*closure.algebraic.B0,1e-20)]
-            residual_max=max(residual_max,float(np.max(np.abs(list(asdict(closure.residuals).values()))/scales)))
             f=closure.fluxes
             budget=2*(f['H2O2_PHOTOLYSIS']+f['H2O_PHOTOLYSIS_A']+f['O1D_H2O']+f['O1D_H2']
                       -f['H_HO2_H2O_O']-f['H_HO2_H2_O2']-f['OH_OH']-f['OH_HO2']-f['HO2_HO2'])
@@ -349,21 +429,24 @@ def main() -> int:
             hydrogen_budget_max=max(hydrogen_budget_max,abs(actual-budget)/
                                     max(abs(actual),abs(budget),sum(abs(v) for v in f.values()),1e-20))
         assert np.all(frequencies[time_index,~uv.illuminated]==0)
-    if residual_max>1e-10 or hydrogen_budget_max>1e-12:
+    retained = retained_closure_audit(rhs,solution.t,independent)
+    if hydrogen_budget_max>1e-12:
         raise RuntimeError("QSSA/family budget failed")
     args.output.parent.mkdir(parents=True,exist_ok=True)
     np.savez_compressed(args.output,time_s=solution.t,altitude_km=rhs.background.z_chem_km,
                         sza_deg=rhs.cycle.sza(solution.t),state_cm3=independent,
-                        state_names=["O","O3","H","R_H","Delta"],algebraic_cm3=algebraic,
-                        algebraic_names=["O1D","OH","HO2","H2O2","B0","B1"],
+                        state_names=TEMPORAL_SPECIES,R_H_cm3=independent[:,:,3]+independent[:,:,4],
+                        algebraic_cm3=algebraic[:,:,[0,3,4,5]],
+                        algebraic_names=["O1D","H2O2","B0","B1"],
                         forcing_s1=frequencies,forcing_names=list(asdict(forcings[0])),
                         dawn_window_s=rhs.cycle.dawn_window_s())
     print(json.dumps({"decision":"GO M5A","cycles":[r["cycles"] for r in results],
                       "cycle_to_cycle":[{k:v.tolist() for k,v in r["convergence"][-1].items()} for r in results],
                       "seed_comparison":seed_comparison,"tighter_BDF":tolerance_check,
-                      "BDF_Radau":radau_check,"QSSA_scaled_max":residual_max,
+                      "BDF_Radau":radau_check,
                       "hydrogen_budget_max":hydrogen_budget_max,"NIR":audit,
-                      "series":str(args.output)},indent=2))
+                      "series":str(args.output), "onset":onset,
+                      **retained},indent=2))
     return 0
 
 
