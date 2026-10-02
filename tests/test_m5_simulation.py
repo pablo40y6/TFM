@@ -35,7 +35,7 @@ def test_api_rejects_missing_or_nonphysical_initialization_and_unsupported_atmos
                    {'output_times_s':[0,0,10]}):
         with pytest.raises(ValueError):
             simulate(**(base|change))
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         simulate(start,start+timedelta(seconds=10),45,0,nir_provider=base['nir_provider'])
 
 

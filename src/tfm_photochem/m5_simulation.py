@@ -1,4 +1,4 @@
-"""M5B finite-horizon simulation with explicit initial state and frozen atmosphere.
+"""M5B golden finite-horizon engine and separate M5C background/initialization routes.
 
 Chemistry and numerical segment solver are the accepted M5A implementations.
 Only the time-to-SZA provider and its physical tangent times are generalized.
@@ -70,6 +70,7 @@ class SimulationResult:
     forcing_s1: np.ndarray
     forcing_names: tuple[str, ...]
     metadata: dict
+    background_fields: dict | None = None
 
     def save(self, path):
         """Derived time-height output only; contains no raw spectral source data."""
@@ -78,10 +79,10 @@ class SimulationResult:
             state_names=DYNAMIC_PEROXIDE_SPECIES, R_H_cm3=self.R_H_cm3,
             algebraic_cm3=self.algebraic_cm3, algebraic_names=("O1D","B0","B1"),
             forcing_s1=self.forcing_s1, forcing_names=self.forcing_names,
-            metadata=json.dumps(self.metadata,sort_keys=True))
+            metadata=json.dumps(self.metadata,sort_keys=True),**(self.background_fields or {}))
 
 
-def simulate(start_datetime, end_datetime, latitude, longitude, initial_state, *,
+def _simulate_frozen(start_datetime, end_datetime, latitude, longitude, initial_state, *,
              atmosphere="frozen_reference", nir_provider=None, geometry=None,
              method="BDF", rtol=2e-6, atol=1e-8, max_step_s=120.,
              output_step_s=300., output_times_s=None,
@@ -180,3 +181,34 @@ def simulate(start_datetime, end_datetime, latitude, longitude, initial_state, *
         atol=atol,max_step_s=max_step_s,**statistics))
     return SimulationResult(times,rhs.background.z_chem_km.copy(),clock.sza(times),states,
         states[:,:,3]+states[:,:,4],algebraic,forcing,forcing_names,metadata)
+
+
+def simulate(start_datetime,end_datetime,latitude,longitude,initial_state=None,*,
+             initialization=None,atmosphere="frozen_reference",activity=None,
+             background_step_s=300.,radiation_step_s=3600.,radiation_inputs=None,cache=None,
+             atmosphere_provider=None,dynamic_nir=None,**solver):
+    """M5C API: exactly one explicit state or approximate reference_noon route.
+
+    Dynamic MSIS requires HistoricalNIRInputs with authorized local sources or
+    already precomputed dynamic_nir; no downloads or frozen-NIR substitution.
+    The explicit state route skips noon finding/fast solving/bootstrap entirely.
+    """
+    if (initial_state is None)==(initialization is None):
+        raise ValueError("choose exactly one of initial_state or initialization='reference_noon'")
+    if initialization is not None and initialization!="reference_noon":
+        raise ValueError("the only automatic policy is reference_noon, not climatology")
+    if atmosphere not in ("frozen_reference","dynamic_msis"):
+        raise ValueError("atmosphere must be frozen_reference or dynamic_msis")
+    if initial_state is not None:
+        checked=np.asarray(initial_state,dtype=float)
+        if checked.shape!=(51,7) or not np.all(np.isfinite(checked)) or np.any(checked<0):
+            raise ValueError("initial_state requires finite nonnegative concentrations, shape (51,7)")
+    if atmosphere=="frozen_reference" and initial_state is not None:
+        return _simulate_frozen(start_datetime,end_datetime,latitude,longitude,initial_state,
+                                atmosphere=atmosphere,**solver)
+    from .m5_dynamic import simulate_with_background
+    return simulate_with_background(start_datetime,end_datetime,latitude,longitude,
+        initial_state=initial_state,initialization=initialization,atmosphere=atmosphere,
+        activity=activity,background_step_s=background_step_s,radiation_step_s=radiation_step_s,
+        radiation_inputs=radiation_inputs,
+        cache=cache,atmosphere_provider=atmosphere_provider,dynamic_nir=dynamic_nir,**solver)
