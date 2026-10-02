@@ -14,6 +14,7 @@ from types import FunctionType
 import numpy as np
 from scipy.integrate import solve_ivp
 
+from tfm_photochem.historical_2020 import kinetics
 from tfm_photochem.historical_2020.background import load_baseline_background
 from tfm_photochem.historical_2020.local_closure import close_local_chemistry
 from tfm_photochem.historical_2020.local_types import LocalForcing, LocalState
@@ -26,13 +27,19 @@ from tfm_photochem.m4d_reconstruction.sources import load_bands, load_solar, loa
 from tfm_photochem.m4d_reconstruction.spectroscopy import SpectralSources
 from tfm_photochem.m4d_reconstruction.transfer import VoigtColumn, compute_classic_rates
 from tfm_photochem.m5_temporal import (
-    TEMPORAL_SPECIES,
+    DYNAMIC_PEROXIDE_SPECIES as TEMPORAL_SPECIES,
+)
+from tfm_photochem.m5_temporal import (
+    DynamicPeroxideColumnRHS as TemporalColumnRHS,
+)
+from tfm_photochem.m5_temporal import (
+    DynamicPeroxideState as TemporalState,
+)
+from tfm_photochem.m5_temporal import (
     InitializationBlocker,
     NIRForcingTable,
     PhysicalClosureFailure,
-    TemporalColumnRHS,
     TemporalPositivityBlocker,
-    TemporalState,
     cycle_difference,
     dark_oh_positivity_preflight,
     integrate_reference_cycle,
@@ -40,8 +47,21 @@ from tfm_photochem.m5_temporal import (
     periodic_spinup,
     qssa_domain_witness,
     reject_nonunique_dark_equilibrium,
-    temporal_bootstrap_seeds,
-    temporal_rhs,
+)
+from tfm_photochem.m5_temporal import (
+    TemporalColumnRHS as HistoricalColumnRHS,
+)
+from tfm_photochem.m5_temporal import (
+    TemporalState as HistoricalState,
+)
+from tfm_photochem.m5_temporal import (
+    dynamic_peroxide_bootstrap_seeds as temporal_bootstrap_seeds,
+)
+from tfm_photochem.m5_temporal import (
+    dynamic_peroxide_rhs as temporal_rhs,
+)
+from tfm_photochem.m5_temporal import (
+    temporal_rhs as historical_rhs,
 )
 
 
@@ -230,7 +250,7 @@ def prepare_nir(args):
 
 def positivity_preflight():
     """Mandatory stop: a real retained QSSA obstruction in natural reference night."""
-    rhs = TemporalColumnRHS()
+    rhs = HistoricalColumnRHS()
     local = rhs.background.local_background_at(100)
     try:
         dark_oh_positivity_preflight(local)
@@ -247,7 +267,7 @@ def positivity_preflight():
     probes = []
     for method,tolerance in (("BDF",2e-6),("BDF",2e-9),("Radau",2e-9)):
         def derivative(time,state):
-            return temporal_rhs(time,state,background=local,forcing=dark)
+            return historical_rhs(time,state,background=local,forcing=dark)
         def event(time,state):
             return state[3]-target
         event.terminal = True
@@ -262,11 +282,11 @@ def positivity_preflight():
         state = result.y[:,-1]
         _, actual = rhs.forcing(time,np.broadcast_to(state,(51,6)))
         assert all(v == 0. for f in actual for v in asdict(f).values())
-        closure = rhs.chemistry(TemporalState(*state),local,dark)
+        closure = rhs.chemistry(HistoricalState(*state),local,dark)
         boundary = state.copy()
         boundary[3] = 0.
         try:
-            rhs.chemistry(TemporalState(*boundary),local,dark)
+            rhs.chemistry(HistoricalState(*boundary),local,dark)
         except Exception as error:
             from tfm_photochem.historical_2020.qssa import SingularQSSAError
             if not isinstance(error,SingularQSSAError):
@@ -287,6 +307,68 @@ def positivity_preflight():
                 interpretation="Boundary preflight counterexample; not a claim of domain exit in nominal spin-up")
 
 
+def dynamic_peroxide_preflight():
+    """Physical boundaries, retained denominators, and natural-night witness crossing."""
+    rhs = TemporalColumnRHS()
+    dark = LocalForcing(**{key:0. for key in asdict(BASE_PREFLIGHT_FORCING())})
+    rng = np.random.default_rng(7517)
+    minimum = np.full(3, np.inf)
+    boundary_scaled_min = np.zeros(7)
+    for local in rhs.locals:
+        for _ in range(12):
+            state = 10**rng.uniform(-8,np.log10(local.M)-3,7)
+            for forcing in (dark, BASE_PREFLIGHT_FORCING()):
+                for index in range(7):
+                    trial = state.copy()
+                    trial[index] = 0.
+                    c = rhs.chemistry(TemporalState(*trial),local,forcing)
+                    d = temporal_rhs(0.,trial,background=local,forcing=forcing,chemistry=rhs.chemistry)
+                    scale = max(sum(abs(v) for v in c.fluxes.values()),1e-30)
+                    boundary_scaled_min[index] = min(boundary_scaled_min[index],d[index]/scale)
+                    minimum = np.minimum(minimum,[c.diagnostics.L_O1D,c.diagnostics.L_B0,c.diagnostics.L_B1])
+    if np.min(boundary_scaled_min) < -32*np.finfo(float).eps or np.min(minimum)<=0:
+        raise RuntimeError("physical positivity / remaining QSSA denominator blocker")
+    local = rhs.locals[-1]
+    production = float(kinetics.k_ho2_ho2(local.T,local.M)*1000.**2)
+    peroxide = 1e-5*local.M
+    oh = production/(kinetics.k_oh_h2o2()*peroxide)
+    initial = np.array([0.,0.,0.,oh,1000.,peroxide,0.])
+    times = np.unique(np.r_[np.linspace(0.,10000.,101),4289.881963453,4333.22845])
+    probes = []
+    for method,tolerance in (("BDF",2e-6),("BDF",2e-9),("Radau",2e-9)):
+        result = solve_ivp(lambda t,y:temporal_rhs(t,y,background=local,forcing=dark),
+                           (0.,10000.),initial,method=method,rtol=tolerance,
+                           atol=[1e-16,1e-16,1e-16,tolerance*1e-3,tolerance,
+                                 tolerance*100.,1e-16],max_step=10.,t_eval=times)
+        if not result.success or np.any(result.y<0) or not np.all(np.isfinite(result.y)):
+            raise RuntimeError("dynamic peroxide natural-night witness numerical / positivity blocker")
+        probes.append(dict(method=method,rtol=tolerance,state_cm3=result.y.T.tolist(),nfev=result.nfev))
+    ref = np.array(probes[1]["state_cm3"])
+    comparisons = []
+    for index in (0,2):
+        trial = np.array(probes[index]["state_cm3"])
+        relevant = np.maximum(ref,trial)>1e-8
+        relative = np.divide(abs(trial-ref),np.maximum(ref,trial),out=np.zeros_like(ref),where=relevant)
+        comparisons.append(float(relative.max()))
+    if max(comparisons)>.005:
+        raise RuntimeError("night crossing convergence exceeds 0.5%")
+    for t in times:
+        _,forcing = rhs.forcing(t,np.broadcast_to(initial,(51,7)))
+        assert all(v==0. for f in forcing for v in asdict(f).values())
+    return dict(decision="PASS seven-species positivity / remaining QSSA / dark witness crossing",
+                boundary_scaled_min=boundary_scaled_min.tolist(),
+                remaining_denominator_min_s1=minimum.tolist(),
+                initial_state_cm3=initial.tolist(),time_s=times.tolist(),probes=probes,
+                BDF_base_tight_relative_max=comparisons[0],BDF_Radau_relative_max=comparisons[1])
+
+
+def BASE_PREFLIGHT_FORCING():
+    # Nonnegative forcing respecting accepted gross spectral subset bookkeeping.
+    return LocalForcing(JH=1e-3,J_SRC=1e-7,J_LYA=1e-8,J_O2_TOTAL=2e-7,
+                        J_O3_TOTAL=2e-3,J_H2O2=1e-5,J_H2O_A=1e-8,J_H2O_B=1e-9,
+                        gA=1e-8,gB=1e-8,gIRA=1e-8)
+
+
 def retained_closure_audit(rhs, times, states):
     """Four QSSA only; the OH residual is now its exact temporal derivative."""
     residual_max = family_max = 0.
@@ -295,9 +377,8 @@ def retained_closure_audit(rhs, times, states):
         for level, forcing in enumerate(forcings):
             c = rhs.chemistry(TemporalState(*column[level]), rhs.locals[level], forcing)
             d, a, r = c.diagnostics, c.algebraic, c.residuals
-            residual = [r.res_O1D, r.res_H2O2, r.res_B1, r.res_B0]
+            residual = [r.res_O1D, r.res_B1, r.res_B0]
             scales = [max(d.P_O1D,d.L_O1D*a.O1D,1e-20),
-                      max(d.P_H2O2,d.L_H2O2*a.H2O2,1e-20),
                       max(d.P_B1,d.L_B1*a.B1,1e-20),
                       max(d.P_B0,d.L_B0*a.B0,1e-20)]
             residual_max = max(residual_max,float(np.max(np.abs(residual)/scales)))
@@ -318,11 +399,11 @@ def onset_validation(rhs, cache):
     time = anchor["time_s"]
     old = np.array(anchor["column_state_cm3"])
     _, forcings = rhs.forcing(time,old)
-    initial = np.empty((51,6))
+    initial = np.empty((51,7))
     golden_max = 0.
     for level, forcing in enumerate(forcings):
         golden = close_local_chemistry(LocalState(*old[level]),rhs.locals[level],forcing)
-        initial[level] = [*old[level,:3],golden.algebraic.OH,golden.algebraic.HO2,old[level,4]]
+        initial[level] = [*old[level,:3],golden.algebraic.OH,golden.algebraic.HO2,golden.algebraic.H2O2,old[level,4]]
         new = rhs.chemistry(TemporalState(*initial[level]),rhs.locals[level],forcing)
         golden_max = max(golden_max,max(abs(getattr(new.algebraic,k)-v)
                                        for k,v in asdict(golden.algebraic).items()))
@@ -340,7 +421,7 @@ def onset_validation(rhs, cache):
                                for a,b in zip(trajectories[1],trial,strict=True)))
     if max(comparisons) > .005:
         raise RuntimeError("onset numerical convergence exceeds 0.5%")
-    np.savez_compressed(cache/"six-species-onset.npz",time_s=times,state_cm3=trajectories[-1],
+    np.savez_compressed(cache/"seven-species-onset.npz",time_s=times,state_cm3=trajectories[-1],
                         state_names=TEMPORAL_SPECIES)
     return dict(decision="PASS old dawn blocker crossed",start_time_s=time,end_time_s=19300.,
                 golden_algebraic_absolute_max=golden_max,
@@ -361,9 +442,9 @@ def main() -> int:
     parser.add_argument("--accelerate-periodic", action="store_true",
                         help="Accelerate positive day-map guesses; certify three consecutive ordinary cycles")
     args = parser.parse_args()
-    if args.mode in ("periodic","positivity-regression"):
+    if args.mode == "positivity-regression":
         print(json.dumps(positivity_preflight(),indent=2))
-        return 0 if args.mode == "positivity-regression" else 2
+        return 0
     if args.mode == "dark-regression":
         return dark_regression(args)
     if args.mode == "domain-regression":
@@ -389,6 +470,8 @@ def main() -> int:
                           "historical_M5_decision":"NO-GO before temporal OH/HO2 relaxation",
                           "independent_cases":len(cases)}))
         return 0
+    preflight = dynamic_peroxide_preflight()
+    print("Dynamic peroxide preflight "+json.dumps(preflight),file=sys.stderr,flush=True)
     table, audit = prepare_nir(args)
     if args.mode == "forcing":
         print(json.dumps({"decision": "PASS forcing preparation only", "NIR": audit}))
@@ -429,7 +512,7 @@ def main() -> int:
                     raise ValueError("spin-up cache does not match current temporal source / seed family")
                 states, times = saved["state"], saved["time"]
                 initial = saved["initial"]
-                if (states.shape != (len(times),51,6) or not np.all(np.isfinite(states))
+                if (states.shape != (len(times),51,7) or not np.all(np.isfinite(states))
                         or np.any(states <= 0) or times[0] != 0 or times[-1] != 86400
                         or not np.all(np.isfinite(times)) or np.any(np.diff(times) <= 0)):
                     raise ValueError("invalid locally generated spin-up trajectory")
@@ -523,8 +606,8 @@ def main() -> int:
     np.savez_compressed(args.output,time_s=solution.t,altitude_km=rhs.background.z_chem_km,
                         sza_deg=rhs.cycle.sza(solution.t),state_cm3=independent,
                         state_names=TEMPORAL_SPECIES,R_H_cm3=independent[:,:,3]+independent[:,:,4],
-                        algebraic_cm3=algebraic[:,:,[0,3,4,5]],
-                        algebraic_names=["O1D","H2O2","B0","B1"],
+                        algebraic_cm3=algebraic[:,:,[0,4,5]],
+                        algebraic_names=["O1D","B0","B1"],
                         forcing_s1=frequencies,forcing_names=list(asdict(forcings[0])),
                         dawn_window_s=rhs.cycle.dawn_window_s())
     print(json.dumps({"decision":"GO M5A","cycles":[r["cycles"] for r in results],
@@ -536,7 +619,7 @@ def main() -> int:
                       "seed_comparison":seed_comparison,"tighter_BDF":tolerance_check,
                       "BDF_Radau":radau_check,
                       "hydrogen_budget_max":hydrogen_budget_max,"NIR":audit,
-                      "series":str(args.output), "onset":onset,
+                      "series":str(args.output), "onset":onset, "preflight":preflight,
                       **retained},indent=2))
     return 0
 

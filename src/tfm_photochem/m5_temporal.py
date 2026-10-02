@@ -282,6 +282,119 @@ def temporal_rhs(time_s, concentrations, *, background, forcing,
     return result
 
 
+DYNAMIC_PEROXIDE_SPECIES = ("O", "O3", "H", "OH", "HO2", "H2O2", "Delta")
+OH_EVENT_COEFFICIENTS = {
+    "H_O3":1., "O_HO2":1., "HO2_O3":1., "H_HO2_2OH":2.,
+    "H2O2_PHOTOLYSIS":2., "H2O_PHOTOLYSIS_A":1., "O1D_H2O":2., "O1D_H2":1.,
+    "O_OH":-1., "OH_O3":-1., "OH_H2":-1., "OH_OH":-2.,
+    "OH_HO2":-1., "OH_H2O2":-1.,
+}
+
+
+@dataclass(frozen=True)
+class DynamicPeroxideState:
+    """M5-only seven prognostic species, exact OH+HO2 family diagnostic."""
+
+    O: float  # noqa: E741
+    O3: float
+    H: float
+    OH: float
+    HO2: float
+    H2O2: float
+    Delta: float
+
+    @property
+    def R_H(self):
+        return self.OH+self.HO2
+
+    def __post_init__(self):
+        for name in DYNAMIC_PEROXIDE_SPECIES:
+            _validate_scalar(f"temporal_state.{name}", getattr(self, name))
+        _validate_scalar("temporal_state.R_H", self.R_H)
+
+
+class DynamicPeroxideClosure:
+    """Original closure body with supplied OH/HO2, three original QSSA retained."""
+
+    def __init__(self):
+        namespace = dict(CachedLocalClosure().close.__globals__)
+        original_hox_globals = namespace["solve_hox_qssa"].__globals__
+        def peroxide(oh, ho2, background, forcing, value):
+            production = float(kinetics.k_ho2_ho2(background.T, background.M)*ho2**2)
+            loss = forcing.J_H2O2 + kinetics.k_oh_h2o2()*oh
+            return SimpleNamespace(value=value, production=production,
+                                   loss_frequency=loss, residual=production-loss*value)
+        oh_equation = original_hox_globals["_oh_production_loss"]
+
+        def supplied_hox(state, background, forcing, o1d):
+            result = peroxide(state.OH, state.HO2, background, forcing, state.H2O2)
+            production, loss = oh_equation(state, background, forcing, o1d,
+                                          state.OH, state.HO2, result.value)
+            return qssa.HoxQSSA(
+                state.OH, state.HO2, result.value, production, loss,
+                result.production, result.loss_frequency, production-loss,
+                result.residual, 0., state.R_H==0.)
+
+        namespace["LocalState"] = DynamicPeroxideState
+        namespace["solve_hox_qssa"] = supplied_hox
+        self.close = FunctionType(close_local_chemistry.__code__, namespace)
+        coefficients = {
+            species:tuple((event,row[species]) for event,row in TENDENCY_COEFFICIENTS.items()
+                          if row[species] != 0.)
+            for species in DYNAMIC_SPECIES}
+
+        def velocity(state, background, forcing):
+            # Same accepted scalar solvers and event evaluator; omit only the
+            # large diagnostic/contribution trace on routine ODE evaluations.
+            o1d = namespace["solve_o1d_qssa"](state,background,forcing)
+            h2o2 = peroxide(state.OH,state.HO2,background,forcing,state.H2O2)
+            b1 = namespace["solve_b1_qssa"](state,background,forcing,o1d.value)
+            _, barth = namespace["barth_sources"](state,background)
+            b0 = namespace["solve_b0_qssa"](state,background,forcing,o1d.value,b1.value,barth)
+            algebraic = AlgebraicState(o1d.value,state.OH,state.HO2,h2o2.value,b0.value,b1.value)
+            events = namespace["evaluate_fluxes"](state,background,forcing,algebraic)
+            totals = {species:sum(events[event]*weight for event,weight in rows)
+                      for species,rows in coefficients.items()}
+            production = sum(events[event]*weight for event,weight in OH_EVENT_COEFFICIENTS.items()
+                             if weight > 0)
+            loss = sum(events[event]*(-weight) for event,weight in OH_EVENT_COEFFICIENTS.items()
+                       if weight < 0)
+            oh = production-loss
+            return np.array([totals["O"],totals["O3"],totals["H"],oh,totals["R_H"]-oh,
+                             events["HO2_HO2"]-events["H2O2_PHOTOLYSIS"]-events["OH_H2O2"],
+                             totals["Delta"]])
+
+        self.close.temporal_velocity = velocity
+
+
+close_dynamic_peroxide_chemistry = DynamicPeroxideClosure().close
+
+
+def dynamic_peroxide_rhs(time_s, concentrations, *, background, forcing,
+                 chemistry=close_dynamic_peroxide_chemistry):
+    """Seven-species RHS with dynamic OH, HO2 and H2O2; unchanged event chemistry."""
+    if not np.isfinite(time_s):
+        raise ValueError("time_s must be finite")
+    values = np.asarray(concentrations, dtype=float)
+    if values.shape != (7,):
+        raise ValueError("temporal concentrations must have shape (7,)")
+    state = DynamicPeroxideState(*values)
+    if hasattr(chemistry,"temporal_velocity"):
+        result = chemistry.temporal_velocity(state,background,forcing)
+    else:
+        closure = chemistry(state, background, forcing)
+        old = closure.tendencies
+        oh = closure.diagnostics.P_OH-closure.diagnostics.L_OH
+        result = np.array([old.O, old.O3, old.H, oh, old.R_H-oh,
+                           closure.fluxes["HO2_HO2"]-closure.fluxes["H2O2_PHOTOLYSIS"]
+                           -closure.fluxes["OH_H2O2"], old.Delta])
+    if not np.all(np.isfinite(result)):
+        raise FloatingPointError("nonfinite temporal tendency")
+    return result
+
+
+
+
 class TemporalPositivityBlocker(RuntimeError):
     """An unchanged remaining QSSA prevents the required nonnegative domain."""
 
@@ -551,6 +664,41 @@ def temporal_bootstrap_seeds(rhs):
     return tuple(result)
 
 
+class DynamicPeroxideColumnRHS(TemporalColumnRHS):
+    """M5 current model: 357 ODEs, only O1D/B0/B1 algebraic."""
+
+    species_count = 7
+    local_velocity = staticmethod(dynamic_peroxide_rhs)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.chemistry = DynamicPeroxideClosure().close
+
+    def __call__(self, time_s, log_state):
+        values = np.asarray(log_state, dtype=float)
+        if values.shape != (357,) or not np.all(np.isfinite(values)):
+            raise ValueError("log_state must have 357 finite values")
+        if np.any(np.abs(values) > 700):
+            raise FloatingPointError("log-state representation range exceeded; no clipping")
+        concentration = np.exp(values).reshape(51, 7)
+        return (self.physical_tendencies(time_s, concentration)/concentration).ravel()
+
+
+def dynamic_peroxide_bootstrap_seeds(rhs):
+    """Golden values are numerical seeds only, never enforced during evolution."""
+    result = []
+    for old in bootstrap_seeds(rhs.background):
+        _, forcings = rhs.forcing(0., old)
+        seven = np.empty((51, 7))
+        for level, forcing in enumerate(forcings):
+            a = close_local_chemistry(LocalState(*old[level]), rhs.locals[level], forcing).algebraic
+            seven[level] = [*old[level, :3], a.OH, a.HO2, a.H2O2, old[level, 4]]
+        if np.any(seven <= 0):
+            raise ValueError("bootstrap requires strictly positive numerical seeds")
+        result.append(seven)
+    return tuple(result)
+
+
 class _CycleCoordinates:
     """Exact coordinate change: selected illuminated species linear, others log.
 
@@ -660,7 +808,7 @@ class NIRForcingTable:
 def cycle_difference(reference, trial, absolute_floor_cm3=1.0):
     """Per-species max relative/absolute error with a declared near-zero floor."""
     a, b = np.asarray(reference), np.asarray(trial)
-    if a.ndim != 2 or a.shape[0] != 51 or a.shape[1] not in (5, 6) or b.shape != a.shape:
+    if a.ndim != 2 or a.shape[0] != 51 or a.shape[1] not in (5, 6, 7) or b.shape != a.shape:
         raise ValueError("cycle states must have shape (51,5) or (51,6)")
     floor = np.maximum(absolute_floor_cm3, 1e-6 * np.max(a, axis=0))
     relevant = np.maximum(a, b) > floor
@@ -831,12 +979,13 @@ def integrate_reference_cycle(rhs, initial_cm3, *, method="BDF", rtol=2e-6,
     for index, (start, end) in enumerate(zip(boundaries[:-1], boundaries[1:], strict=True)):
         illuminated = _reference_shell_paths(float(rhs.cycle.sza((start+end)/2))).illuminated
         scales = ([1e10,1e10,1e4,1e5,1e6] if count == 5 else
-                  [1e10,1e10,1e4,1e5,1e5,1e6])
-        if count == 6:
+                  [1e10,1e10,1e4,1e5,1e5,1e6] if count == 6 else
+                  [1e10,1e10,1e4,1e5,1e5,1e5,1e6])
+        if count in (6, 7):
             # Control small OH/HO2 directly instead of imposing a 0.001 cm^-3
             # absolute error on populations many orders of magnitude below it.
-            scales = np.broadcast_to(scales, (51,6)).copy()
-            scales[:,3:5] = np.maximum(1.,current[:,3:5])
+            scales = np.broadcast_to(scales, (51,count)).copy()
+            scales[:,3:count-1] = np.maximum(1.,current[:,3:count-1])
         coordinates = _CycleCoordinates(rhs, illuminated,
                                         delta_scale=np.array(scales),
                                         linear_species=range(count))
