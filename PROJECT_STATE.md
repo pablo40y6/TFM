@@ -11,7 +11,7 @@ This repository develops a reproducible time-dependent mesospheric ozone and O2(
 - Golden M3/M4 basis: 255 dynamic coordinates across 51 levels.
 - Algebraic/QSSA species: O(1D), OH, HO2, H2O2, B0 = O2(b1Sigma_g+, v=0), and B1 = O2(b1Sigma_g+, v=1).
 - Prescribed fields: T, M, O2, N2, CO2, H2O, and H2.
-- First temporal version: no vertical transport; BDF main solver; Radau independent verification; repeated diurnal cycles to periodic convergence.
+- First temporal version: no vertical transport; BDF main solver; Radau independent verification; finite-horizon reference noon-to-dawn simulation. Periodic spin-up is a closed historical diagnostic.
 - Delta remains dynamic: `dDelta/dt = P_Delta - L_Delta*Delta`.
 
 M5 alone uses O/O3/H/OH/HO2/H2O2/Delta (357 ODEs), with R_H=OH+HO2
@@ -36,18 +36,20 @@ The immutable current artifact is `artifacts/accepted/m4c-r2/tfm-photochem-miles
 
 M4D is **PROVISIONALLY CLOSED / INTEGRATION READY / NOT FROZEN** under the authorized pragmatic closure in `docs/m4d_closure_report.md`: A0 430 Voigt, B 320 Voigt, IRA 835 monomer Voigt plus historical O2-Air CIA attenuation; A1 is sensitivity only. Historical Y/Galatry/high-T/B-qSDV gates do not block integration; PR #4 is not merged.
 
-M5A is **NO-GO / LONG TRANSIENT AND SLOW DRIFT: period-2 not certified**
-on milestone/m5-temporal. Strict 24-hour recurrence is no longer an a priori
-requirement. The unchanged 357-ODE model completed 30 new ordinary consecutive
-days per seed (90 total), without acceleration. D1/D3 retain the alternating
-response; D2/D4 and same-phase drift exceed 0.5%. This horizon does not prove
-that an asymptotic 48-hour orbit is absent. Seed independence, 48-hour solver
-certification, perturbation recovery and both reference dawns remain uncertified.
-This is reduced frozen-model behavior, not an atmospheric claim. Positivity,
-three remaining QSSA, HOx budget, exact shadow and historical regressions pass.
-Full pytest **868 + 13 subtests**, ruff and five historical validators pass.
-M3/M4/main and M4C-R2 SHA remain unchanged. See the single temporal report and
-existing evidence JSON.
+M5A is **GO / VALIDATED FINITE-HORIZON REFERENCE DAWN** on milestone/m5-temporal.
+The 357-ODE baseline is unchanged; O1D/B0/B1 remain QSSA. Reference noon uses
+frozen M4A O3/native O/H, declared missing-atom zeros at 50..72 km, and a
+multistart stationary OH/HO2/H2O2/Delta subsystem only at t0. All six trajectories
+complete the 21-hour noon -> next-dawn -> SZA60 interval without resets/clipping.
+BDF base/tight differ by 0.045420%; tighter BDF/Radau by 0.001248%.
+O3/Delta initialization sensitivities are quantified and material; they are a
+climatological-initialization limitation, not a chemistry-change gate. Periodic
+spin-up is closed as a historical diagnostic and no longer required. Full
+reference time-height fields and dawn tables are saved. Pytest **870 + 13
+subtests**, ruff and five historical validators pass. M3/M4/main and M4C-R2 SHA
+are unchanged; M4D remains NOT FROZEN. Next scope: real solar geometry with
+explicit initial_state support; atmospheric dynamics remain outside this change.
+See the single temporal report and existing evidence JSON.
 
 ## Frozen source / transition gates
 

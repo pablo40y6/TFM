@@ -1,4 +1,4 @@
-"""Frozen periodic reference validation, with optional accepted dark regression."""
+"""Finite-horizon reference-noon validation; periodic experiments are historical."""
 
 from __future__ import annotations
 
@@ -371,7 +371,7 @@ def BASE_PREFLIGHT_FORCING():
 
 def retained_closure_audit(rhs, times, states):
     """Audit the three remaining QSSA, exact shadow and dynamic HOx budget."""
-    residual_max = family_max = 0.
+    residual_max = family_max = peroxide_max = 0.
     for time, column in zip(times, states, strict=True):
         uv, forcings = rhs.forcing(time, column)
         if any(any(value != 0. for value in asdict(f).values())
@@ -389,9 +389,14 @@ def retained_closure_audit(rhs, times, states):
                               forcing=forcing,chemistry=rhs.chemistry)
             flux_scale = max(sum(abs(v) for v in c.fluxes.values()),1e-20)
             family_max = max(family_max,abs(dy[3]+dy[4]-c.tendencies.R_H)/flux_scale)
-    if residual_max > 1e-10 or family_max > 1e-12:
+            peroxide_scale = max(d.P_H2O2,d.L_H2O2*a.H2O2,1e-30)
+            peroxide_max = max(peroxide_max,abs(dy[5]-(d.P_H2O2-d.L_H2O2*a.H2O2))/peroxide_scale)
+            if min(d.L_O1D,d.L_B0,d.L_B1)<=0:
+                raise RuntimeError("nonpositive retained QSSA loss")
+    if residual_max > 1e-10 or family_max > 1e-12 or peroxide_max > 1e-12:
         raise RuntimeError("retained QSSA / dynamic HOx budget audit failed")
-    return dict(retained_QSSA_scaled_max=residual_max, family_budget_scaled_max=family_max)
+    return dict(retained_QSSA_scaled_max=residual_max, family_budget_scaled_max=family_max,
+                dynamic_H2O2_budget_scaled_max=peroxide_max)
 
 
 def onset_validation(rhs, cache):
@@ -661,12 +666,131 @@ def ordinary_period2_candidate(rhs, cache, family, *, days=30):
     return result
 
 
+
+def trajectory_difference(reference,trial):
+    floor = np.maximum(1.,1e-6*np.max(reference,axis=(0,1)))
+    relevant = np.maximum(reference,trial)>floor
+    absolute = abs(reference-trial)
+    relative = np.divide(absolute,np.maximum(reference,trial),out=np.zeros_like(absolute),where=relevant)
+    maximum = np.max(relative,axis=(0,1))
+    near = np.max(np.where(relevant,0,absolute),axis=(0,1))
+    return dict(relative_max=maximum.tolist(),near_zero_absolute_max_cm3=near.tolist(),
+                relevance_floor_cm3=floor.tolist(),pass_=bool(np.all(maximum<=.005) and np.all(near<=.005*floor)))
+
+
+def noon_time_height_fields(rhs,time,state):
+    algebraic,forcing = [],[]
+    forcing_names = None
+    for t,column in zip(time,state,strict=True):
+        _,f = rhs.forcing(t,column)
+        forcing_names = list(asdict(f[0]))
+        forcing.append([[asdict(row)[k] for k in forcing_names] for row in f])
+        a = [rhs.chemistry(TemporalState(*y),b,row).algebraic
+             for y,b,row in zip(column,rhs.locals,f,strict=True)]
+        algebraic.append([[row.O1D,row.B0,row.B1] for row in a])
+    return np.array(algebraic),np.array(forcing),forcing_names
+
+
+def noon_assessment(rhs,args):
+    import ast
+
+    from tfm_photochem.historical_2020.reactions import REACTION_BY_ID
+    ho2_weights={event:dict(r.products).get('HO2',0)-dict(r.reactants).get('HO2',0)
+                 for event,r in REACTION_BY_ID.items()}
+    source=Path(__file__).resolve().parents[1]/'src/tfm_photochem/m5_temporal.py'
+    ast_sha=hashlib.sha256(ast.dump(ast.parse(source.read_text()),include_attributes=False).encode()).hexdigest()
+    cases={}
+    for variant,solver in [('nominal','base'),('nominal','tight'),('nominal','Radau'),
+                           ('low','base'),('high','base'),('missing_bound','base')]:
+        with np.load(args.cache/f'noon-run-{variant}-{solver}.npz') as data:
+            if str(data['source_ast_sha256'])!=ast_sha:
+                raise RuntimeError('finite-horizon cache model AST changed')
+            time,state=data['time'].copy(),data['state'].copy()
+            np.testing.assert_allclose(state[0],data['initial'],rtol=5e-15,atol=0)
+        if not np.all(np.isfinite(state)) or np.any(state<0):
+            raise RuntimeError('nonphysical finite-horizon trajectory')
+        audit=retained_closure_audit(rhs,time,state)
+        cases[variant,solver]=dict(time=time,state=state,audit=audit)
+    nominal=cases['nominal','tight']
+    time,reference=nominal['time'],nominal['state']
+    if any(not np.array_equal(time,x['time']) for x in cases.values()):
+        raise RuntimeError('finite-horizon time grids differ')
+    comparisons=[trajectory_difference(reference,cases['nominal',s]['state']) for s in ('base','Radau')]
+    if not all(x['pass_'] for x in comparisons):
+        raise RuntimeError('finite-horizon convergence exceeds 0.5%')
+    window=rhs.cycle.dawn_window_s()
+    dawn=(time>=86400+window[0])&(time<=86400+window[1])
+    sensitivities=[]
+    for variant in ('low','high','missing_bound'):
+        trial=cases[variant,'base']['state']
+        metrics=trajectory_difference(reference[dawn],trial[dawn])
+        metrics.pop('pass_')
+        selected=[]
+        for z in (60,70,80,90,100):
+            measured=trajectory_difference(reference[dawn,z-50:z-49],trial[dawn,z-50:z-49])
+            measured.pop('pass_')
+            selected.append(dict(z_km=z,**measured))
+        sensitivities.append(dict(variant=variant,all_heights=metrics,selected_heights=selected))
+    algebraic,forcing,names=noon_time_height_fields(rhs,time,reference)
+    args.output.parent.mkdir(parents=True,exist_ok=True)
+    np.savez_compressed(args.output,time_s=time,time_since_noon_s=time-43200.,z_km=np.arange(50,101),
+        reference_date='2020-03-20',latitude_deg=45.,longitude_deg=0.,initial_LST_h=12.,
+        reference_mode='ReferenceEquinoxSolarCycle/frozen M4A',
+        SZA_deg=rhs.cycle.sza(time),species=TEMPORAL_SPECIES,state_cm3=reference,
+        R_H_cm3=reference[:,:,3]+reference[:,:,4],algebraic_species=['O1D','B0','B1'],
+        algebraic_cm3=algebraic,forcing_names=names,forcing_s1=forcing,dawn_mask=dawn)
+    tables=[]
+    for angle in (99.,85.,60.):
+        i=np.flatnonzero(dawn)[np.argmin(abs(rhs.cycle.sza(time[dawn])-angle))]
+        for z in (60,70,80,90,100):
+            row=dict(z_km=z,SZA_deg=float(rhs.cycle.sza(time[i])),time_since_noon_s=float(time[i]-43200),
+                     state=dict(zip(TEMPORAL_SPECIES,reference[i,z-50].tolist(),strict=True)),
+                     R_H=float(reference[i,z-50,3]+reference[i,z-50,4]),
+                     algebraic=dict(zip(['O1D','B0','B1'],algebraic[i,z-50].tolist(),strict=True)),
+                     forcing=dict(zip(names,forcing[i,z-50].tolist(),strict=True)))
+            tables.append(row)
+    initializations={}
+    for variant in ('nominal','low','high','missing_bound'):
+        with np.load(args.cache/f'noon-initial-{variant}.npz') as data:
+            initial=data['state'].copy()
+            record=json.loads(str(data['record']))
+        if len(record['levels'])!=51 or any(sum(x['passed'] for x in level['seeds'])<3 or
+                level['root_relative_spread']>1e-4 for level in record['levels']):
+            raise RuntimeError('noon seed independence is not certified')
+        _,forcings=rhs.forcing(43200.,initial)
+        worst=0.
+        for y,b,f in zip(initial,rhs.locals,forcings,strict=True):
+            c=rhs.chemistry(TemporalState(*y),b,f)
+            d=c.diagnostics
+            from tfm_photochem.m5_temporal import dynamic_peroxide_rhs
+            velocity=dynamic_peroxide_rhs(43200.,y,background=b,forcing=f,chemistry=rhs.chemistry)
+            # OH and family together certify OH/HO2 stationarity; peroxide and
+            # Delta have independent accepted production/loss diagnostics.
+            scales=np.array([max(d.P_OH+d.L_OH,1e-30),
+                max(sum(abs(w)*c.fluxes.get(event,0.) for event,w in ho2_weights.items()),1e-30),
+                max(d.P_H2O2+d.L_H2O2*y[5],1e-30),max(d.P_Delta+d.L_Delta*y[6],1e-30)])
+            worst=max(worst,float(np.max(abs(velocity[3:])/scales)))
+        if worst>1e-9:
+            raise RuntimeError('noon fast subsystem residual is not stationary')
+        initializations[variant]=dict(state_cm3=initial.tolist(),verified_fast_residual_max=worst,**record)
+    return dict(decision='GO M5A / validated finite-horizon reference dawn',
+        scope='finite-horizon initial-value simulation; periodicity is historical diagnostic only',
+        initialization=initializations,completion=dict(start_LST_h=12.,end_SZA_deg=60.,
+            elapsed_s=float(time[-1]-time[0]),finite_nonnegative=True,no_clipping_or_reset=True),
+        convergence=dict(BDF_base_tight=comparisons[0],BDF_tight_Radau=comparisons[1]),
+        initialization_sensitivities_are_acceptance_gates=False,initialization_sensitivities=sensitivities,physical_audits={f'{v}-{s}':x['audit'] for (v,s),x in cases.items()},
+        dawn_tables=tables,time_height_artifact=dict(path=str(args.output),
+            sha256=hashlib.sha256(args.output.read_bytes()).hexdigest(),source_ast_sha256=ast_sha),
+        limitation='Initial-state sensitivity is a model limitation for later climatological initialization; not a chemistry-change gate.')
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--sources", type=Path, required=True)
     parser.add_argument("--hitran", type=Path, required=True)
-    parser.add_argument("--mode", choices=("periodic", "onset", "positivity-regression", "dark-regression", "domain-regression", "periodicity-regression", "period2-certification", "period2-assessment", "forcing"), default="period2-certification")
+    parser.add_argument("--mode", choices=("periodic", "onset", "positivity-regression", "dark-regression", "domain-regression", "periodicity-regression", "period2-certification", "period2-assessment", "noon", "noon-assessment", "forcing"), default="noon")
     parser.add_argument("--cache", type=Path, default=Path(".m5-derived-cache"))
+    parser.add_argument("--noon-variant", choices=("nominal","low","high","missing_bound"), default="nominal")
+    parser.add_argument("--noon-solver", choices=("base","tight","Radau"), default="base")
     parser.add_argument("--family", type=int, choices=(0,1,2), default=0)
     parser.add_argument("--ordinary-days", type=int, default=30)
     parser.add_argument("--output", type=Path, default=Path("evidence/m5_reference_cycle.npz"))
@@ -675,8 +799,8 @@ def main() -> int:
     parser.add_argument("--accelerate-periodic", action="store_true",
                         help="Accelerate positive day-map guesses; certify three consecutive ordinary cycles")
     args = parser.parse_args()
-    if args.mode == "period2-certification" and args.accelerate_periodic:
-        parser.error("period-2 certification uses ordinary physical days only")
+    if args.mode in ("periodic","period2-certification"):
+        parser.error("Periodic spin-up is closed as a historical diagnostic; use noon or archived assessment")
     if args.mode == "period2-assessment":
         result = assess_ordinary_period2(args.cache)
         print(json.dumps(result,indent=2))
@@ -717,6 +841,31 @@ def main() -> int:
         return 0
     rhs = TemporalColumnRHS(table,progress=lambda t,n,sza:
                              print(f"RHS t={t:.3f}s SZA={sza:.6f} evaluations={n}",file=sys.stderr,flush=True))
+    if args.mode == "noon-assessment":
+        print(json.dumps(noon_assessment(rhs,args),indent=2))
+        return 0
+    if args.mode == "noon":
+        import ast
+
+        from tfm_photochem.m5_temporal import (
+            integrate_reference_noon_to_dawn,
+            reference_noon_initialization,
+        )
+        factor,bound={"nominal":(1.,0.),"low":(.5,0.),"high":(2.,0.),"missing_bound":(1.,1e-8)}[args.noon_variant]
+        initial,record=reference_noon_initialization(rhs,atom_factor=factor,missing_fraction=bound)
+        np.savez_compressed(args.cache/f"noon-initial-{args.noon_variant}.npz",state=initial,record=json.dumps(record))
+        tight=args.noon_solver!="base"
+        time,state,stats=integrate_reference_noon_to_dawn(rhs,initial,
+            method="Radau" if args.noon_solver=="Radau" else "BDF",rtol=2e-8 if tight else 2e-6,
+            atol_log=1e-10 if tight else 1e-8,max_step_s=60 if tight else 120)
+        audit=retained_closure_audit(rhs,time,state)
+        source=Path(__file__).resolve().parents[1]/"src/tfm_photochem/m5_temporal.py"
+        ast_sha=hashlib.sha256(ast.dump(ast.parse(source.read_text()),include_attributes=False).encode()).hexdigest()
+        np.savez_compressed(args.cache/f"noon-run-{args.noon_variant}-{args.noon_solver}.npz",
+            time=time,state=state,initial=initial,audit=json.dumps(audit),source_ast_sha256=ast_sha,
+            source_sha256=hashlib.sha256(source.read_bytes()).hexdigest())
+        print(json.dumps(dict(decision="PASS finite-horizon trajectory; full QA/sensitivities still required",**stats,**audit)))
+        return 0
     if args.mode == "period2-certification":
         result = ordinary_period2_candidate(rhs,args.cache,args.family,days=args.ordinary_days)
         print(json.dumps(result,indent=2))

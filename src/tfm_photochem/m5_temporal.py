@@ -1095,8 +1095,8 @@ def integrate_reference_cycle(rhs, initial_cm3, *, method="BDF", rtol=2e-6,
     initial = np.asarray(initial_cm3, dtype=float)
     count = getattr(rhs, "species_count", 5)
     dimension = 51*count
-    if initial.shape != (51, count) or not np.all(np.isfinite(initial)) or np.any(initial <= 0):
-        raise ValueError(f"log-coordinate initial state must be finite and positive (51,{count})")
+    if initial.shape != (51, count) or not np.all(np.isfinite(initial)) or np.any(initial < 0):
+        raise ValueError(f"initial state must be finite and nonnegative (51,{count})")
     if method not in ("BDF", "Radau"):
         raise ValueError("use BDF or Radau")
     if not 0 <= start_time_s < end_time_s <= 86400:
@@ -1140,7 +1140,7 @@ def integrate_reference_cycle(rhs, initial_cm3, *, method="BDF", rtol=2e-6,
         current = coordinates.decode(part.y[:, -1])
         segments.append((part, coordinates))
 
-    def dense(time_s):
+    def physical_dense(time_s):
         query = np.atleast_1d(np.asarray(time_s, dtype=float))
         if np.any(query < start_time_s) or np.any(query > end_time_s):
             raise ValueError("dense query outside reference cycle")
@@ -1155,23 +1155,25 @@ def integrate_reference_cycle(rhs, initial_cm3, *, method="BDF", rtol=2e-6,
                     elif time == part.t[-1]:
                         value = part.y[:,-1]
                     physical = coordinates.decode(value)
-                    if np.any(physical == 0):
-                        raise FloatingPointError(
-                            f"zero dense concentration at t={time}; indices "
-                            f"{np.argwhere(physical == 0).tolist()}; no clipping")
-                    columns.append(np.log(physical).ravel())
+                    columns.append(physical.ravel())
                 result[:,mask] = np.column_stack(columns)
         return result[:,0] if np.ndim(time_s)==0 else result
 
     times = (np.unique(np.r_[np.arange(0,86401,300), rhs.cycle.dawn_window_s(), boundaries])
              if output_times_s is None else np.asarray(output_times_s))
     times = times[(times>=start_time_s)&(times<=end_time_s)]
-    result = SimpleNamespace(t=times, y=dense(times), sol=dense,
+    def dense(time_s):
+        # Exact boundary zeros are valid initial concentrations, never replaced
+        # by a small positive concentration. Log is diagnostic output only here.
+        with np.errstate(divide="ignore"):
+            return np.log(physical_dense(time_s))
+
+    result = SimpleNamespace(t=times, y=dense(times), sol=dense, physical_sol=physical_dense,
                              nfev=sum(p.nfev for p, _ in segments),
                              njev=sum(p.njev for p, _ in segments), success=True)
     result.trial_rejections = sum(p.trial_rejections for p, _ in segments)
-    state = np.exp(result.y).T.reshape(-1, 51, count)
-    if not np.all(np.isfinite(state)) or np.any(state <= 0):
+    state = physical_dense(times).T.reshape(-1, 51, count)
+    if not np.all(np.isfinite(state)) or np.any(state < 0):
         raise FloatingPointError("invalid physical cycle state")
     return result, state
 
@@ -1280,3 +1282,144 @@ def reject_nonunique_dark_equilibrium(
         if any(getattr(residuals, f.name) != 0 for f in fields(residuals)):
             raise AssertionError("dark witness violates accepted QSSA")
     raise InitializationBlocker(witnesses)
+
+
+class NoonInitializationBlocker(RuntimeError):
+    """No physical reproducible unique stationary fast subsystem at noon."""
+
+    def __init__(self, evidence):
+        super().__init__('NOON INITIALIZATION BLOCKER')
+        self.evidence = evidence
+
+
+def reference_noon_atom_profiles(background=None, *, atom_factor=1., missing_fraction=0.):
+    """Read verified frozen M4A native atoms; missing zeros are declared seeds."""
+    from .historical_2020.background import _read_numeric_csv
+    from .historical_2020.background_generation import RAD_FILENAME
+    background = load_baseline_background() if background is None else background
+    if atom_factor <= 0 or not 0 <= missing_fraction < 1:
+        raise ValueError('invalid atom initialization controls')
+    raw = _read_numeric_csv(RAD_FILENAME)
+    native = np.column_stack([raw['msis_O_native_cm3'][50:101],
+                              raw['msis_H_native_cm3'][50:101]])
+    finite = np.isfinite(native)
+    atoms = np.zeros((51,2))
+    atoms[finite] = atom_factor*native[finite]
+    bound = missing_fraction*background.chemical.M_cm3
+    atoms[~finite] = np.broadcast_to(bound[:,None],atoms.shape)[~finite]
+    if np.any(atoms<0):
+        raise ValueError('native atom concentrations are negative')
+    return atoms, finite
+
+
+def reference_noon_initialization(rhs, *, atom_factor=1., missing_fraction=0.):
+    """Stationary OH/HO2/H2O2/Delta only at t0; O/O3/H remain prescribed seeds.
+
+    Every stationary equation is taken from the seven-species temporal RHS.
+    Log fast coordinates enforce positivity, without clipping or a time closure.
+    Multiple widely separated positive seeds check numerical root independence.
+    """
+    from scipy.optimize import least_squares
+
+    from .historical_2020.reactions import REACTION_BY_ID
+    atoms, native_finite = reference_noon_atom_profiles(rhs.background,
+                    atom_factor=atom_factor,missing_fraction=missing_fraction)
+    state = np.zeros((51,7))
+    state[:,0],state[:,2] = atoms[:,0],atoms[:,1]
+    state[:,1] = rhs.background.radiative.O3_socrates_reference_cm3[50:101]
+    _, forcings = rhs.forcing(43200.,state)
+    names = ('OH','HO2','H2O2','Delta')
+    coefficients = {}
+    for name in names:
+        coefficients[name] = {}
+        for event,reaction in REACTION_BY_ID.items():
+            weight = dict(reaction.products).get(name,0)-dict(reaction.reactants).get(name,0)
+            if weight:
+                coefficients[name][event] = weight
+    seed_fractions = np.array([[1e-12,1e-12,1.,1.],[1e-9,1e-9,1.,1.],
+        [1e-6,1e-6,1.,1.],[1e-12,1e-6,.1,10.],[1e-6,1e-12,10.,.1],
+        [1e-9,1e-9,1e-3,1e3],[1e-9,1e-9,1e3,1e-3]])
+    records = []
+    for level,(background,forcing) in enumerate(zip(rhs.locals,forcings,strict=True)):
+        fixed = state[level].copy()
+        def rates(log_fast):
+            y = fixed.copy()
+            y[3:] = np.exp(log_fast)
+            c = rhs.chemistry(DynamicPeroxideState(*y),background,forcing)
+            derivative = dynamic_peroxide_rhs(43200.,y,background=background,
+                                             forcing=forcing,chemistry=rhs.chemistry)[3:]
+            scales = np.array([max(1e-30,sum(abs(w)*c.fluxes.get(event,0.)
+                    for event,w in coefficients[name].items())) for name in names])
+            # Special accepted Hartley key is the reduced Delta source.
+            scales[3] += c.fluxes['O3_HARTLEY_PRODUCTS']
+            return derivative,scales
+        def normalized(log_fast):
+            derivative,scales = rates(log_fast)
+            return derivative/scales
+        reference_scales = rates(np.log(np.full(4,1e-9*background.M)))[1]
+        roots, outcomes = [], []
+        for fractions in seed_fractions:
+            seed = fixed.copy()
+            seed[3:5] = fractions[:2]*background.M
+            seed[5:] = 1e-9*background.M
+            c = rhs.chemistry(DynamicPeroxideState(*seed),background,forcing)
+            seed[5] = fractions[2]*c.diagnostics.P_H2O2/c.diagnostics.L_H2O2
+            seed[6] = fractions[3]*c.diagnostics.P_Delta/c.diagnostics.L_Delta
+            solved = least_squares(lambda x:rates(x)[0]/reference_scales,np.log(seed[3:]),
+                bounds=(-70.,70.),xtol=1e-12,ftol=1e-12,gtol=1e-12,max_nfev=1000)
+            # Fixed rate scales locate the basin; local relative-rate refinement
+            # then resolves the much smaller peroxide tendency to the same
+            # precision as the other equations. Algebraic values seed only t0.
+            refine = solved.x.copy()
+            candidate = fixed.copy()
+            candidate[3:] = np.exp(refine)
+            c = rhs.chemistry(DynamicPeroxideState(*candidate),background,forcing)
+            algebraic_seed = np.log([c.diagnostics.P_H2O2/c.diagnostics.L_H2O2,
+                                    c.diagnostics.P_Delta/c.diagnostics.L_Delta])
+            if np.all(abs(algebraic_seed)<70):
+                refine[2:] = algebraic_seed
+                polished = least_squares(normalized,refine,bounds=(-70.,70.),
+                    xtol=1e-13,ftol=1e-13,gtol=1e-13,max_nfev=300)
+                if np.max(abs(normalized(polished.x))) < np.max(abs(normalized(solved.x))):
+                    solved = polished
+            root = np.exp(solved.x)
+            residual = float(np.max(abs(normalized(solved.x))))
+            passed = bool(solved.success and residual<=1e-9)
+            outcomes.append(dict(seed_cm3=seed[3:].tolist(),
+                    state_cm3=root.tolist(),normalized_residual=residual,
+                    passed=passed,nfev=int(solved.nfev)))
+            if passed:
+                roots.append(root)
+        if len(roots)<3:
+            raise NoonInitializationBlocker(dict(z_km=level+50,reason='insufficient independently converged physical roots',seeds=outcomes))
+        spread = float(np.max(abs(np.array(roots)-roots[0])/np.maximum(roots[0],1e-12)))
+        if spread>1e-4:
+            raise NoonInitializationBlocker(dict(z_km=level+50,reason='multiple distinct physical roots',seeds=outcomes))
+        state[level,3:] = roots[0]
+        records.append(dict(z_km=level+50,root_relative_spread=spread,seeds=outcomes))
+    return state, dict(policy='reference_noon_initialization',date='2020-03-20',
+        latitude_deg=45.,longitude_deg=0.,LST_h=12.,SZA_deg=45.,
+        atom_factor=atom_factor,missing_fraction=missing_fraction,
+        native_O_missing_z_km=(50+np.flatnonzero(~native_finite[:,0])).tolist(),
+        native_H_missing_z_km=(50+np.flatnonzero(~native_finite[:,1])).tolist(),
+        stationary_only_at_t0=['OH','HO2','H2O2','Delta'],levels=records)
+
+
+def integrate_reference_noon_to_dawn(rhs,initial,**solver):
+    """Continuous physical state across midnight; all seven species remain free."""
+    finish = rhs.cycle.dawn_window_s()[1]
+    left,left_state = integrate_reference_cycle(rhs,initial,start_time_s=43200.,
+                    end_time_s=86400.,**solver)
+    right,right_state = integrate_reference_cycle(rhs,left_state[-1],
+                    start_time_s=0.,end_time_s=finish,**solver)
+    middle = float((.5-np.arccos(np.cos(np.deg2rad(85.))/np.cos(np.deg2rad(45.)))/(2*np.pi))*86400.)
+    right_times = np.unique(np.r_[right.t,middle])
+    right_state = right.physical_sol(right_times).T.reshape(-1,51,7)
+    times = np.r_[left.t,86400.+right_times[1:]]
+    states = np.concatenate([left_state,right_state[1:]])
+    # Adding the day offset can collapse distinct adjacent floating timestamps.
+    # Keep the final physical sample of each equal-time group, never reset y.
+    keep = np.r_[np.diff(times)>0,True]
+    times,states = times[keep],states[keep]
+    return times,states,dict(nfev=int(left.nfev+right.nfev),
+                    trial_rejections=int(left.trial_rejections+right.trial_rejections))
