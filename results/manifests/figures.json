@@ -12,7 +12,7 @@
         {
           "bytes": 57624,
           "path": "results/figures/01_reference_o3_heatmap.pdf",
-          "sha256": "529852df18fa463fb132f5a49acb6ed5fa424eff4848b8117ff14bd03883c55e"
+          "sha256": "faa7c3900d26ebb3836de1e5eeda7e24639205cbf3c2bcc3573a64c7e7e3ad8d"
         }
       ]
     },
@@ -28,7 +28,7 @@
         {
           "bytes": 56921,
           "path": "results/figures/02_reference_delta_heatmap.pdf",
-          "sha256": "5731a6cf5f6c82339e7188bf3168a0f4c1851006929352aeffd71909c24c9766"
+          "sha256": "173224fe2190042d225fc80641d3f0bcc9af7d11602b30618e5c036d1392747e"
         }
       ]
     },
@@ -44,7 +44,7 @@
         {
           "bytes": 17991,
           "path": "results/figures/03_reference_o3_levels.pdf",
-          "sha256": "9540c8406afc3ef140db7fd1fa7d15546ed1fe4caae8e283a62ad3e83858c358"
+          "sha256": "7f89c6bdb1cf392172cadccfc4b25fb6d5f5fdf216c917ae09a5e765d9cedf45"
         }
       ]
     },
@@ -60,7 +60,7 @@
         {
           "bytes": 18936,
           "path": "results/figures/04_reference_delta_levels.pdf",
-          "sha256": "9a4dfa6ef9b6862de69dd3bc1d4d457ad1041aa4544cd983dd7be211a9428c73"
+          "sha256": "bb8a1b47cd3c57cf914983be6be6007ead57984e549881f11908ebfec49b7949"
         }
       ]
     },
@@ -76,7 +76,71 @@
         {
           "bytes": 18065,
           "path": "results/figures/05_reference_profiles.pdf",
-          "sha256": "9f94814de38616dff87d414315cd094ae652053fc5d1fe5a3d1f6f0b1af2ed21"
+          "sha256": "91c8c9d71128e7175e95bb4279ada4aa1c2538050747f5977c51365d3bb8e312"
+        }
+      ]
+    },
+    {
+      "caption": "Complete seasonal model response at common SZA85/70: solar geometry, dynamic background and approximate initialization all change. Common dawn interval99\u219270; no extrapolation to unreachable60\u00b0. Dates identify the preceding bootstrap noon; dawn is on the following UTC date.",
+      "figure": "06_seasonal_o3",
+      "files": [
+        {
+          "bytes": 284218,
+          "path": "results/figures/06_seasonal_o3.png",
+          "sha256": "d7506fb4ef7f687c88ea343fbda7c2c85ddec0a7f82e327fe2ebea28a07c21b1"
+        },
+        {
+          "bytes": 18770,
+          "path": "results/figures/06_seasonal_o3.pdf",
+          "sha256": "09808bbac802c39d704d03c9cbce82813d20cd839916d999c2225f0d14f00cd6"
+        }
+      ]
+    },
+    {
+      "caption": "Complete seasonal model response at common SZA85/70: solar geometry, dynamic background and approximate initialization all change. Common dawn interval99\u219270; no extrapolation to unreachable60\u00b0. Dates identify the preceding bootstrap noon; dawn is on the following UTC date.",
+      "figure": "07_seasonal_delta",
+      "files": [
+        {
+          "bytes": 249627,
+          "path": "results/figures/07_seasonal_delta.png",
+          "sha256": "b71343b36163d23b4482e2d30193cefda0737a1e410c36ea04e871124ac7ca4b"
+        },
+        {
+          "bytes": 19140,
+          "path": "results/figures/07_seasonal_delta.pdf",
+          "sha256": "18f08101b1ecb2e644dabdec91596416f2839dcb87953a27fa188c18e324ec09"
+        }
+      ]
+    },
+    {
+      "caption": "Complete latitude model response at common SZA85/70: solar geometry, dynamic background and approximate initialization all change. Common dawn interval99\u219270; no extrapolation to unreachable60\u00b0. Dates identify the preceding bootstrap noon; dawn is on the following UTC date.",
+      "figure": "08_latitude_o3",
+      "files": [
+        {
+          "bytes": 246459,
+          "path": "results/figures/08_latitude_o3.png",
+          "sha256": "fdd2aea7a358c3a8cefd2306f3fedb4cea61ad128dc8a4ccdd04abcad336589f"
+        },
+        {
+          "bytes": 17707,
+          "path": "results/figures/08_latitude_o3.pdf",
+          "sha256": "0c2ceb6b8a5f20f7bd5a02b3534e546207e4809a9b2b237a268b58dc4b91ea15"
+        }
+      ]
+    },
+    {
+      "caption": "Complete latitude model response at common SZA85/70: solar geometry, dynamic background and approximate initialization all change. Common dawn interval99\u219270; no extrapolation to unreachable60\u00b0. Dates identify the preceding bootstrap noon; dawn is on the following UTC date.",
+      "figure": "09_latitude_delta",
+      "files": [
+        {
+          "bytes": 222480,
+          "path": "results/figures/09_latitude_delta.png",
+          "sha256": "b34112b6ea9d2534ab51d6cff199a88f275cc55b6e3016ffcc78efb3c9728afe"
+        },
+        {
+          "bytes": 18162,
+          "path": "results/figures/09_latitude_delta.pdf",
+          "sha256": "07307a9030c8375c8e1d639568dcacb87aa21692aab35de33f6737cdf6131b62"
         }
       ]
     },
@@ -92,7 +156,7 @@
         {
           "bytes": 121039,
           "path": "results/figures/10_frozen_dynamic_sensitivity.pdf",
-          "sha256": "7501d135866d995b586cffa2224cd7afcf6d6899d3e51c6d2f9f45b1f9014359"
+          "sha256": "ac55bca4d5b6bd590f6e6732417315f9a671dcf4ef9fda450c2b5386caca6a17"
         }
       ]
     },
@@ -108,17 +172,25 @@
         {
           "bytes": 20264,
           "path": "results/figures/11_initialization_sensitivity.pdf",
-          "sha256": "e9a0ba652879dbbc6f2c3c3ea2d76c5e64875452da99b0d577d294272ee5c52a"
+          "sha256": "4f946a6a1686dd213cc143960105a9b20620f215206c5fd5b2b6d8db1b91b268"
         }
       ]
     }
   ],
   "matplotlib_version": "3.11.2",
   "numeric_inputs_sha256": {
+    "results/tables/autumn_dawn.npz": "5c65572b7b1352889a5d115d8bc14855c28a25c3c7cc683c3be033f0962af021",
+    "results/tables/equatorial_dawn.npz": "8ffb450fc3c674aabe7452a7e76b5e2c3494cf9f367ffd243580e3c6095b889d",
+    "results/tables/high_latitude_dawn.npz": "8650bced8f28795bf05143daaad3631d976d37b50b884ce470c4c4c0724fc69e",
     "results/tables/initialization_dawn.npz": "16ea0352b4ec7198daaa80eeeea5b6f6457c40f8537bbde6e7eef87f80e370bd",
-    "results/tables/reference_dawn.npz": "79a3f026c3b82c9912c497ad56ad44c22089e61a516cde019bff35fdc129abc7",
-    "results/tables/sensitivity_summary.csv": "d0569eb92a3d15ec76e0a0b5922fdc6058ab05f089ce7309e65a6e9601c58af2"
+    "results/tables/latitude_summary.csv": "cc669c378a4c05497ff203523248fd2341092f013d3fe3f2485e4a30ba34c96d",
+    "results/tables/reference_dawn.npz": "168dbb7e732b6f4e9b10db2226b53275f170a213298be65aebd6f3531d6c6160",
+    "results/tables/reference_dawn_summary.csv": "d14904f13c665bf7273c5253e173c22bf74a00ec8c18a06d55bbc844cd3ff9b3",
+    "results/tables/seasonal_summary.csv": "3fe975c1c0fcffc3164499b6b301ee927b9da93abe397922658fba6302e8c586",
+    "results/tables/sensitivity_summary.csv": "d0569eb92a3d15ec76e0a0b5922fdc6058ab05f089ce7309e65a6e9601c58af2",
+    "results/tables/summer_dawn.npz": "7f5a5de3e2f00721d182017580e7159c144ff104d6004affaafc0944c6923a0a",
+    "results/tables/winter_dawn.npz": "5c574afeb9e1ab1801ef35671ce61f2f312e9e6885e38dd55062cefba69757ba"
   },
   "numpy_version": "2.5.3",
-  "plotting_script_sha256": "715d4857fc7a92a68f0ab567b9734a8c38de1a6e697d9927c83709a8b63ee88f"
+  "plotting_script_sha256": "043a32825abb69df8d65e0ccf4b6c7ca8c719a9e416646e4091449939976cdd4"
 }

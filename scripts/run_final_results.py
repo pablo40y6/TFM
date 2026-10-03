@@ -39,6 +39,7 @@ CASES = {
 }
 CONTROLS = dict(method="BDF", rtol=2e-6, atol=1e-8,
                 max_step_s=120., output_step_s=300.)
+TIME_FIX_HELPER_AST = "acb7d425d490d8209f500b68a8d1ddbe6d3d92f72aa9fd07aef1ddb0367941ea"
 
 
 def sha(path):
@@ -124,12 +125,44 @@ def normalized_source_proof():
             ["git", "show", f"dbb5878:{relative}"], cwd=ROOT).decode("utf8")
         current = path.read_text(encoding="utf8")
         old_ast = ast.dump(ast.parse(historical), include_attributes=False)
-        new_ast = ast.dump(ast.parse(current), include_attributes=False)
-        if old_ast != new_ast:
+        current_tree = ast.parse(current)
+        new_ast = ast.dump(current_tree, include_attributes=False)
+        roundoff_fix = False
+        if old_ast != new_ast and path.name in ("dynamic_atmosphere.py", "dynamic_radiation.py"):
+            # Explicit compatibility exception for the demonstrated one-ULP
+            # datetime bug; remove ONLY the fingerprinted helper and its calls.
+            roundoff_fix = True
+            if path.name == "dynamic_atmosphere.py":
+                helper = next(n for n in current_tree.body if isinstance(n,ast.FunctionDef)
+                              and n.name=="_time_within_coverage")
+                digest = hashlib.sha256(ast.dump(helper,include_attributes=False).encode()).hexdigest()
+                if digest != TIME_FIX_HELPER_AST:
+                    raise ValueError("time normalization helper changed beyond reviewed patch")
+                current_tree.body.remove(helper)
+                target_class, target_method = "DynamicMSISAtmosphere", "raw_at"
+                call = "time_s = _time_within_coverage(time_s, 0., self.times[-1])"
+            else:
+                helper_import = next(n for n in current_tree.body if isinstance(n,ast.ImportFrom)
+                                     and n.module=="dynamic_atmosphere"
+                                     and [a.name for a in n.names]==["_time_within_coverage"])
+                current_tree.body.remove(helper_import)
+                target_class, target_method = "DynamicNIRForcing", "__call__"
+                call = "time_s = _time_within_coverage(time_s, times[0], times[-1])"
+            cls = next(n for n in current_tree.body if isinstance(n,ast.ClassDef) and n.name==target_class)
+            method = next(n for n in cls.body if isinstance(n,ast.FunctionDef) and n.name==target_method)
+            expected = ast.dump(ast.parse(call).body[0],include_attributes=False)
+            matches = [n for n in method.body if ast.dump(n,include_attributes=False)==expected]
+            if len(matches)!=1:
+                raise ValueError("time normalization call does not match reviewed patch")
+            method.body.remove(matches[0])
+        comparable_ast = ast.dump(current_tree, include_attributes=False)
+        if old_ast != comparable_ast:
             raise ValueError(f"accepted scientific source differs: {relative}")
         proofs[relative] = dict(current_bytes_sha256=sha(path),
             historical_bytes_sha256=hashlib.sha256(historical.encode()).hexdigest(),
-            AST_sha256=hashlib.sha256(new_ast.encode()).hexdigest())
+            AST_sha256=hashlib.sha256(new_ast.encode()).hexdigest(),
+            accepted_AST_sha256=hashlib.sha256(old_ast.encode()).hexdigest(),
+            one_ULP_datetime_fix_only=roundoff_fix)
     return proofs
 
 
@@ -150,6 +183,10 @@ def audit_result(result, provider, nir, start):
         _, frequencies = rhs.forcing(float(t), column)
         expected = np.array([[asdict(f)[name] for name in result.forcing_names] for f in frequencies])
         np.testing.assert_array_equal(expected, result.forcing_s1[i])
+        if result.background_fields:
+            for field in ("T_K", "M_cm3", "O2_cm3", "N2_cm3", "CO2_cm3", "H2O_cm3", "H2_cm3"):
+                np.testing.assert_array_equal(result.background_fields["background_"+field][i],
+                                              getattr(rhs.background.chemical, field))
     tangent = 180-np.rad2deg(np.arcsin(6370/(6370+result.altitude_km)))
     shadow = result.sza_deg[:, None] > tangent[None, :]
     if np.any(result.forcing_s1[shadow] != 0):
@@ -157,6 +194,7 @@ def audit_result(result, provider, nir, start):
     audit.update(finite_nonnegative=True, exact_R_H=True, algebraic_physical=True,
                  exact_shadow=True, no_clipping_or_state_reset=True,
                  stored_forcing_recomputed_bitwise=True,
+                 stored_chemical_background_recomputed_bitwise=bool(result.background_fields),
                  output_samples=len(result.time_s))
     return audit
 
@@ -190,12 +228,25 @@ def dawn_subset(result, config, rhs):
         closure = rhs.chemistry(DynamicPeroxideState(*state), bg, f)
         a = closure.algebraic
         algebraic[0, j] = a.O1D, a.B0, a.B1
+    backgrounds = {k: interpolate(v) if k != "radiative_altitude_km" else v.copy()
+                   for k, v in (result.background_fields or {}).items()}
+    # Background interpolation knots need not coincide with output-time knots.
+    # Preserve the exact accepted provider at the new boundary, just like forcing.
+    if backgrounds:
+        case = rhs.background
+        for field in ("T_K", "M_cm3", "O2_cm3", "N2_cm3", "CO2_cm3", "H2O_cm3", "H2_cm3"):
+            backgrounds["background_"+field][0] = getattr(case.chemical, field)
+        backgrounds["radiative_background_T_K"][0] = case.radiative.T_K
+        backgrounds["radiative_background_M_cm3"][0] = case.radiative.M_cm3
+        backgrounds["radiative_O3_reference_cm3"][0] = case.radiative.O3_socrates_reference_cm3
+        raw = rhs.atmosphere_provider.raw_at(float(times[0])+rhs.atmosphere_offset_s)
+        backgrounds["radiative_MSIS_O_native_cm3"][0] = raw[:,3]*1e-6
+        backgrounds["radiative_MSIS_H_native_cm3"][0] = raw[:,5]*1e-6
     return SimulationResult(times, result.altitude_km,
         DatetimeSolarGeometry(start, config["latitude_deg"], 0.).sza(times), states,
         states[:, :, 3]+states[:, :, 4], algebraic,
         forcing, result.forcing_names, metadata,
-        {k: interpolate(v) if v.shape[0] == len(result.time_s) else v
-         for k, v in (result.background_fields or {}).items()})
+        backgrounds or None)
 
 
 def run_case(args):

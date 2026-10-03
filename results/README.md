@@ -63,6 +63,20 @@ extrema and common-window changes. Concentration change percentages are omitted
 when their starting value is below the recorded relevance threshold; absolute
 changes remain available in CSV.
 
+Direct seasonal output at common SZA 70° and 80 km: summer O3 is 6.5873e6,
+compared with 3.1097e6 in the March reference and 3.3562e6 in winter,
+in molecule cm^-3. Delta at the same point is 1.7667e9 in summer,
+1.2698e9 in March and 1.2684e9 in winter. The ordering depends on height:
+at 100 km, summer O3 is only 8.7444e5 versus 3.7215e6 in March.
+These results support a height-dependent response of the reduced model, not a
+single universal seasonal enhancement.
+
+At common SZA 70° and 90 km, the equatorial case gives O3=9.0375e7 and
+Delta=2.4663e9 molecule cm^-3, versus 5.4765e7 and 1.6927e9 at45°N:
+approximately +65.0% and +45.7%, respectively. The common-SZA comparison removes
+the simple clock-phase difference while retaining different illumination history,
+background and initialization; those contributions have not been separated.
+
 ## Dynamic atmosphere sensitivity
 
 Reused accepted M5B/M5C trajectories have **exactly identical initial concentrations**.
@@ -148,6 +162,32 @@ Reusing initialization sensitivities requires the four original accepted caches;
 their fingerprints are explicit. Each scenario config and manifest records the
 baseline, geometry, initialization, drivers, solver controls, source hashes,
 software versions, output checksum and physical audit.
+
+One demonstrated software defect required a minimal correction: the equatorial
+endpoint `(end-start)+(start-noon)` is 71984.67518600001 s, while independently
+computed `(end-noon)` is 71984.675186 s. The one-ULP excess (1.4552e-11 s) triggered
+a false out-of-coverage error. Atmosphere and NIR queries now normalize only
+roundoff within four ULPs of a coverage endpoint. Interior queries are unchanged;
+genuinely outside queries still fail. No concentration, parameter, forcing or
+chemical equation is adjusted. A regression reproduces the actual datetime
+witness and tests both real-outside rejection and identical endpoint values.
+Source compatibility checks allow only this explicitly fingerprinted patch;
+all other accepted scientific source ASTs and immutable artifacts remain intact.
+
+## Final verification and storage
+
+Full pytest: **913 tests + 13 subtests PASS**; ruff and result-generation
+consistency checks PASS. All six full trajectories and their dawn subsets are
+finite/nonnegative, preserve exact R_H and shell shadow, and have physical
+remaining QSSA species. The maximum scaled QSSA/family/peroxide-budget residual
+is 4.121e-16. Stored chemical background and forcing are independently
+recomputed bitwise. M4C-R2 and accepted evidence remain intact.
+The audit receipt is [campaign_qa.json](manifests/campaign_qa.json).
+
+Canonical compressed NPZ datasets total approximately 6.25 MB, including the
+reused initialization sensitivity; the 22 PNG/PDF files total 2.36 MB.
+The complete results directory is approximately 8.78 MB. Full trajectories and
+private caches remain local and ignored. No licensed raw data are committed.
 
 ## Scope and limitations
 

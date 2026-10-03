@@ -23,6 +23,7 @@ from scripts.run_final_results import (
     ROOT,
     TAG,
     load_result,
+    normalized_source_proof,
     sha,
     write_json,
 )
@@ -284,7 +285,7 @@ def figures(cases):
             fig,axes = plt.subplots(1,2,figsize=(8.2,4.8),sharey=True)
             for name in names:
                 result = cases[name]
-                label = result.metadata["campaign"]["date"] if group=="seasonal" else f"{result.metadata['campaign']['latitude_deg']:g}°N"
+                label = f"Noon {result.metadata['campaign']['date']}" if group=="seasonal" else f"{result.metadata['campaign']['latitude_deg']:g}°N"
                 for ax,angle in zip(axes,(85.,70.),strict=True):
                     ax.plot(at_sza(result.sza_deg,result.state_cm3[:,:,index],angle),
                             result.altitude_km,label=label)
@@ -292,7 +293,7 @@ def figures(cases):
             axes[0].set_ylabel("Altitude [km]")
             axes[1].legend(frameon=False)
             save_figure(fig,f"{number:02d}_{group}_{species.lower()}",
-                f"Complete {group} model response at common SZA85/70: solar geometry, dynamic background and approximate initialization all change. Common dawn interval99→70; no extrapolation to unreachable60°.",registry)
+                f"Complete {group} model response at common SZA85/70: solar geometry, dynamic background and approximate initialization all change. Common dawn interval99→70; no extrapolation to unreachable60°. Dates identify the preceding bootstrap noon; dawn is on the following UTC date.",registry)
     frozen = load_result(ROOT/"evidence/m5b_reference_real_geometry.npz")
     dynamic = load_result(ROOT/"evidence/m5c_reference_dynamic_msis.npz")
     mask = (dynamic.time_s>43200)&(dynamic.sza_deg<=99)&(dynamic.sza_deg>=60)
@@ -334,7 +335,8 @@ def figures(cases):
 
 def checks():
     """Artifact and table consistency, including boundary/interpolation conventions."""
-    unchanged = subprocess.run(["git","diff","--quiet",BASELINE,"--","src",
+    normalized_source_proof()  # Only the explicitly fingerprinted datetime fix may differ.
+    unchanged = subprocess.run(["git","diff","--quiet",BASELINE,"--",
                                 "artifacts/accepted","evidence"],cwd=ROOT,check=False)
     if unchanged.returncode:
         raise ValueError("accepted model/assets/evidence were modified")
