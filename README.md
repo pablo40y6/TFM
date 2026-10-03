@@ -1,102 +1,122 @@
 # TFM photochemistry model
 
-Reproducible Python implementation of mesospheric O3 and O2(a1Delta)
-photochemistry, developed in independently auditable milestones.
+A reproducible temporal model of mesospheric ozone (O3) and excited molecular
+oxygen O2(a1Delta), developed for the master's thesis (TFM).
 
-## Current milestone: 4C-R2
+## Accepted temporal model
 
-Milestone 4C adds a reproducible spherical, direct-beam UV/VUV kernel on the
-frozen 0--150 km atmosphere. Given 51 dynamic O and O3 concentrations and a
-supplied SZA, it calculates exactly eight photolysis coefficients: `JH`,
-`J_SRC`, `J_LYA`, `J_O2_TOTAL`, `J_O3_TOTAL`, `J_H2O2`, `J_H2O_A`, and
-`J_H2O_B`. The spectral backbone is numerically identical to all six arrays in
-the accepted 2017 `sigma.mat`; H2O and H2O2 cross sections are corrected
-transcriptions from JPL Evaluation 18 (2015). The H2O row implemented at
-189 nm documents and corrects the table's printed 199 nm typo without changing
-its `1.08e-20 cm2 molecule-1` value. Exact spherical shell intersections,
-altitude-specific Earth shadow, endpoint-mean shell densities, and
-Beer--Lambert attenuation are implemented independently of `legacy_2017`.
+The chemistry grid has 51 heights from **50 to 100 km**, at 1 km spacing.
+Seven species evolve dynamically: **O, O3, H, OH, HO2, H2O2 and Delta**
+(357 ODEs). `R_H = OH + HO2` is diagnostic; only O1D, B0 and B1 use QSSA.
+M4C UV responds to chemical O/O3, and accepted M4D A0/B/IRA excitation
+includes historical O2-Air CIA attenuation. UTC date, latitude and
+east-positive longitude determine solar geometry and height-dependent shadow.
+BDF is the main solver; Radau provides independent numerical validation.
 
-The M4A background provides:
+M1-R2, M2-R2, M3, M4A, M4B-R2, M4C-R2, M4D for temporal use, and M5A/M5B/M5C
+are accepted. The current references are [PROJECT_STATE.md](PROJECT_STATE.md)
+and the single [technical report](docs/m5_temporal_report.md).
+Earlier investigations are indexed in [docs/archive](docs/archive/README.md).
 
-- NRLMSISE-00 temperature and ordinary-neutral density from a pinned,
-  explicitly driven `pymsis==0.12.0`, `version=0` generation;
-- fixed Li-2020 model VMRs for O2, N2, and CO2;
-- prescribed SOCRATES H2O/H2 climatological profiles on 50--100 km;
-- a qualified SOCRATES external-O3 approximation on 0--150 km;
-- exact dynamic O/O3 replacement on 50--100 km for the radiative column;
-- packaged CSV/JSON assets loaded at runtime without pymsis or network.
+## Install and run
 
-M3 thermal/QSSA semantics, M2 kinetics, M4B odd-oxygen bookkeeping, the
-accepted `legacy_2017` code, and frozen `sigma.mat` remain unchanged.
-
-Not implemented in M4C: `gA/gB/gIRA`, HITRAN O2 excitation, calendar/local-time
-astronomy, a column/vector RHS, time integration, BDF/Radau, diurnal spin-up,
-retrieval, transport, or `updated_2025`.
-
-## Layout
-
-```text
-src/tfm_photochem/
-  metadata.py
-  assets/legacy_2017/         frozen sigma.mat and metadata
-  assets/historical_2020/     frozen M4A profiles and M4C UV source tables
-  legacy_2017/                accepted literal MATLAB reproduction
-  historical_2020/
-    config.py                 neutral names and unit conventions
-    kinetics.py               38 historical rate laws + provenance
-    reactions.py              declarative 52-process registry
-    local_types.py            scalar input/output contracts
-    qssa.py                   six-species algebraic closure
-    fluxes.py                 event-flux evaluation
-    stoichiometry.py          registry-derived tendency coefficients
-    local_closure.py          single-level orchestration
-    photolysis_budget.py      injected-total odd-oxygen partition
-    background_types.py       immutable profile contracts
-    prescribed_profiles.py    SOCRATES interpolation/extrapolation
-    background_generation.py  optional pinned MSIS generator
-    background.py             network-free runtime loader/API
-    uv_assets.py              immutable spectral assets and hashes
-    uv_cross_sections.py      JPL18 H2O/H2O2 rules
-    uv_geometry.py            exact spherical shell paths and Earth shadow
-    uv_radiation.py           columns, optical depth, photon field, eight J
-tests/                        inherited tests plus independent M4C tests
-scripts/                      five validators and deterministic generators
-docs/                          architecture, sources, provenance, evidence
-```
-
-## Run
-
-From the repository root:
+Use Python 3.10 or later from the repository root:
 
 ```bash
-python -m pip install -e ".[dev]"
+python -m pip install -e ".[dev,background-gen]"
+```
+
+A dynamic atmosphere uses pinned `pymsis==0.12.0` (MSIS-00), prescribed reference
+VMRs, and quiet activity `F107/F107a/Ap = 150/150/4` or explicit activity drivers.
+It never downloads space weather. Dynamic NIR requires the authorized local
+historical source bundle and HITRAN2016 export, or an explicitly precomputed
+`DynamicNIRForcing`. Raw HITRAN is not distributed in this repository.
+
+```python
+from datetime import datetime, timezone
+from pathlib import Path
+from tfm_photochem.dynamic_radiation import HistoricalNIRInputs
+from tfm_photochem.m5_simulation import simulate
+
+start_datetime = datetime(2020, 3, 20, 20, tzinfo=timezone.utc)
+end_datetime = datetime(2020, 3, 21, 9, tzinfo=timezone.utc)
+latitude, longitude = 45.0, 0.0
+inputs = HistoricalNIRInputs(
+    Path("/path/to/verified/historical-sources"),
+    Path("/path/to/authorized-hitran2016.txt"),
+)
+result = simulate(
+    start_datetime, end_datetime, latitude, longitude,
+    atmosphere="dynamic_msis", initialization="reference_noon",
+    radiation_inputs=inputs, cache=Path(".m5-derived-cache"),
+)
+result.save("trajectory.npz")
+```
+
+`reference_noon` is an approximate bootstrap from the preceding apparent solar
+noon. To bypass it, omit `initialization` and supply `initial_state=state`, a
+finite, nonnegative `(51, 7)` array in cm^-3, in the species order above:
+
+```python
+result = simulate(
+    start_datetime, end_datetime, latitude, longitude,
+    initial_state=state, atmosphere="dynamic_msis",
+    radiation_inputs=inputs, cache=Path(".m5-derived-cache"),
+)
+```
+
+For a self-contained frozen-atmosphere example using the accepted golden noon
+state and packaged NIR table (no external spectroscopy files required):
+
+```python
+import numpy as np
+
+with np.load("evidence/m5b_reference_real_geometry.npz", allow_pickle=False) as data:
+    state = data["state_cm3"][0].copy()
+result = simulate(
+    datetime(2020, 3, 20, 12, tzinfo=timezone.utc), end_datetime, 45.0, 0.0,
+    initial_state=state, atmosphere="frozen_reference",
+)
+result.save("trajectory.npz")
+```
+
+This last example explicitly injects a reference state; it does not establish
+chemical equilibrium at actual astronomical noon. `frozen_reference` retains
+the M4A reference atmosphere even if the geometry date/location changes.
+Saved NPZ outputs include time, height, SZA, species, QSSA fields, forcings and
+solver/atmosphere/initialization metadata; dynamic runs also retain backgrounds.
+
+## Validate
+
+```bash
 python -m pytest
 python -m ruff check src tests scripts
-python -m compileall -q src tests scripts
 python scripts/validate_legacy.py
 python scripts/validate_local_closure.py
-python scripts/validate_historical_2020_background.py
 python scripts/validate_odd_oxygen_photolysis_budget.py
+python scripts/validate_historical_2020_background.py
 python scripts/validate_historical_2020_uv.py
 ```
 
-To independently regenerate the frozen background (optional generation extra):
+Run M5 validators as modules from the repository root (for example,
+`python -m scripts.validate_m5b_temporal --mode assess --cache /local/cache`).
+M4D mapping and M5A/M5B/M5C certification commands, verified source identities,
+and cache requirements are documented in the [technical report](docs/m5_temporal_report.md).
+Accepted reference trajectories are `evidence/m5_reference_cycle.npz`,
+`evidence/m5b_reference_real_geometry.npz` and
+`evidence/m5c_reference_dynamic_msis.npz`. Numerical certification uses 300-s
+background and 3600-s NIR grids, with output convergence below approximately
+0.5%. These goldens are evidence, not universal initial conditions.
 
-```bash
-python -m pip install -e ".[background-gen]"
-python scripts/generate_historical_2020_background.py --check-against-frozen
-```
+## Scientific limits and next phase
 
-The meaning and limits of validation are documented in
-`docs/validation_report.md`; the full M2 provenance table is in
-`docs/historical_2020_reactions.md`; the exhaustive reduced-network inclusion
-and exclusion decisions are in `docs/historical_2020_topology.md`.
-The M3 equations, flux map, coefficient table, and limitations are in
-`docs/historical_2020_local_closure.md`.
-The superseding M4B partition, event semantics, and conservation identities are
-in `docs/historical_2020_odd_oxygen.md`.
-M4A sources, transformations, limitations, and anchors are in
-`docs/historical_2020_background.md` and `docs/milestone4a_report.md`.
-M4C equations, reconstruction choices, source limits, and sensitivity results
-are in `docs/historical_2020_uv_radiation.md` and `docs/milestone4c_report.md`.
+There is no transport or validated climatological initialization. This is a
+finite-horizon model; a periodic attractor is not certified. Exterior O3 and
+H2O/H2 VMR profiles are prescribed references. Large frozen/dynamic differences
+are atmospheric sensitivities, not solver error. Advanced LM/Galatry remains
+optional historical spectroscopy work and is not required by the accepted
+A0/B/IRA temporal baseline. The M4C-R2 immutable ZIP and earlier accepted
+scientific assets remain preserved.
+
+The next phase is final scientific results, figures and thesis writing.
+Repository consolidation introduces no new scientific model or milestone.

@@ -1,0 +1,68 @@
+{
+  "M4D_frozen": false,
+  "cases_per_spacing": 357,
+  "diagnostic_semantics": {
+    "line_weight": "HITRAN2012 IRA line strength only; diagnostic, not final monomer-self-shielded gIRA",
+    "nodeclip": "clip each measured source node k to >=0 before T interpolation; conservative diagnostic for negative-sample sensitivity",
+    "nominal_temperature": "253/273/296 linear interpolation; endpoint clamp outside",
+    "source_envelope": "outside 253..296 K only: per-frequency min/max of three measured nonnegative spectra"
+  },
+  "extracted_existing_diagnostic_sha256": "bc73629391971039d23ed0ac99739d17051655d4479ee56f7943e6967de7bc00",
+  "scope": "existing HITRAN2012 thin-weight geometry witness; not retained gIRA",
+  "source_meta": {
+    "253": {
+      "hi": 8477.18,
+      "k_max": 1.191e-45,
+      "k_min": -6.622e-48,
+      "lo": 7450.38,
+      "n": 4194,
+      "negative_samples": 360
+    },
+    "273": {
+      "hi": 8486.485,
+      "k_max": 1.12e-45,
+      "k_min": -1.322e-48,
+      "lo": 7500.089,
+      "n": 4029,
+      "negative_samples": 19
+    },
+    "296": {
+      "hi": 8487.4645,
+      "k_max": 1.091e-45,
+      "k_min": -1.51e-47,
+      "lo": 7450.1322,
+      "n": 4237,
+      "negative_samples": 822
+    }
+  },
+  "sources": {
+    "07_hit12.par": {
+      "bytes": 2263950,
+      "sha256": "ad2cadf91cb985bec4074ce0bf47cdcfa7aab627ea15de2ac85de731873417a4"
+    },
+    "O2-O2_2011.cia": {
+      "bytes": 1938473,
+      "sha256": "8cc3ecc87bf7a02492b385ecc71abf279b058da853aea768825deb81237d5ee3"
+    }
+  },
+  "spatial_refinement": {
+    "0.0625_to_0.03125": {
+      "max_abs_weight_effect_diff": 8.84752221232965e-05,
+      "max_rel_attenuation_factor_diff": 0.00038833740968996576,
+      "max_rel_tau_lines_max_diff": 0.0004156931420543775
+    },
+    "0.125_to_0.0625": {
+      "max_abs_weight_effect_diff": 0.0002605644102688931,
+      "max_rel_attenuation_factor_diff": 0.0012339666401493625,
+      "max_rel_tau_lines_max_diff": 0.0012434411183927705
+    }
+  },
+  "summary_0125": {
+    "max_grid_negative_handling_tau_difference": 0.0004793405389689649,
+    "max_line_negative_handling_tau_difference": 0.0,
+    "max_source_envelope_effect_high": 0.9741424559415546,
+    "max_tau_grid": 5.8965533398167205,
+    "max_tau_lines": 5.894737592057628,
+    "max_thin_weight_effect_rel": 0.9740281224160727
+  }
+}

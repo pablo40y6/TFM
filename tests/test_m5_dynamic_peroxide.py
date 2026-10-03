@@ -1,0 +1,264 @@
+"""Seven-species temporal model: unchanged fluxes, physical boundaries, golden reference."""
+from dataclasses import asdict
+
+import numpy as np
+import pytest
+
+from tfm_photochem.m5_temporal import (
+    DynamicPeroxideColumnRHS,
+    DynamicPeroxideState,
+    LocalState,
+    bootstrap_seeds,
+    close_dynamic_peroxide_chemistry,
+    close_local_chemistry,
+    dynamic_peroxide_bootstrap_seeds,
+    dynamic_peroxide_rhs,
+    load_baseline_background,
+)
+
+from .test_historical_2020_local_closure import BASE_FORCING, FORCING_OFF
+
+
+@pytest.mark.parametrize("z", range(50,101))
+def test_seven_boundaries_and_remaining_denominators(z):
+    b=load_baseline_background().local_background_at(z)
+    rng=np.random.default_rng(517+z)
+    for forcing in (BASE_FORCING, FORCING_OFF):
+        for _ in range(8):
+            y=10**rng.uniform(-8,np.log10(b.M)-3,7)
+            for index in range(7):
+                state=y.copy()
+                state[index]=0.
+                c=close_dynamic_peroxide_chemistry(DynamicPeroxideState(*state),b,forcing)
+                dy=dynamic_peroxide_rhs(0.,state,background=b,forcing=forcing)
+                scale=max(sum(abs(v) for v in c.fluxes.values()),1e-30)
+                assert dy[index]>=-32*np.finfo(float).eps*scale
+                assert min(c.diagnostics.L_O1D,c.diagnostics.L_B0,c.diagnostics.L_B1)>0
+                expected=c.fluxes["HO2_HO2"]-c.fluxes["H2O2_PHOTOLYSIS"]-c.fluxes["OH_H2O2"]
+                assert dy[5]==expected
+                assert abs(dy[3]+dy[4]-c.tendencies.R_H)<=8*np.finfo(float).eps*scale
+                assert c.algebraic.H2O2==state[5]
+                assert np.all(np.isfinite(list(asdict(c.algebraic).values())))
+
+@pytest.mark.parametrize("family", range(3))
+def test_seven_golden_fluxes_and_tendencies(family):
+    bg=load_baseline_background()
+    for i,y in enumerate(bootstrap_seeds(bg)[family]):
+        b=bg.local_background_at(50+i)
+        old=close_local_chemistry(LocalState(*y),b,FORCING_OFF)
+        a=old.algebraic
+        state=DynamicPeroxideState(*y[:3],a.OH,a.HO2,a.H2O2,y[4])
+        new=close_dynamic_peroxide_chemistry(state,b,FORCING_OFF)
+        assert asdict(a)==asdict(new.algebraic)
+        assert old.fluxes==new.fluxes
+        assert old.tendencies==new.tendencies
+        d=dynamic_peroxide_rhs(0.,list(asdict(state).values()),background=b,forcing=FORCING_OFF)
+        scale=max(sum(abs(v) for v in old.fluxes.values()),1e-30)
+        assert abs(d[3])<1e-8*scale
+        assert abs(d[5])<1e-14*scale
+        # Original family coordinate evolves even when OH is in QSSA.
+        assert abs(d[4]-old.tendencies.R_H)<1e-8*scale
+
+@pytest.mark.parametrize("z", range(50,101))
+def test_seven_exact_dark_continuum(z):
+    b=load_baseline_background().local_background_at(z)
+    y=np.array([0.,12345.,0.,0.,0.,0.,0.])
+    np.testing.assert_array_equal(dynamic_peroxide_rhs(0.,y,background=b,forcing=FORCING_OFF),np.zeros(7))
+
+@pytest.mark.parametrize("index", range(7))
+def test_no_clipping(index):
+    y=np.ones(7)
+    y[index]=-1.
+    with pytest.raises(ValueError):
+        DynamicPeroxideState(*y)
+
+def test_357_coordinates_and_positive_seed_families():
+    rhs=DynamicPeroxideColumnRHS()
+    for seed in dynamic_peroxide_bootstrap_seeds(rhs):
+        assert seed.shape==(51,7) and np.all(seed>0)
+        value=rhs(0.,np.log(seed).ravel())
+        assert value.shape==(357,) and np.all(np.isfinite(value))
+
+
+def test_peroxide_reaction_stoichiometry_independent():
+    from tfm_photochem.historical_2020.reactions import REACTION_BY_ID
+    coefficients = {}
+    for name,reaction in REACTION_BY_ID.items():
+        products=dict(reaction.products)
+        reactants=dict(reaction.reactants)
+        value=products.get("H2O2",0)-reactants.get("H2O2",0)
+        if value:
+            coefficients[name]=value
+    assert coefficients=={"HO2_HO2":1,"H2O2_PHOTOLYSIS":-1,"OH_H2O2":-1}
+    reaction=REACTION_BY_ID["OH_H2O2"]
+    products,reactants=dict(reaction.products),dict(reaction.reactants)
+    assert products.get("OH",0)-reactants.get("OH",0)==-1
+    assert products.get("HO2",0)-reactants.get("HO2",0)==1
+
+
+def test_random_full_trace_matches_lean_velocity():
+    rng=np.random.default_rng(732)
+    b=load_baseline_background().local_background_at(80)
+    for _ in range(100):
+        y=10**rng.uniform(-6,9,7)
+        c=close_dynamic_peroxide_chemistry(DynamicPeroxideState(*y),b,BASE_FORCING)
+        traced=dynamic_peroxide_rhs(0.,y,background=b,forcing=BASE_FORCING,
+                                    chemistry=lambda s,b,f:close_dynamic_peroxide_chemistry(s,b,f))
+        lean=dynamic_peroxide_rhs(0.,y,background=b,forcing=BASE_FORCING)
+        np.testing.assert_array_equal(traced,lean)
+        expected=np.array([c.tendencies.O,c.tendencies.O3,c.tendencies.H,c.tendencies.Delta])
+        np.testing.assert_array_equal(lean[[0,1,2,6]],expected)
+
+
+def test_negative_stoichiometry_requires_consumed_dynamic_reactant():
+    """Analytic mass-action boundary check, independent of sampled flux values."""
+    from tfm_photochem.historical_2020.reactions import REACTION_BY_ID
+    species=("O","O3","H","OH","HO2","H2O2","Delta")
+    for reaction in REACTION_BY_ID.values():
+        reactants,products=dict(reaction.reactants),dict(reaction.products)
+        for name in species:
+            if products.get(name,0)-reactants.get(name,0)<0:
+                assert reactants.get(name,0)>0
+
+
+def test_illuminated_golden_reference():
+    from .test_historical_2020_local_closure import BASE_BACKGROUND, BASE_STATE
+    c=close_local_chemistry(BASE_STATE,BASE_BACKGROUND,BASE_FORCING)
+    a=c.algebraic
+    state=DynamicPeroxideState(BASE_STATE.O,BASE_STATE.O3,BASE_STATE.H,a.OH,a.HO2,a.H2O2,BASE_STATE.Delta)
+    new=close_dynamic_peroxide_chemistry(state,BASE_BACKGROUND,BASE_FORCING)
+    assert new.algebraic==c.algebraic
+    assert new.fluxes==c.fluxes
+    assert new.tendencies==c.tendencies
+
+
+def test_vector_column_is_identical_to_golden_scalar_kernel():
+    from dataclasses import replace
+    rhs=DynamicPeroxideColumnRHS()
+    rng=np.random.default_rng(875)
+    for _ in range(12):
+        column=10**rng.uniform(-8,11,(51,7))
+        forcing=[replace(BASE_FORCING, J_H2O2=10**rng.uniform(-10,-3)) for _ in range(51)]
+        batch=rhs.column_kernel(column,forcing)
+        scalar=np.array([dynamic_peroxide_rhs(0.,state,background=b,forcing=f,chemistry=rhs.chemistry)
+                         for state,b,f in zip(column,rhs.locals,forcing,strict=True)])
+        np.testing.assert_array_equal(batch,scalar)
+
+
+@pytest.mark.parametrize("z", [50,75,100])
+@pytest.mark.parametrize("method", ["BDF","Radau"])
+def test_dark_peroxide_analytic_limit_without_qssa(z,method):
+    from scipy.integrate import solve_ivp
+
+    from tfm_photochem.historical_2020 import kinetics
+    b=load_baseline_background().local_background_at(z)
+    coefficient=float(kinetics.k_ho2_ho2(b.T,b.M))
+    initial=np.array([0.,0.,0.,0.,1000.,1233.,0.])
+    times=np.linspace(0.,1/(coefficient*initial[4]),31)
+    def jacobian(time,state):
+        # Newton preconditioner on the exact invariant dark subspace. Avoid
+        # finite-difference leakage into identically zero species; no clipping.
+        matrix=np.zeros((7,7))
+        matrix[4,4]=-4*coefficient*state[4]
+        matrix[5,4]=2*coefficient*state[4]
+        return matrix
+    solution=solve_ivp(lambda t,y:dynamic_peroxide_rhs(t,y,background=b,forcing=FORCING_OFF),
+                       (0.,times[-1]),initial,t_eval=times,method=method,rtol=2e-10,atol=1e-10,
+                       jac=jacobian)
+    assert solution.success and np.all(solution.y>=0)
+    expected_ho2=initial[4]/(1+2*coefficient*initial[4]*times)
+    # Integral storage uses two HO2 per peroxide; the event rate has no factor 1/2.
+    expected_peroxide=initial[5]+(initial[4]-expected_ho2)/2
+    np.testing.assert_allclose(solution.y[4],expected_ho2,rtol=2e-8,atol=1e-8)
+    np.testing.assert_allclose(solution.y[5],expected_peroxide,rtol=2e-8,atol=1e-8)
+    np.testing.assert_array_equal(solution.y[[0,1,2,3,6]],0.)
+    np.testing.assert_allclose(solution.y[4]+2*solution.y[5],initial[4]+2*initial[5],rtol=1e-12)
+
+
+def test_daily_initializer_rejects_known_stable_two_cycle(monkeypatch):
+    from types import SimpleNamespace
+
+    from tfm_photochem import m5_temporal as model
+    def day_map(rhs,initial,**kwargs):
+        mapped=initial.copy()
+        fraction=initial[:,0]/1e6
+        mapped[:,0]=1e6*3.2*fraction*(1-fraction)
+        return SimpleNamespace(),np.array([initial,mapped])
+    monkeypatch.setattr(model,"integrate_reference_cycle",day_map)
+    initial=np.full((51,7),1e6)
+    initial[:,0]=.2e6
+    with pytest.raises(RuntimeError,match="cycle convergence not attained"):
+        model.periodic_spinup(SimpleNamespace(),initial,max_cycles=40,acceleration=False)
+
+
+
+def test_period2_lag_certificate_distinguishes_periods_and_drift():
+    from scripts.validate_m5_temporal import certify_period2_lags
+    baseline=np.full((51,7),1e6)
+    a=baseline.copy()
+    b=baseline.copy()
+    b[35,1]*=3
+    two=[a if n%2==0 else b for n in range(31)]
+    assert certify_period2_lags(two)["period2_candidate_pass"]
+    assert not certify_period2_lags([a]*31)["period2_candidate_pass"]
+    four=[baseline*(1+n%4) for n in range(31)]
+    assert not certify_period2_lags(four)["period2_candidate_pass"]
+    # Small two-day changes alone do not certify slow secular growth.
+    drifting=[state*(1.0007**n) for n,state in enumerate(two)]
+    result=certify_period2_lags(drifting)
+    assert max(result["lag_history"][-1]["D2"]["relative_max"])<.005
+    assert not result["period2_candidate_pass"]
+
+
+def test_period2_near_zero_absolute_guard():
+    from scripts.validate_m5_temporal import lag_analysis, lag_pass
+    a=np.full((51,7),1e6)
+    b=a.copy()
+    a[0,0]=1e-9
+    b[0,0]=.01
+    metric=lag_analysis([a,b])[0]["D1"]
+    assert max(metric["relative_max"])==0
+    assert not lag_pass(metric)
+
+
+
+def test_phase_pair_comparison_allows_only_common_parity_swap():
+    from scripts.validate_m5_temporal import compare_phase_pairs
+    a=np.full((51,7),1e6)
+    b=a*2
+    matched=compare_phase_pairs([a,b],[b,a])
+    assert matched["pass_"] and matched["parity_swapped"]
+    different=compare_phase_pairs([a,b],[a,b*1.1])
+    assert not different["pass_"]
+    mixed=b.copy()
+    mixed[:25]=a[:25]
+    assert not compare_phase_pairs([a,b],[a,mixed])["pass_"]
+
+
+
+def test_ordinary_certification_never_extrapolates_or_resets_endpoints(tmp_path,monkeypatch):
+    from types import SimpleNamespace
+
+    from scripts import validate_m5_temporal as validator
+    a=np.full((51,7),1e6)
+    b=a.copy()
+    b[35,1]*=3
+    np.savez_compressed(tmp_path/"seven-seed-0-latest.npz",state=a,day=55)
+    received=[]
+    def physical_day(rhs,initial):
+        expected=a if len(received)%2==0 else b
+        np.testing.assert_array_equal(initial,expected)
+        received.append(initial.copy())
+        end=b if len(received)%2 else a
+        return SimpleNamespace(t=np.array([0.,86400.]),nfev=1,trial_rejections=0),np.array([initial,end])
+    monkeypatch.setattr(validator,"integrate_reference_cycle",physical_day)
+    monkeypatch.setattr(validator,"retained_closure_audit",lambda *args:
+                        dict(retained_QSSA_scaled_max=0.,family_budget_scaled_max=0.))
+    rhs=SimpleNamespace(nir_provider=SimpleNamespace(sza_deg=np.array([0.,180.]),
+                          rates_s1=np.zeros((2,51,3))),locals=DynamicPeroxideColumnRHS().locals)
+    result=validator.ordinary_period2_candidate(rhs,tmp_path,0,days=20)
+    assert len(received)==20 and result["ordinary_days"]==20
+    assert result["period2_candidate_pass"] and not result["acceleration"]
+    # Resume a chain without repeating or replacing any completed physical day.
+    validator.ordinary_period2_candidate(rhs,tmp_path,0,days=22)
+    assert len(received)==22

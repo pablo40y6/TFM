@@ -1,0 +1,82 @@
+{
+  "M4D_frozen": false,
+  "M5_started": false,
+  "candidate_algebra_opacity_probes": {
+    "clipping": false,
+    "minimum_cm2_molecule": 0.0,
+    "negative_states": [],
+    "nodes": 3868,
+    "source_order_invariance": "PASS",
+    "states": 16,
+    "status": "PASS"
+  },
+  "code_sha256": {
+    "scripts/validate_m4d_a_transfer.py": "fb79f8613105843e55fb4c70e570cd558213afe3bd25f7d119887d4d4a2f806a",
+    "src/tfm_photochem/m4d_reconstruction/a_band.py": "38bf44faec655fa333d82deb814b382410887d1777003745c68a0f536aa4f11c",
+    "src/tfm_photochem/m4d_reconstruction/spectroscopy.py": "beb71003869636201b664e2ec2105967efb3998208418b031f3200016a655cb7"
+  },
+  "decision": "SCIENTIFIC BLOCKER",
+  "full_domain_rate_convergence": "NOT RUN; LM normalization, hot-shell and Galatry blockers",
+  "hot_shells": {
+    "active_in_vertical_50km": 248,
+    "count": 248,
+    "exception": "A shell 952: DESIGN BLOCKER: Y temperature outside supported policy",
+    "first_lower_edge_km": 119.0,
+    "maximum_temperature_K": 741.757396697998,
+    "shell_step_km": 0.125,
+    "status": "DESIGN BLOCKER"
+  },
+  "line_mixing_normalization": {
+    "exception": "SOURCE CONVENTION BLOCKER: Table-22 Y unit annotation does not establish dimensionless p*Y normalization against complex SDV; frozen HAPI has no LM evaluator",
+    "nominal_rate_gate": "PASS; unverified normalization rejected",
+    "required": "historical demonstration of numeric Y normalization with F/F-prime",
+    "source_table_units": "cm^-1 atm^-1",
+    "status": "SOURCE CONVENTION BLOCKER"
+  },
+  "low_T_no_Y_q_rate_sensitivities": "NOT RUN on full accepted column",
+  "mapping": {
+    "ambiguities": [],
+    "auxiliary_matches": 430,
+    "dipoles_outside_lm": 21,
+    "drouin_sdv": 91,
+    "duplicates": [],
+    "published_lm": 70,
+    "quadrupoles": 59,
+    "rare_galatry": 280,
+    "status": "PASS",
+    "unmatched": []
+  },
+  "principal_shadow": "PASS",
+  "rare_galatry": {
+    "limits_area_and_nonnegativity": "NOT RUN; no authorized evaluator",
+    "mapped_lines": 280,
+    "missing": [
+      "exact beta/profile frequency convention",
+      "historical beta(T,p) law"
+    ],
+    "pinned_hapi_galatry_functions": [],
+    "status": "SOURCE CONVENTION BLOCKER"
+  },
+  "scope": "principal SDV and candidate LM algebra only; not full 430-line gA closure",
+  "sdv_hapi_default_cpf": {
+    "comparisons": 1092,
+    "maximum_profile_scaled_complex_error": 2.1635279370293397e-05,
+    "method": "hash-verified math-only AST; pinned hum1_wei/pcqsdhc, no module import",
+    "status": "PASS",
+    "tolerance": 0.001
+  },
+  "sdv_unit_area": {
+    "checks": 24,
+    "max_error": 8.038014698286133e-14,
+    "status": "PASS"
+  },
+  "sensitivity_population_counts": {
+    "nominal": 150,
+    "without_no_y": 129,
+    "without_q": 91
+  },
+  "table22_source_nodes": {
+    "checks": 280,
+    "status": "PASS"
+  }
+}

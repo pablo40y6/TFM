@@ -1,0 +1,91 @@
+{
+  "scope": "Repository consolidation only; no scientific changes or new experiments",
+  "accepted_source_commit": "dbb5878728be0c60c661742661c37f2a5da89b38",
+  "pytest": {
+    "passed": 908,
+    "subtests_passed": 13
+  },
+  "ruff": "PASS",
+  "historical_validators": {
+    "legacy": "PASS",
+    "local_closure": "PASS",
+    "odd_oxygen_photolysis_budget": "PASS",
+    "historical_2020_background": "PASS",
+    "historical_2020_uv": "PASS"
+  },
+  "M4D_mapping": "PASS",
+  "M5A": {
+    "decision": "GO M5A / validated finite-horizon reference dawn",
+    "regenerated_golden_arrays": "bit-identical"
+  },
+  "M5B": {
+    "decision": "GO M5B",
+    "M4D_decision": "CLOSED / ACCEPTED for temporal model"
+  },
+  "M5C": {
+    "decision": "PASS numerical convergence; case/regression QA also required",
+    "assessment_mode": "300-s background/3600-s NIR versus 600/3600 and 300/7200, certified trajectories"
+  },
+  "golden_integrity": {
+    "artifacts": {
+      "m5_reference_cycle.npz": {
+        "sha256": "96ba8d5cde0775dbe20b4d0b22a3e5f82ac64a050ead443f7248b1db23553689",
+        "state_shape": [
+          357,
+          51,
+          7
+        ],
+        "finite_nonnegative": true,
+        "R_H_exact": true,
+        "unchanged_from_accepted_checkout": true
+      },
+      "m5b_reference_real_geometry.npz": {
+        "sha256": "2f4345c455731a3fce07c85caf1f37b7382b7e22ddf7cd6e2e473560242491bb",
+        "state_shape": [
+          357,
+          51,
+          7
+        ],
+        "finite_nonnegative": true,
+        "R_H_exact": true,
+        "unchanged_from_accepted_checkout": true
+      },
+      "m5c_reference_dynamic_msis.npz": {
+        "sha256": "0c8efafdaaedabab819ecabc027370b054c39f1b44badbc1897501d75467cb57",
+        "state_shape": [
+          357,
+          51,
+          7
+        ],
+        "finite_nonnegative": true,
+        "R_H_exact": true,
+        "unchanged_from_accepted_checkout": true
+      }
+    },
+    "frozen_NIR_verified": true,
+    "active_document_links": "PASS"
+  },
+  "cache_newline_compatibility": {
+    "reason": "CRLF/LF checkout differences only; normalized text and Python AST identical; original code SHA identities match accepted M4D closure",
+    "original_fingerprint": "beb9d7a99c2f6d45b38acca41d748992ca08ed5d2e6f2d50a82501d17e11dcac",
+    "checkout_fingerprint": "a960fbacb29934d3ea8e7319e7364e87ee122237412d39f1cdd4edbfb3a65a65",
+    "files_with_newline_differences": [
+      "src\\tfm_photochem\\m4d_reconstruction\\cia.py",
+      "src\\tfm_photochem\\m4d_reconstruction\\mapping.py",
+      "src\\tfm_photochem\\m4d_reconstruction\\sources.py",
+      "src\\tfm_photochem\\m4d_reconstruction\\transfer.py",
+      "src\\tfm_photochem\\m4d_reconstruction\\__init__.py"
+    ],
+    "derived_cache_sha256": "30bcdbe691c1f612fad0cc413e2a5c56c49029a370b9324a543a3f7a073a3351"
+  },
+  "M4C_SHA256": "2944c8a8e0899b320c69c45192ee6f03b9001114c4120a9db8c67a3f1bb8f1fe",
+  "environment": {
+    "python": "3.14",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "pytest": "9.1.1",
+    "ruff": "0.16.10",
+    "pymsis": "0.12.0"
+  },
+  "scientific_code_tests_sources_and_accepted_evidence_diff_from_source_commit": "none"
+}

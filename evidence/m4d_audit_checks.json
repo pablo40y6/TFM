@@ -1,0 +1,309 @@
+{
+  "M4D_frozen": false,
+  "M5_touched": false,
+  "authorization_date": "2026-09-30",
+  "bands": {
+    "A": {
+      "canonical_sha256": "176a6c21ee37b1244bd11ef7047f6e31f7cada7edff2c3498f31f8d1f2e92eea",
+      "lines": 430
+    },
+    "B": {
+      "canonical_sha256": "bb5f8b26a2ad3c9dc31870506c3c05bcdb115b7c5b06d7141c9660c952d83c2d",
+      "lines": 320
+    },
+    "IRA": {
+      "canonical_sha256": "8d06f322aa4058ab03150a705bf9765fe356a2c7ecd06df98379c46062d295ad",
+      "lines": 835
+    }
+  },
+  "base_commit": "08a818c0c7f39b82c118aaec152a01e4433a7b66",
+  "branch": "milestone/m4d-design",
+  "cia_relative_reductions": {
+    "cia_envelope_max": 0.0029248153466058247,
+    "cia_envelope_min": 0.002722675384077,
+    "cia_nominal": 0.0029155042756581206,
+    "cia_raw": 0.0029155042756581206
+  },
+  "completed_date": "2026-10-01",
+  "counterexample_only_convergence": {
+    "baseline_to_spatial": {
+      "max_relative_difference": 0.00038850550379429836,
+      "relative_differences": {
+        "cia_envelope_max": 0.00038739187722377876,
+        "cia_envelope_min": 0.0003874707117713076,
+        "cia_nominal": 0.0003873938897834418,
+        "cia_raw": 0.0003873938897834418,
+        "monomer": 0.00038850550379429836,
+        "unattenuated": 0.0
+      },
+      "status": "PASS"
+    },
+    "baseline_to_spectral_order": {
+      "max_relative_difference": 2.140087936324544e-06,
+      "relative_differences": {
+        "cia_envelope_max": 2.1352934348020714e-06,
+        "cia_envelope_min": 2.135567352760543e-06,
+        "cia_nominal": 2.135289150163046e-06,
+        "cia_raw": 2.135289150163046e-06,
+        "monomer": 2.140087936324544e-06,
+        "unattenuated": 3.491051316321977e-11
+      },
+      "status": "PASS"
+    },
+    "spectral_order_to_spectral_support": {
+      "max_relative_difference": 7.189447951514405e-05,
+      "relative_differences": {
+        "cia_envelope_max": 7.182615535434312e-05,
+        "cia_envelope_min": 7.183367958685878e-05,
+        "cia_nominal": 7.182559438737761e-05,
+        "cia_raw": 7.182559438737761e-05,
+        "monomer": 7.189447951514405e-05,
+        "unattenuated": 3.4067191491384736e-06
+      },
+      "status": "PASS"
+    }
+  },
+  "decision": "DESIGN BLOCKER",
+  "environment": {
+    "OPENBLAS_NUM_THREADS": "1",
+    "PYTHONIOENCODING": "utf-8",
+    "PYTHONPATH": "src"
+  },
+  "frozen_baseline": {
+    "accepted_assets_byte_identical_to_base": 11,
+    "git_diff_frozen_paths_empty": true,
+    "m4c_r2_zip_sha256": "2944c8a8e0899b320c69c45192ee6f03b9001114c4120a9db8c67a3f1bb8f1fe",
+    "zip_hash_command": "Get-FileHash artifacts/accepted/m4c-r2/tfm-photochem-milestone4c-r2.zip -Algorithm SHA256"
+  },
+  "historical_cia_blocks": {
+    "253": {
+      "points": 4194,
+      "sha256": "58366c46162ca55c84aecd8b81bdadc1f5a68a27db0fbbd615a401dcc21f0bfc"
+    },
+    "273": {
+      "points": 4029,
+      "sha256": "09a1e93c23004c0b12acf3e9b97fcb44f4bd32872e7ad1c6441225f0ab56b545"
+    },
+    "296": {
+      "points": 4237,
+      "sha256": "19bd3c333c56dc9dd90019b57d014a69db420cae139a33a1c470557b1ad78e08"
+    }
+  },
+  "lint": {
+    "command": "../m4d-env/Scripts/python.exe -m ruff check .",
+    "exit_code": 0
+  },
+  "mapping": {
+    "ambiguities": [],
+    "auxiliary_matches": 430,
+    "dipoles_outside_lm": 21,
+    "drouin_sdv": 91,
+    "duplicates": [],
+    "matrix_table22_coverage_identical": true,
+    "published_lm": 70,
+    "quadrupoles": 59,
+    "rare_galatry": 280,
+    "unmatched": []
+  },
+  "new_code_format": {
+    "files": 10,
+    "status": "PASS"
+  },
+  "outstanding_after_required_stop": [
+    "full-domain A/B/IRA rate closure",
+    "A SDV+LM coupled transfer and rare Galatry evaluator",
+    "A low-temperature/no-Y/quadrupole sensitivities",
+    "B corrected source-based qSDV sensitivity",
+    "pressure-shift sensitivity",
+    "full-domain spectral/spatial maxima",
+    "illuminated tangent RATE closure (tangent/shadow geometry and shadow rate passed)",
+    "A upper-column Y policy beyond the 340-K source range; primitive currently fails closed"
+  ],
+  "powershell_exit_note": "Append exit $LASTEXITCODE in a separate validation shell to propagate the stop validator exit 2.",
+  "preliminary_checks": {
+    "all_line_opacity": {
+      "absorber_cutoff": "none; every accepted line contributes",
+      "active_shells": 1991,
+      "max_relative_difference_from_direct_wofz": {
+        "4": 1.4054744698291315e-08,
+        "6": 3.3782455643144574e-12,
+        "8": 1.4259996743236795e-14
+      },
+      "near_radius_cm1": 2.0,
+      "nodes": 728,
+      "selected_moment_order": 4
+    },
+    "geometry": {
+      "cases": 357,
+      "illuminated": 327,
+      "immediately_shadowed_IRA_rate_exact_zero": true,
+      "immediately_shadowed_path_exact_zero": true,
+      "max_absolute_accepted_shell_difference_km": 2.842170943040401e-14,
+      "tangent_illuminated": true,
+      "tangent_sza_deg": 100.08663838402701
+    },
+    "unattenuated_anchors": {
+      "bands": [
+        "A",
+        "B",
+        "IRA"
+      ],
+      "max_relative_difference": 3.1011216756082296e-11,
+      "rates_s1": [
+        [
+          6.191439451989507e-09,
+          3.575285676787124e-10,
+          1.4549983480969263e-10
+        ],
+        [
+          6.1963256585484154e-09,
+          3.580557235805004e-10,
+          1.4573674700754026e-10
+        ],
+        [
+          6.199959739253897e-09,
+          3.5852735537759415e-10,
+          1.4593873602452573e-10
+        ],
+        [
+          6.202584209307043e-09,
+          3.5895153696502674e-10,
+          1.4611114499802447e-10
+        ],
+        [
+          6.204317565053516e-09,
+          3.5933010075531544e-10,
+          1.4625641628638752e-10
+        ],
+        [
+          6.2051968875092666e-09,
+          3.5966103383809097e-10,
+          1.4637502395027614e-10
+        ],
+        [
+          6.20528469126636e-09,
+          3.5988913887808597e-10,
+          1.4645036483664059e-10
+        ]
+      ],
+      "temperatures_K": [
+        180,
+        200,
+        220,
+        240,
+        260,
+        280,
+        296
+      ]
+    }
+  },
+  "refined_rates_s1": {
+    "cia_envelope_max": 6.699818342028862e-12,
+    "cia_envelope_min": 6.701176615757316e-12,
+    "cia_nominal": 6.699880907505247e-12,
+    "cia_raw": 6.699880907505247e-12,
+    "monomer": 6.7194715555556325e-12,
+    "unattenuated": 1.4628770357168742e-10
+  },
+  "retained_case": {
+    "altitude_km": 50.0,
+    "sza_deg": 95.0
+  },
+  "runtime": {
+    "numpy": "2.5.3",
+    "python": "3.14.3",
+    "scipy": "1.18.1"
+  },
+  "test_suite": {
+    "command": "../m4d-env/Scripts/python.exe -m pytest -q -p no:cacheprovider",
+    "exit_code": 0,
+    "new_tests": 45,
+    "passed": 532,
+    "subtests_passed": 13
+  },
+  "validators": [
+    {
+      "command": "../m4d-env/Scripts/python.exe scripts/validate_legacy.py",
+      "exit_code": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "../m4d-env/Scripts/python.exe scripts/validate_local_closure.py",
+      "exit_code": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "../m4d-env/Scripts/python.exe scripts/validate_odd_oxygen_photolysis_budget.py",
+      "exit_code": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "../m4d-env/Scripts/python.exe scripts/validate_historical_2020_background.py",
+      "exit_code": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "../m4d-env/Scripts/python.exe scripts/validate_historical_2020_uv.py",
+      "exit_code": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "../m4d-env/Scripts/python.exe scripts/validate_m4d_mapping.py --sources ../m4d-sources --hitran 'C:/Users/Pablo/Downloads/guest1593878592.txt' --output evidence/m4d_mapping.json",
+      "exit_code": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "../m4d-env/Scripts/python.exe scripts/validate_m4d_legacy_cia_diagnostic.py --sources ../m4d-workflow-check/acquisition --work ../m4d-legacy-rerun --output evidence/m4d_legacy_cia_diagnostic.json",
+      "exit_code": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "../m4d-env/Scripts/python.exe scripts/validate_m4d_reconstruction.py --sources ../m4d-sources --hitran 'C:/Users/Pablo/Downloads/guest1593878592.txt' --checkpoints ../m4d-run-cache --output evidence/m4d_cia_stop_gate.json",
+      "exit_code": 2,
+      "status": "DESIGN BLOCKER (expected scientific stop)"
+    }
+  ],
+  "verified_source_identities": {
+    "07_A-band_SDF.dat": {
+      "bytes": 6229,
+      "sha256": "7cfefb8040a89cb0e4948c2811a6766b793181646d8188ebfa4d646e063dbd26"
+    },
+    "07_hit12.par": {
+      "bytes": 2263950,
+      "sha256": "ad2cadf91cb985bec4074ce0bf47cdcfa7aab627ea15de2ac85de731873417a4"
+    },
+    "07_hit12_0.76mic_Galatry.par": {
+      "bytes": 47231,
+      "sha256": "69c9fd181b5aba8aa818dc906bdc216aaa8cf038eb5687dd4da8f2bb9bf42dab"
+    },
+    "1-s2.0-S0022407316301108-mmc1.pdf": {
+      "bytes": 89406,
+      "sha256": "12e621d3b5d17e7648d140ea16134e3c04096bd7e47e2c1bb0e2084adeccbb51"
+    },
+    "HITRAN-2016.pdf": {
+      "bytes": 11019503,
+      "role": "primary bibliographic/semantic corroboration, not line-table substitution",
+      "sha256": "59cfae42b11a0f67372804555583095d768dfdf4d65b5cc1fae2513c03bb5b86"
+    },
+    "O2-O2_2011.cia": {
+      "bytes": 1938473,
+      "sha256": "8cc3ecc87bf7a02492b385ecc71abf279b058da853aea768825deb81237d5ee3"
+    },
+    "PMC5103325.xml": {
+      "bytes": 310708,
+      "sha256": "935fd09d5f619f7eb3f7fac5347e80fa81bc23d3158dc9c519874bb161c364fe"
+    },
+    "guest1593878592.txt": {
+      "bytes": 2268239,
+      "sha256": "6b4acbc01cb649891f2d8597875c9cd8e4805cfdd4d3b7841c2d18cbf718de12"
+    },
+    "hapi.py": {
+      "bytes": 1204196,
+      "sha256": "81d9d2f4fc6dd80021d329280810008e0385109d8c5295f41615f51d405b0964"
+    },
+    "wehrli85.txt": {
+      "bytes": 28555,
+      "sha256": "daad62d53f188d8c48bfb60e4b78afd22c74ffc49180e2ac249c6d95b8f96d43"
+    }
+  }
+}
