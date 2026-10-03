@@ -1,0 +1,124 @@
+{
+  "figures": [
+    {
+      "caption": "Reference dynamic-MSIS dawn; approximate reference-noon bootstrap; logarithmic concentration colour scale. Values\u22641 molecule cm^-3 are masked for display only; all numerical data are retained.",
+      "figure": "01_reference_o3_heatmap",
+      "files": [
+        {
+          "bytes": 90851,
+          "path": "results/figures/01_reference_o3_heatmap.png",
+          "sha256": "76fde9b84d20937e5f5ddcf43d220c09674340f34b90cc8a6afef874e797996c"
+        },
+        {
+          "bytes": 57624,
+          "path": "results/figures/01_reference_o3_heatmap.pdf",
+          "sha256": "529852df18fa463fb132f5a49acb6ed5fa424eff4848b8117ff14bd03883c55e"
+        }
+      ]
+    },
+    {
+      "caption": "Reference dynamic-MSIS dawn; approximate reference-noon bootstrap; logarithmic concentration colour scale. Values\u22641 molecule cm^-3 are masked for display only; all numerical data are retained.",
+      "figure": "02_reference_delta_heatmap",
+      "files": [
+        {
+          "bytes": 92713,
+          "path": "results/figures/02_reference_delta_heatmap.png",
+          "sha256": "2f2c0cf5c052547a474af39d68cd8f19a5a0ba7c536607bf5190a24d0d7774a8"
+        },
+        {
+          "bytes": 56921,
+          "path": "results/figures/02_reference_delta_heatmap.pdf",
+          "sha256": "5731a6cf5f6c82339e7188bf3168a0f4c1851006929352aeffd71909c24c9766"
+        }
+      ]
+    },
+    {
+      "caption": "Reference dawn at five selected heights; concentrations evolve freely after the approximate initialization. Values\u22641 molecule cm^-3 are omitted on logarithmic axes for display only.",
+      "figure": "03_reference_o3_levels",
+      "files": [
+        {
+          "bytes": 120129,
+          "path": "results/figures/03_reference_o3_levels.png",
+          "sha256": "f88d59392256309e52739dd9225d092020937d25fffd74cdd3102c2e7e95bb38"
+        },
+        {
+          "bytes": 17991,
+          "path": "results/figures/03_reference_o3_levels.pdf",
+          "sha256": "9540c8406afc3ef140db7fd1fa7d15546ed1fe4caae8e283a62ad3e83858c358"
+        }
+      ]
+    },
+    {
+      "caption": "Reference dawn at five selected heights; concentrations evolve freely after the approximate initialization. Values\u22641 molecule cm^-3 are omitted on logarithmic axes for display only.",
+      "figure": "04_reference_delta_levels",
+      "files": [
+        {
+          "bytes": 138810,
+          "path": "results/figures/04_reference_delta_levels.png",
+          "sha256": "3705168776de98e4a1c1c6f6178257ef8d674931662a4b0a81496819c30119b0"
+        },
+        {
+          "bytes": 18936,
+          "path": "results/figures/04_reference_delta_levels.pdf",
+          "sha256": "9a4dfa6ef9b6862de69dd3bc1d4d457ad1041aa4544cd983dd7be211a9428c73"
+        }
+      ]
+    },
+    {
+      "caption": "Vertical profiles at SZA99/85/60 from saved reference concentrations; intermediate SZA values use linear output interpolation. Values\u22641 molecule cm^-3 are omitted on logarithmic axes for display only.",
+      "figure": "05_reference_profiles",
+      "files": [
+        {
+          "bytes": 202441,
+          "path": "results/figures/05_reference_profiles.png",
+          "sha256": "f2f04dae175d15c837ab13cc99cb47cf93356164b6e30fe625a255b0ab4a8b52"
+        },
+        {
+          "bytes": 18065,
+          "path": "results/figures/05_reference_profiles.pdf",
+          "sha256": "9f94814de38616dff87d414315cd094ae652053fc5d1fe5a3d1f6f0b1af2ed21"
+        }
+      ]
+    },
+    {
+      "caption": "Accepted frozen/dynamic sensitivity with identical explicit initial concentrations. Near-zero concentrations are masked using the recorded relevance floors; accepted output stops at SZA60.961\u00b0, leaving60\u00b0 uncovered.",
+      "figure": "10_frozen_dynamic_sensitivity",
+      "files": [
+        {
+          "bytes": 156426,
+          "path": "results/figures/10_frozen_dynamic_sensitivity.png",
+          "sha256": "3cbf917100da5e6073321e6436c76ce6476d5bfb672af507284c342d9cdd83cf"
+        },
+        {
+          "bytes": 121039,
+          "path": "results/figures/10_frozen_dynamic_sensitivity.pdf",
+          "sha256": "7501d135866d995b586cffa2224cd7afcf6d6899d3e51c6d2f9f45b1f9014359"
+        }
+      ]
+    },
+    {
+      "caption": "Reused accepted M5A frozen-atmosphere/artificial-equinox experiment; maximum relative dawn sensitivity per altitude. Reference-noon bootstrap is approximate, not climatology; small-concentration samples use absolute metrics in the table.",
+      "figure": "11_initialization_sensitivity",
+      "files": [
+        {
+          "bytes": 171171,
+          "path": "results/figures/11_initialization_sensitivity.png",
+          "sha256": "649b62de5a9021f6aced7cfcd757801472ac251fddfb080b946c07be6068d023"
+        },
+        {
+          "bytes": 20264,
+          "path": "results/figures/11_initialization_sensitivity.pdf",
+          "sha256": "e9a0ba652879dbbc6f2c3c3ea2d76c5e64875452da99b0d577d294272ee5c52a"
+        }
+      ]
+    }
+  ],
+  "matplotlib_version": "3.11.2",
+  "numeric_inputs_sha256": {
+    "results/tables/initialization_dawn.npz": "16ea0352b4ec7198daaa80eeeea5b6f6457c40f8537bbde6e7eef87f80e370bd",
+    "results/tables/reference_dawn.npz": "79a3f026c3b82c9912c497ad56ad44c22089e61a516cde019bff35fdc129abc7",
+    "results/tables/sensitivity_summary.csv": "d0569eb92a3d15ec76e0a0b5922fdc6058ab05f089ce7309e65a6e9601c58af2"
+  },
+  "numpy_version": "2.5.3",
+  "plotting_script_sha256": "715d4857fc7a92a68f0ab567b9734a8c38de1a6e697d9927c83709a8b63ee88f"
+}

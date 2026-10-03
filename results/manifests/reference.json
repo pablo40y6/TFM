@@ -1,0 +1,636 @@
+{
+  "QA": {
+    "algebraic_physical": true,
+    "dynamic_H2O2_budget_scaled_max": 3.220981579499166e-16,
+    "exact_R_H": true,
+    "exact_shadow": true,
+    "family_budget_scaled_max": 1.5496458758229564e-16,
+    "finite_nonnegative": true,
+    "no_clipping_or_state_reset": true,
+    "output_samples": 159,
+    "retained_QSSA_scaled_max": 3.563348778461785e-16,
+    "stored_forcing_recomputed_bitwise": true
+  },
+  "accepted_model_git_sha": "6637b20eb4dafa35d68c766ff4370241c750def2",
+  "config": {
+    "NIR_step_s": 3600.0,
+    "activity": {
+      "Ap": 4.0,
+      "F107": 150.0,
+      "F107a": 150.0
+    },
+    "atmosphere": "dynamic_msis",
+    "attainable_minimum_sza_deg": 44.755230785441846,
+    "background_step_s": 300.0,
+    "baseline_git_sha": "6637b20eb4dafa35d68c766ff4370241c750def2",
+    "baseline_tag": "tfm-temporal-model-v1",
+    "case": "reference",
+    "date": "2020-03-20",
+    "dawn_start_utc": "2020-03-21T05:16:02.121360+00:00",
+    "end_datetime_utc": "2020-03-21T09:06:33.217289+00:00",
+    "initialization": "reference_noon; approximate bootstrap, not climatology",
+    "latitude_deg": 45.0,
+    "longitude_deg_east": 0.0,
+    "previous_noon_utc": "2020-03-20T12:07:55.363681+00:00",
+    "reaches_sza60": true,
+    "solver": {
+      "atol": 1e-08,
+      "max_step_s": 120.0,
+      "method": "BDF",
+      "output_step_s": 300.0,
+      "rtol": 2e-06
+    },
+    "start_datetime_utc": "2020-03-20T20:00:00+00:00"
+  },
+  "dawn_QA": {
+    "algebraic_physical": true,
+    "dynamic_H2O2_budget_scaled_max": 3.220981579499166e-16,
+    "exact_R_H": true,
+    "exact_shadow": true,
+    "family_budget_scaled_max": 1.0666375646722886e-16,
+    "finite_nonnegative": true,
+    "no_clipping_or_state_reset": true,
+    "output_samples": 48,
+    "retained_QSSA_scaled_max": 3.563348778461785e-16,
+    "stored_forcing_recomputed_bitwise": true
+  },
+  "external_sources_sha256": {
+    "O2-O2_2011.cia": "8cc3ecc87bf7a02492b385ecc71abf279b058da853aea768825deb81237d5ee3",
+    "guest1593878592.txt": "6b4acbc01cb649891f2d8597875c9cd8e4805cfdd4d3b7841c2d18cbf718de12",
+    "hapi.py": "81d9d2f4fc6dd80021d329280810008e0385109d8c5295f41615f51d405b0964",
+    "wehrli85.txt": "daad62d53f188d8c48bfb60e4b78afd22c74ffc49180e2ac249c6d95b8f96d43"
+  },
+  "full_local_output_sha256": "88d010666b8abbc873c5143f1d208d1646a5e53b5e8d21062209a685ecdea517",
+  "full_trajectory_metadata": {
+    "atmosphere": {
+      "CO2_vmr": 0.000405,
+      "H2O_H2": "accepted prescribed VMR profiles",
+      "N2_vmr": 0.78,
+      "O2_vmr": 0.21,
+      "activity": {
+        "ap": 4.0,
+        "f107": 150.0,
+        "f107a": 150.0,
+        "policy": "explicit constant quiet reference, no downloads"
+      },
+      "end_datetime_utc": "2020-03-21T09:00:00+00:00",
+      "external_O3": "accepted SOCRATES fixed VMR times dynamic M; not date-dependent climatology",
+      "external_O_unavailable": "exact zero",
+      "interpolation": "linear native densities and temperature; no RHS MSIS calls",
+      "latitude_deg": 45,
+      "longitude_deg_east": 0,
+      "model": "NRLMSISE-00",
+      "msis_version": 0,
+      "number_density_units": "cm^-3; native m^-3 times 1e-6",
+      "options": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "ordinary_M": "sum N2/O2/O/He/H/Ar/N; unavailable=0; anomalous O excluded",
+      "policy": "dynamic_msis",
+      "pymsis_version": "0.12.0",
+      "start_datetime_utc": "2020-03-20T12:00:00+00:00",
+      "step_s": 300.0
+    },
+    "atmosphere_tracks_location": true,
+    "continuation_solver": {
+      "atol": 1e-08,
+      "max_step_s": 120.0,
+      "method": "BDF",
+      "nfev": 28,
+      "njev": 1,
+      "rtol": 2e-06,
+      "segments": 1,
+      "trial_rejections": 0
+    },
+    "dynamic_atmosphere": true,
+    "end_datetime_utc": "2020-03-21T09:06:33.217289+00:00",
+    "geometry": {
+      "algorithm": "NOAA fractional-year Fourier approximation",
+      "latitude_deg": 45,
+      "longitude_deg_east": 0,
+      "origin_utc": "2020-03-20T20:00:00+00:00",
+      "refraction": false,
+      "shadow": "accepted spherical solid-Earth shell geometry",
+      "source": "https://gml.noaa.gov/grad/solcalc/solareqns.PDF",
+      "zenith_units": "degrees"
+    },
+    "initialization": {
+      "LST_h": 12.0,
+      "SZA_deg": 45.14902175403246,
+      "atom_factor": 1.0,
+      "bootstrap_duration_s": 28324.636319,
+      "bootstrap_solver": {
+        "atol": 1e-10,
+        "max_step_s": 60.0,
+        "method": "BDF",
+        "nfev": 23064,
+        "njev": 665,
+        "rtol": 2e-08,
+        "segments": 52,
+        "trial_rejections": 0
+      },
+      "climatologically_validated": false,
+      "date": "2020-03-20T12:07:55.363681+00:00",
+      "latitude_deg": 45,
+      "longitude_deg": 0,
+      "missing_fraction": 0.0,
+      "multiseed_certification": {
+        "full_seed_log": "preserved in canonical NPZ metadata",
+        "levels": 51,
+        "maximum_normalized_residual": 3.5997897106085034e-14,
+        "maximum_root_relative_spread": 2.5362486508126917e-13,
+        "minimum_physical_convergences": 5
+      },
+      "native_H_missing_z_km": [
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72
+      ],
+      "native_O_missing_z_km": [
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72
+      ],
+      "noon_datetime_utc": "2020-03-20T12:07:55.363681+00:00",
+      "policy": "reference_noon; approximate bootstrap, not climatology",
+      "simulation_start_datetime_utc": "2020-03-20T20:00:00+00:00",
+      "stationary_only_at_t0": [
+        "OH",
+        "HO2",
+        "H2O2",
+        "Delta"
+      ],
+      "unavailable_native_O_H": "exact zero; no extrapolation"
+    },
+    "radiation": {
+      "NIR": {
+        "CIA": "historical O2-Air attenuation only",
+        "angular_audits": [
+          {
+            "cached_reference_nodes": 2,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "optimized_nodes": 0,
+            "relative_max": 0.0030466889983741573
+          },
+          {
+            "cached_reference_nodes": 2,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "optimized_nodes": 0,
+            "relative_max": 0.0030462463339929633
+          },
+          {
+            "cached_reference_nodes": 3,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 3,
+            "optimized_nodes": 0,
+            "relative_max": 0.004307187014002203
+          },
+          {
+            "cached_reference_nodes": 6,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 6,
+            "optimized_nodes": 0,
+            "relative_max": 0.0043089662495710305
+          },
+          {
+            "cached_reference_nodes": 8,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 8,
+            "optimized_nodes": 0,
+            "relative_max": 0.004312245873601901
+          },
+          {
+            "cached_reference_nodes": 14,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 14,
+            "optimized_nodes": 0,
+            "relative_max": 0.004041147350112944
+          },
+          {
+            "cached_reference_nodes": 226,
+            "dark": false,
+            "near_zero_absolute_max_s1": 9.763879078939446e-16,
+            "nodes": 226,
+            "optimized_nodes": 0,
+            "relative_max": 0.0046252331246981
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 9.8279095682247e-16,
+            "nodes": 265,
+            "optimized_nodes": 265,
+            "relative_max": 0.004952803217463063
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 55,
+            "optimized_nodes": 55,
+            "relative_max": 0.004978524395219863
+          },
+          {
+            "dark": true,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "relative_max": 0.0
+          },
+          {
+            "dark": true,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "relative_max": 0.0
+          },
+          {
+            "dark": true,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "relative_max": 0.0
+          },
+          {
+            "dark": true,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "relative_max": 0.0
+          },
+          {
+            "dark": true,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "relative_max": 0.0
+          },
+          {
+            "dark": true,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "relative_max": 0.0
+          },
+          {
+            "dark": true,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "relative_max": 0.0
+          },
+          {
+            "dark": true,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "relative_max": 0.0
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 9.789008815737286e-16,
+            "nodes": 254,
+            "optimized_nodes": 254,
+            "relative_max": 0.004997520343812277
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 9.770769691913863e-16,
+            "nodes": 273,
+            "optimized_nodes": 273,
+            "relative_max": 0.0049855078600485265
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 22,
+            "optimized_nodes": 22,
+            "relative_max": 0.004032385977804865
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 8,
+            "optimized_nodes": 8,
+            "relative_max": 0.0038119673621764944
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 4,
+            "optimized_nodes": 4,
+            "relative_max": 0.00262650534874671
+          }
+        ],
+        "atmosphere_step_s": 3600.0,
+        "numerics": {
+          "cached_reference": "validated far_order=4 / near_cm1=2 direct rates; row provenance retained",
+          "fresh_far_order": 8,
+          "fresh_near_cm1": 0.25,
+          "outputs": "nominal only; unused CIA envelope/raw evaluations omitted without equation changes"
+        },
+        "policy": "dynamic background A0/B/IRA snapshot tables; no frozen-NIR substitution",
+        "raw_hitran_distributed": false,
+        "temporal_interpolation": "linear rates between adjacent atmospheres at actual SZA"
+      },
+      "UV": "accepted M4C with current prescribed background and dynamic chemical O/O3"
+    },
+    "solver": {
+      "atol": 1e-10,
+      "max_step_s": 60.0,
+      "method": "BDF",
+      "nfev": 34088,
+      "njev": 838,
+      "rtol": 2e-08,
+      "segments": 52,
+      "trial_rejections": 0
+    },
+    "start_datetime_utc": "2020-03-20T20:00:00+00:00",
+    "transport": false
+  },
+  "output": {
+    "bytes": 736882,
+    "path": "results/tables/reference_dawn.npz",
+    "sha256": "79a3f026c3b82c9912c497ad56ad44c22089e61a516cde019bff35fdc129abc7"
+  },
+  "production_git_sha": "26a0498576ad54caf0b03a6b37c9f5438ac02862",
+  "publication_runner_sha256": "662a6c6bc8ad908b3e1ac0ae6440ee0b9f38c71ba255d8768459ad939d601233",
+  "reused_accepted_artifacts": [
+    {
+      "path": "accepted M5C local bootstrap-reference.npz",
+      "sha256": "2194f61abbb769116b65642ea7421d7de06634416dd98fddc6cf50a4771ac2a5"
+    }
+  ],
+  "scientific_source_compatibility": {
+    "src/tfm_photochem/__init__.py": {
+      "AST_sha256": "c0804d31360f35d4dfa4bd929a39b0a30e21d0f2be8c6101fd11851b7467a481",
+      "current_bytes_sha256": "bcf74110d31758da065adfee2adc87cc5b90a8f658dcfc074a6e828f2a78078e",
+      "historical_bytes_sha256": "bedc671c47ccd8362761d64d06d077aef2ad71b4cdd6646a0f45f8876cf0c061"
+    },
+    "src/tfm_photochem/dynamic_atmosphere.py": {
+      "AST_sha256": "d845ef9e087f1ffdd96e0a1e8235ac6377b2589948f0c0cd87d5f2c0e81868d9",
+      "current_bytes_sha256": "39f6455feebd5eb0cf3d254e5a1bed0a6229ac7b1e8a078fc5513e30a163cdea",
+      "historical_bytes_sha256": "39f6455feebd5eb0cf3d254e5a1bed0a6229ac7b1e8a078fc5513e30a163cdea"
+    },
+    "src/tfm_photochem/dynamic_radiation.py": {
+      "AST_sha256": "df6f54cf0a90d792d68c4ba318aae773dce7926bd95eb9e2c7a3a266694b7567",
+      "current_bytes_sha256": "a10349b2feff18ceb786672f8a45753db4675ad23e7d5fce962e029982f684c5",
+      "historical_bytes_sha256": "a10349b2feff18ceb786672f8a45753db4675ad23e7d5fce962e029982f684c5"
+    },
+    "src/tfm_photochem/historical_2020/__init__.py": {
+      "AST_sha256": "32ea0a23b42790dfb17b12ed310a967325587d76c7d591d8535dd5572e33df14",
+      "current_bytes_sha256": "4f7cd699c46fa17cb82b4594b273e1269a288f0a0d8c97dff06d80ec3961101a",
+      "historical_bytes_sha256": "4813adf8207aee3e1e7c1f33d76b835814ec99761dc6d0a558b5325e98fe92e0"
+    },
+    "src/tfm_photochem/historical_2020/background.py": {
+      "AST_sha256": "1e26d5ff6b7470976d582dc457963084e6c6f227677e8d49e9453047ae6ea6d8",
+      "current_bytes_sha256": "9de421da055e9bc451f73165a11ab473851c26f403b8bfdf6e36bf24f5ea5f67",
+      "historical_bytes_sha256": "6c8ed8bda78470dfedc2d90c147b96a04bfa8ff014909b394e7f4c1f0e6c204f"
+    },
+    "src/tfm_photochem/historical_2020/background_generation.py": {
+      "AST_sha256": "8235a8c681b007b7634cecc3b6960c6463de6985a1b195bae925c8896e5db3d1",
+      "current_bytes_sha256": "dfb71a8af45184e281c1145e0e0d233123c390eed729d45a385111205dff7bac",
+      "historical_bytes_sha256": "c1da66023f3517cbee55a03ec949ec9f7ad09190717089823754076657a690cd"
+    },
+    "src/tfm_photochem/historical_2020/background_types.py": {
+      "AST_sha256": "79cc98eb479ca2d7cf40a2afc1da53493c2fb0163a5d9b14debc07508a1b8c2d",
+      "current_bytes_sha256": "722b4cfbe22f32875d6cbdaac9f9217b31d6af55397199f7708636ed44166759",
+      "historical_bytes_sha256": "3b66965a5e56d4b2ed9b84376f15aa1a33dc1962dafc5e164fec6d85b60bc872"
+    },
+    "src/tfm_photochem/historical_2020/config.py": {
+      "AST_sha256": "4a1fdd41f51efbeb7678ec2acbd8c83758852169a1584b4cb376cafa3b7d2004",
+      "current_bytes_sha256": "b5535ab82811d325d6935fea8e5811cb1efe10cddcfec3eaa68421a8a5841729",
+      "historical_bytes_sha256": "46b3c63cb1b22dd9552c4112a2ce785df7255e49804aae8da2ee52fc62a21ed6"
+    },
+    "src/tfm_photochem/historical_2020/fluxes.py": {
+      "AST_sha256": "2dce3258732ecb2f26c1b690dee80b76ae5b258d872a7c6f2f31cde8104e5d49",
+      "current_bytes_sha256": "3e3a470f67e8c920fe2af1908c3aafaa0d8f9e918c2bb667a48b5eb731d9e0ca",
+      "historical_bytes_sha256": "de82c5594a8691be2152cd49a707156e51ebccb7f800ed081dd77f0e4f48114a"
+    },
+    "src/tfm_photochem/historical_2020/kinetics.py": {
+      "AST_sha256": "f637267c1a2e29052f40ce9f722e58b2fcf10f3d45854a663547c63154c108f4",
+      "current_bytes_sha256": "75d4ce195acd19cbae39605789dbd26eb8cf2695056932a433bbf4549aa77618",
+      "historical_bytes_sha256": "946cde786e641e7cda713dd7a3e26673f2aa138b77cf3c6de4af1208caa6523a"
+    },
+    "src/tfm_photochem/historical_2020/local_closure.py": {
+      "AST_sha256": "428ff417f9b50540da88dfd9395afd931f0bf0b69a3d2881e553c17af73b196f",
+      "current_bytes_sha256": "624112a796afd6389fad236af6318d875d3250bedea12489b921fecd48c9c140",
+      "historical_bytes_sha256": "c4334c9b080716f9c7a4c4f9fb45c239a0d74f21300b14aa50ea273e3afac29c"
+    },
+    "src/tfm_photochem/historical_2020/local_types.py": {
+      "AST_sha256": "02563d39437d8664516ddb1b7cda15f2b6cf65b668caa527b0a32cd1017e3d34",
+      "current_bytes_sha256": "e7df1a55c694dc880b75a6026dd8ce8060dd63baac0365448ef20c103ea1db29",
+      "historical_bytes_sha256": "19776770daf5b25ec9850a4d061a7db7b0e4393e02709e791b5d61f46cf68dbf"
+    },
+    "src/tfm_photochem/historical_2020/photolysis_budget.py": {
+      "AST_sha256": "cf1c232d5b2162a12381c9208e0d3d92cefa39880d37f04a28f157ee2708f49a",
+      "current_bytes_sha256": "29c2ccfb24ea89cd04efc7be0161b73e2b00f177677c60716a6291caa9e8e415",
+      "historical_bytes_sha256": "31a33fa8cadea87f6e5fe788eef5aa451fe0dc32db00ee4274c626386a3ac537"
+    },
+    "src/tfm_photochem/historical_2020/prescribed_profiles.py": {
+      "AST_sha256": "d470e4293b806d0fe7e7747be6788ce7d32fad59e164548648916db96000a058",
+      "current_bytes_sha256": "2c9a633476137f869acd77de4a368f026e9a55a125b0569cb286a404203492d4",
+      "historical_bytes_sha256": "6fb27c6a8a32c082ad5d764fe22e0ba773f11a861028d538669828ab8fecbe94"
+    },
+    "src/tfm_photochem/historical_2020/qssa.py": {
+      "AST_sha256": "f918eeb4162748a8280be0be6a5bd40cd5debc4e2a840e0b883601f0da28e79b",
+      "current_bytes_sha256": "1fdf71fc9f6af2d0d11a8ee71ed31ec3aae3e8346214d52ef87b9a04d3c01421",
+      "historical_bytes_sha256": "0587b1a0d06a219e0cb308b652223b5e8b4e374d58455420b6e1bac46ae895f2"
+    },
+    "src/tfm_photochem/historical_2020/reactions.py": {
+      "AST_sha256": "5af38a30c26a277cab3e6ca1671a56d88f7481fdc509d758feab189ed00df354",
+      "current_bytes_sha256": "507909ee1a66705c4f9fc93f68216eb87d699eb4d1e85ba99ff09fb112744256",
+      "historical_bytes_sha256": "d9e41c603b3cfd759d98a813e8503b3e879819dae8665df8ac9d4451b20ee535"
+    },
+    "src/tfm_photochem/historical_2020/stoichiometry.py": {
+      "AST_sha256": "57f8db6687183c24f8e44ce33f283ddf7a0da0da89d54b7bf52964658f632e9f",
+      "current_bytes_sha256": "5fe8907a1acc5523750e20c3eb6c058028852a276daaf56db308a846b9d1bd15",
+      "historical_bytes_sha256": "f2edd45c4acdf37b14cd8fe1d26547fdd0e70b05febd7c989436c5172fbaded8"
+    },
+    "src/tfm_photochem/historical_2020/uv_assets.py": {
+      "AST_sha256": "558525c3020a7ea8c712431b843706f2ffc84df3719a801bd66a8dffc634fe38",
+      "current_bytes_sha256": "428572b2b6cceb2578ff1fdb0bdaf6193b75b03332f988552ddad5b40efd5afb",
+      "historical_bytes_sha256": "7ac87f6de742128909e108ac4a54dc161d4f1e8080a3d4c40c567cc893430eb9"
+    },
+    "src/tfm_photochem/historical_2020/uv_cross_sections.py": {
+      "AST_sha256": "050c8bf1931749365b14a82d013d4f41be33ebb9ae2bb399b95c0658acb00081",
+      "current_bytes_sha256": "12c052a5425ba8efd45cc8f8888ef0ddfd26704c4bb72537d16711792a1ad928",
+      "historical_bytes_sha256": "afb9e7e8549715a041a25afd94f58cd3c65986ea6aa297cc4b603b9b60f4e563"
+    },
+    "src/tfm_photochem/historical_2020/uv_geometry.py": {
+      "AST_sha256": "8dc144ba81b7ff3c256c9bb953f3f930a78c2231ed2af918ab0ec8754dfaa1f8",
+      "current_bytes_sha256": "dfe70ae7f318f35627b59a996520341abe3e936ba0f430aea17d45268a3cb22d",
+      "historical_bytes_sha256": "67f758fda37b5cdf79cd6b0331c3970bf406e4f20f0c2515c7439985910c74de"
+    },
+    "src/tfm_photochem/historical_2020/uv_radiation.py": {
+      "AST_sha256": "51ede5e60636f7271f9532c4c42bc689acc33bd19cb7052928e4d6f0e14e6500",
+      "current_bytes_sha256": "a3fc204db15f8b2c03582cd7c310a74f336c7bbcc2e703345f87cc4a544b4d99",
+      "historical_bytes_sha256": "700508fd721405018c9db3ae53bbea64de5e2ab3ede08131a3f6a2f2f5c211a6"
+    },
+    "src/tfm_photochem/legacy_2017/__init__.py": {
+      "AST_sha256": "367c7b99d5eba074af5520b245f556b8c8c65c8e71f21cd532140c114628827f",
+      "current_bytes_sha256": "a9ba0aee46e89c39d1d1ce893590cb210c1fb67a38e7f0bc0cc0e46cbb0f041d",
+      "historical_bytes_sha256": "8a4369ecbc4ca1b708632dc892a844d8ec9d3c75e8b4bae04bb93ff6a83638eb"
+    },
+    "src/tfm_photochem/legacy_2017/geometry.py": {
+      "AST_sha256": "6a564bd992788df3ef2d0c2add04fb3bcf20e96faeb1a2cff98fd93d84307b7a",
+      "current_bytes_sha256": "d0f1d701f40a6819a6faff8bd36147401ce493ae54a54dbeb503fc30b6c03845",
+      "historical_bytes_sha256": "f183599ecd24d01a110f3af0603df7770d27550628f14666f8d628e8f6d8c93d"
+    },
+    "src/tfm_photochem/legacy_2017/ozone.py": {
+      "AST_sha256": "fd3007c0215cf2af1c51b9a4e2eb0b5b2daf6d191c27518bedefd44c53ac8952",
+      "current_bytes_sha256": "0bce234ff050efba1834804751d759332bb4e7c1774781dbe7d2676ee5b06590",
+      "historical_bytes_sha256": "da51595d1a50eb0f057ffa0045605d7a8a39af6bf20266ccda4b0bfd0b8c7f42"
+    },
+    "src/tfm_photochem/legacy_2017/parameters.py": {
+      "AST_sha256": "f14e4fe274aa1cd1fa8668cd6e6bcc5675f16537897952417ad3649aff72a7ec",
+      "current_bytes_sha256": "9fef1613384c91c57c939476910e006d45492c26054667bd853583fb90b79b69",
+      "historical_bytes_sha256": "833d3f48220c540ac00e804161b09e08ca1e9d0ae52ec9e4164e8699ad57428b"
+    },
+    "src/tfm_photochem/legacy_2017/photolysis.py": {
+      "AST_sha256": "85ffff41f0d0ad5b63ba78682b44ec24de84d3674f14ebe02c2c33485aa77c1a",
+      "current_bytes_sha256": "f55c26b9edb73c280062e8b597e635a4b7cb6f9df2308a47fd9d40ef6a2e14f8",
+      "historical_bytes_sha256": "09fca1689c1dc2d136f43a0fbef8f1c45254a25e023713124450cf30bcc8e409"
+    },
+    "src/tfm_photochem/legacy_2017/sigma.py": {
+      "AST_sha256": "cad1cf6f0c44b4f9e88aa307eed45b5a573f6ccca6a2b74c0bd6393f4c07f6d9",
+      "current_bytes_sha256": "c9962a2e0898449a8daed93d0b4a6cf4cd7378f2a9e05e63b3ce0dbfcb1ded9b",
+      "historical_bytes_sha256": "84600e970bf62ecca4b4e0937c7b5e7bee25f90ce74b61128663c645a2f8e068"
+    },
+    "src/tfm_photochem/m4d_reconstruction/__init__.py": {
+      "AST_sha256": "d96e0415fee63be4fa8b009d44840b1c33bebd86a0c92956fee196cdd07fee49",
+      "current_bytes_sha256": "aa538af50f7edcfa347f8aba00a75f60d5526c466401e9e98f24f94a75f922de",
+      "historical_bytes_sha256": "5930e8ebe44ff5dd213d9fc074df198f95853425986e20cdc9831c9913ec5b75"
+    },
+    "src/tfm_photochem/m4d_reconstruction/a_band.py": {
+      "AST_sha256": "282ba053c5589bc9a920b3b2a2d6220b5a0edd55c96e1abde2e37ecda5695270",
+      "current_bytes_sha256": "38bf44faec655fa333d82deb814b382410887d1777003745c68a0f536aa4f11c",
+      "historical_bytes_sha256": "38bf44faec655fa333d82deb814b382410887d1777003745c68a0f536aa4f11c"
+    },
+    "src/tfm_photochem/m4d_reconstruction/cia.py": {
+      "AST_sha256": "4d2ef850d25a018e3578d0f2dc76973bcfe4d76cbb4a2485901bf5b59ff378bb",
+      "current_bytes_sha256": "5340fc225972cc78ccf0b33a8daf382fcb348d477dd6e02d2a7a3c4b44e11385",
+      "historical_bytes_sha256": "05a0ca55fbcd46e08daedd3ad11707ede74f09db290c28c4797bd4b7c15895ae"
+    },
+    "src/tfm_photochem/m4d_reconstruction/mapping.py": {
+      "AST_sha256": "1b75b3a41700a5ab85db778c2ebc9fadbe90f74e0f369e048d7121da45cfec32",
+      "current_bytes_sha256": "0a5d3bd6d72286f3ea3b9ddfea69ce64dbab03d7e29f6098a0e62fd06fb84c0c",
+      "historical_bytes_sha256": "7215a3c972e01a430f64fec35e30a458ff94c584263bd845f98e8a658289550f"
+    },
+    "src/tfm_photochem/m4d_reconstruction/sources.py": {
+      "AST_sha256": "f2de70cfe7573f70a51f24c04f79489c55ec1b9cf7f838659a9a34c23891a0b6",
+      "current_bytes_sha256": "36c391f87fbd67fefe71378f65a320b3f719cc639083e820fea013380d633304",
+      "historical_bytes_sha256": "cc0929be29063c2b339a321ea25c51cb3a274f411625e3d4c970f2a283506640"
+    },
+    "src/tfm_photochem/m4d_reconstruction/spectroscopy.py": {
+      "AST_sha256": "9d2b2a9ee2a3509fe43a05c380decfb68bf63fa03b79fc9ba77694a6f7ec6ede",
+      "current_bytes_sha256": "d0128c31fb86c529db63d736a142b34d13ef7ba831f50d0e6832082e46e7fd80",
+      "historical_bytes_sha256": "d0128c31fb86c529db63d736a142b34d13ef7ba831f50d0e6832082e46e7fd80"
+    },
+    "src/tfm_photochem/m4d_reconstruction/transfer.py": {
+      "AST_sha256": "92cc93e4261282eb7b682489d0277c39e48e8f891b5a231f918ec913d8f44575",
+      "current_bytes_sha256": "1ada89e93697ba7b21bcf42c11e82bd5f05fcb11723bc3defa3d1a19ffa07c46",
+      "historical_bytes_sha256": "a50a713566288e3a07cc30bcaa5bb130cb6b22910ded11f0aa693249c580eaa7"
+    },
+    "src/tfm_photochem/m5_dynamic.py": {
+      "AST_sha256": "7ad14dbcda897c57cbc10ea88cc91ccdc0f8f19e7220c2e6ddc8b75be2a6bf0f",
+      "current_bytes_sha256": "b67903459938b2fa3bdac25020a0891f176da5a7e5ebab068c06cfd6b8f93fec",
+      "historical_bytes_sha256": "b67903459938b2fa3bdac25020a0891f176da5a7e5ebab068c06cfd6b8f93fec"
+    },
+    "src/tfm_photochem/m5_simulation.py": {
+      "AST_sha256": "d7578d2913700e16784add98f19196255985b562f88269f1269a4b010b0b2732",
+      "current_bytes_sha256": "1367a831b962530bb915e3dfe40c55ffc048d3302135c2da96932f96e608c63e",
+      "historical_bytes_sha256": "1367a831b962530bb915e3dfe40c55ffc048d3302135c2da96932f96e608c63e"
+    },
+    "src/tfm_photochem/m5_temporal.py": {
+      "AST_sha256": "366ef6bc9f6b26eaa862013f8d3af49cf7034b719ebaec596fb87e37b930a687",
+      "current_bytes_sha256": "36215ba87a89cce4915f30dc4a006087f46577eb5ef865c9bd1cfd4bfc2fedab",
+      "historical_bytes_sha256": "36215ba87a89cce4915f30dc4a006087f46577eb5ef865c9bd1cfd4bfc2fedab"
+    },
+    "src/tfm_photochem/metadata.py": {
+      "AST_sha256": "ec4a99cd918f75e0c598e2dbad8aa333a92466733dd7d5264cfad9c1b4e5466d",
+      "current_bytes_sha256": "5553567599938577016a2ae8ac06813bb7ca3f918f361785359e64832725bdf4",
+      "historical_bytes_sha256": "ee004dac46024091924d7650b0b3aa274a5ceec17528120130ba2c9ac8addaee"
+    },
+    "src/tfm_photochem/solar_geometry.py": {
+      "AST_sha256": "e3e62fd5c820f59fce2a116327b1fffdf90f81643b46aeccc82e5c7f536d904c",
+      "current_bytes_sha256": "cff6857f41e6ac9c45de93c3ccb3f9f3d10c4106f127a5b356b02de0b7806036",
+      "historical_bytes_sha256": "cff6857f41e6ac9c45de93c3ccb3f9f3d10c4106f127a5b356b02de0b7806036"
+    }
+  },
+  "software": {
+    "numpy": "2.5.3",
+    "pymsis": "0.12.0",
+    "python": "3.14.3",
+    "scipy": "1.18.1"
+  }
+}

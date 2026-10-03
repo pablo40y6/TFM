@@ -9,7 +9,9 @@ import argparse
 import ast
 import hashlib
 import json
+import platform
 import subprocess
+from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -21,6 +23,7 @@ from tfm_photochem.dynamic_atmosphere import DynamicMSISAtmosphere
 from tfm_photochem.dynamic_radiation import DynamicNIRForcing, HistoricalNIRInputs
 from tfm_photochem.m5_dynamic import DynamicAtmosphereColumnRHS, previous_solar_noon
 from tfm_photochem.m5_simulation import SimulationResult, simulate
+from tfm_photochem.m5_temporal import DynamicPeroxideState
 from tfm_photochem.solar_geometry import DatetimeSolarGeometry
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -92,6 +95,22 @@ def load_result(path):
             json.loads(str(data["metadata"])), extras or None)
 
 
+def compact_metadata(metadata):
+    """Keep initializer certification, avoiding duplication of full NPZ seed logs."""
+    result = json.loads(json.dumps(metadata))
+    record = result.get("initialization", {})
+    levels = record.pop("levels", None)
+    if levels:
+        record["multiseed_certification"] = dict(levels=len(levels),
+            minimum_physical_convergences=min(sum(seed["passed"] for seed in row["seeds"])
+                                              for row in levels),
+            maximum_root_relative_spread=max(row["root_relative_spread"] for row in levels),
+            maximum_normalized_residual=max(seed["normalized_residual"] for row in levels
+                                           for seed in row["seeds"] if seed["passed"]),
+            full_seed_log="preserved in canonical NPZ metadata")
+    return result
+
+
 def normalized_source_proof():
     """Require identical scientific Python ASTs to the accepted M5C commit.
 
@@ -121,21 +140,28 @@ def audit_result(result, provider, nir, start):
     np.testing.assert_array_equal(result.R_H_cm3, states[:, :, 3]+states[:, :, 4])
     if not np.all(np.isfinite(result.algebraic_cm3)) or np.any(result.algebraic_cm3 < 0):
         raise ValueError("nonphysical algebraic species")
+    if not np.all(np.isfinite(result.forcing_s1)) or np.any(result.forcing_s1 < 0):
+        raise ValueError("nonphysical forcing")
     clock = DatetimeSolarGeometry(start, provider.latitude, provider.longitude)
     rhs = DynamicAtmosphereColumnRHS(provider, nir, clock,
         offset_s=(start-provider.start).total_seconds())
     audit = retained_closure_audit(rhs, result.time_s, states)
+    for i, (t, column) in enumerate(zip(result.time_s, states, strict=True)):
+        _, frequencies = rhs.forcing(float(t), column)
+        expected = np.array([[asdict(f)[name] for name in result.forcing_names] for f in frequencies])
+        np.testing.assert_array_equal(expected, result.forcing_s1[i])
     tangent = 180-np.rad2deg(np.arcsin(6370/(6370+result.altitude_km)))
     shadow = result.sza_deg[:, None] > tangent[None, :]
     if np.any(result.forcing_s1[shadow] != 0):
         raise ValueError("shadow forcing must be exactly zero")
     audit.update(finite_nonnegative=True, exact_R_H=True, algebraic_physical=True,
                  exact_shadow=True, no_clipping_or_state_reset=True,
+                 stored_forcing_recomputed_bitwise=True,
                  output_samples=len(result.time_s))
     return audit
 
 
-def dawn_subset(result, config):
+def dawn_subset(result, config, rhs):
     """Retain native time samples and explicit SZA99 boundary by interpolation.
 
     Tables describe interpolation of saved outputs, not a new chemistry solve.
@@ -154,10 +180,20 @@ def dawn_subset(result, config):
     metadata = dict(result.metadata, campaign=config,
         saved_output_interpolation="linear time interpolation only at SZA99 boundary",
         absolute_time_origin_utc=start.isoformat())
+    algebraic = interpolate(result.algebraic_cm3)
+    forcing = interpolate(result.forcing_s1)
+    # Reevaluate accepted radiation and QSSA at the interpolated boundary state.
+    # Interpolating forcing across a shell tangent would smear exact shadow.
+    _, frequencies = rhs.forcing(float(times[0]), states[0])
+    forcing[0] = [[asdict(f)[name] for name in result.forcing_names] for f in frequencies]
+    for j, (state, bg, f) in enumerate(zip(states[0], rhs.locals, frequencies, strict=True)):
+        closure = rhs.chemistry(DynamicPeroxideState(*state), bg, f)
+        a = closure.algebraic
+        algebraic[0, j] = a.O1D, a.B0, a.B1
     return SimulationResult(times, result.altitude_km,
         DatetimeSolarGeometry(start, config["latitude_deg"], 0.).sza(times), states,
-        states[:, :, 3]+states[:, :, 4], interpolate(result.algebraic_cm3),
-        interpolate(result.forcing_s1), result.forcing_names, metadata,
+        states[:, :, 3]+states[:, :, 4], algebraic,
+        forcing, result.forcing_names, metadata,
         {k: interpolate(v) if v.shape[0] == len(result.time_s) else v
          for k, v in (result.background_fields or {}).items()})
 
@@ -270,15 +306,27 @@ def run_case(args):
     audit = audit_result(result, provider, nir, start)
     output = ROOT / f"results/tables/{name}_dawn.npz"
     output.parent.mkdir(parents=True, exist_ok=True)
-    dawn_subset(result, config).save(output)
+    rhs = DynamicAtmosphereColumnRHS(provider, nir,
+        DatetimeSolarGeometry(start, config["latitude_deg"], 0.),
+        offset_s=(start-provider.start).total_seconds())
+    dawn = dawn_subset(result, config, rhs)
+    dawn_audit = audit_result(dawn, provider, nir, start)
+    dawn.save(output)
+    with np.load(output, allow_pickle=False) as data:
+        fields = {k: data[k].copy() for k in data.files}
+    fields["datetime_utc"] = [(start+timedelta(seconds=float(t))).isoformat() for t in dawn.time_s]
+    np.savez_compressed(output, **fields)
     fingerprints = {p.name: sha(p) for p in [args.hitran, args.sources / "hapi.py",
         args.sources / "wehrli85.txt", args.sources / "O2-O2_2011.cia"]}
-    write_json(ROOT/f"results/manifests/{name}.json", dict(config=config, QA=audit,
+    write_json(ROOT/f"results/manifests/{name}.json", dict(config=config, QA=audit, dawn_QA=dawn_audit,
         production_git_sha=subprocess.check_output(["git", "rev-parse", "HEAD"],cwd=ROOT).decode().strip(),
+        publication_runner_sha256=sha(Path(__file__)), accepted_model_git_sha=BASELINE,
+        software=dict(python=platform.python_version(), numpy=np.__version__,
+                      scipy=__import__("scipy").__version__, pymsis="0.12.0"),
         external_sources_sha256=fingerprints, reused_accepted_artifacts=reused,
         scientific_source_compatibility=proof, full_local_output_sha256=sha(full_path),
         output=dict(path=output.relative_to(ROOT).as_posix(), sha256=sha(output),
-                    bytes=output.stat().st_size), full_trajectory_metadata=result.metadata))
+                    bytes=output.stat().st_size), full_trajectory_metadata=compact_metadata(result.metadata)))
     print(json.dumps(dict(case=name, status="PASS", QA=audit)), flush=True)
 
 
