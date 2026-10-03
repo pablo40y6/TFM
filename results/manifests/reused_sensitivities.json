@@ -1,0 +1,146 @@
+{
+  "accepted_audits": [
+    {
+      "NIR": {
+        "method": "direct midpoint audit; adaptive piecewise linear SZA; all 51 tangent nodes; exact shadow",
+        "near_zero_absolute_max_s1": 9.836573758954561e-16,
+        "nodes": 276,
+        "relative_max": 0.004976554194973857
+      },
+      "dynamic_H2O2_budget_scaled_max": 4.051777399773149e-16,
+      "family_budget_scaled_max": 1.6040623411789654e-16,
+      "finite_nonnegative": true,
+      "minimum_cm3": 0.0,
+      "nfev": 14379,
+      "retained_QSSA_scaled_max": 3.5965468499657347e-16,
+      "trial_rejections": 0
+    },
+    {
+      "NIR": {
+        "method": "direct midpoint audit; adaptive piecewise linear SZA; all 51 tangent nodes; exact shadow",
+        "near_zero_absolute_max_s1": 9.836573758954561e-16,
+        "nodes": 276,
+        "relative_max": 0.004976554194973857
+      },
+      "dynamic_H2O2_budget_scaled_max": 3.6788822913087863e-16,
+      "family_budget_scaled_max": 1.5898141069288157e-16,
+      "finite_nonnegative": true,
+      "minimum_cm3": 0.0,
+      "nfev": 14559,
+      "retained_QSSA_scaled_max": 3.847789048058573e-16,
+      "trial_rejections": 0
+    },
+    {
+      "NIR": {
+        "method": "direct midpoint audit; adaptive piecewise linear SZA; all 51 tangent nodes; exact shadow",
+        "near_zero_absolute_max_s1": 9.836573758954561e-16,
+        "nodes": 276,
+        "relative_max": 0.004976554194973857
+      },
+      "dynamic_H2O2_budget_scaled_max": 4.0927952484172517e-16,
+      "family_budget_scaled_max": 1.615518485079781e-16,
+      "finite_nonnegative": true,
+      "minimum_cm3": 0.0,
+      "nfev": 14508,
+      "retained_QSSA_scaled_max": 3.521827659127944e-16,
+      "trial_rejections": 0
+    },
+    {
+      "NIR": {
+        "method": "direct midpoint audit; adaptive piecewise linear SZA; all 51 tangent nodes; exact shadow",
+        "near_zero_absolute_max_s1": 9.836573758954561e-16,
+        "nodes": 276,
+        "relative_max": 0.004976554194973857
+      },
+      "dynamic_H2O2_budget_scaled_max": 3.9046680818112853e-16,
+      "family_budget_scaled_max": 2.721902830160233e-16,
+      "finite_nonnegative": true,
+      "minimum_cm3": 5.185890067265244e-23,
+      "nfev": 14929,
+      "retained_QSSA_scaled_max": 3.7409455389788494e-16,
+      "trial_rejections": 0
+    }
+  ],
+  "atmosphere_inputs": [
+    {
+      "path": "evidence/m5b_reference_real_geometry.npz",
+      "sha256": "2f4345c455731a3fce07c85caf1f37b7382b7e22ddf7cd6e2e473560242491bb"
+    },
+    {
+      "path": "evidence/m5c_reference_dynamic_msis.npz",
+      "sha256": "0c8efafdaaedabab819ecabc027370b054c39f1b44badbc1897501d75467cb57"
+    }
+  ],
+  "baseline_git_sha": "6637b20eb4dafa35d68c766ff4370241c750def2",
+  "baseline_tag": "tfm-temporal-model-v1",
+  "comparison": "symmetric relative difference; floor=max(1,1e-6 nominal peak); full-run peak for atmosphere, dawn peak for initialization, as in accepted evidence",
+  "evidence": "evidence/m5_temporal_evidence.json",
+  "evidence_sha256": "f82160685f50395ebe576826ee9d254e12941a3f14ebfb9943f6070f377773ab",
+  "exact_same_initial_state": true,
+  "initialization_base_vs_tight_golden": {
+    "near_zero_absolute_max_cm3": [
+      318.44867691153195,
+      0.0,
+      0.006793711630592725,
+      0.00316966646293082,
+      8.161566356079675e-07,
+      1.0916775806002477e-05,
+      2.308296217022871
+    ],
+    "pass_": true,
+    "relative_max": [
+      0.00045419636308254263,
+      0.0002527183324266969,
+      0.00015238178545499493,
+      0.0002218407894535878,
+      4.675601661236011e-05,
+      2.640246382084236e-05,
+      0.00031989854296538163
+    ],
+    "relevance_floor_cm3": [
+      597901.2091589087,
+      63018.95963988981,
+      175.02193807686973,
+      64.23652617203815,
+      26.688291826643553,
+      7.996576246146229,
+      57490.113290393914
+    ]
+  },
+  "initialization_inputs": [
+    {
+      "accepted_source_AST_sha256": "366ef6bc9f6b26eaa862013f8d3af49cf7034b719ebaec596fb87e37b930a687",
+      "local_cache_basename": "noon-run-nominal-base.npz",
+      "original_source_sha256": "7ce6e1128ec18eeda2878a002db970370f274ba8c642fc22cf7c205bde6b2ef7",
+      "sha256": "5b37cb0920cf3a6c79b823cdc9c906adbe477c0a043528ce396dead1a24551b9",
+      "variant": "nominal"
+    },
+    {
+      "accepted_source_AST_sha256": "366ef6bc9f6b26eaa862013f8d3af49cf7034b719ebaec596fb87e37b930a687",
+      "local_cache_basename": "noon-run-low-base.npz",
+      "original_source_sha256": "7ce6e1128ec18eeda2878a002db970370f274ba8c642fc22cf7c205bde6b2ef7",
+      "sha256": "0bbf92716f4525452f996b380c689d3555b9157750236d830233b576d324eba6",
+      "variant": "low"
+    },
+    {
+      "accepted_source_AST_sha256": "366ef6bc9f6b26eaa862013f8d3af49cf7034b719ebaec596fb87e37b930a687",
+      "local_cache_basename": "noon-run-high-base.npz",
+      "original_source_sha256": "7ce6e1128ec18eeda2878a002db970370f274ba8c642fc22cf7c205bde6b2ef7",
+      "sha256": "0756a503424adc1b8e52f7096a192ee43cc1cbf60925a948ea9fdb4189c18890",
+      "variant": "high"
+    },
+    {
+      "accepted_source_AST_sha256": "366ef6bc9f6b26eaa862013f8d3af49cf7034b719ebaec596fb87e37b930a687",
+      "local_cache_basename": "noon-run-missing_bound-base.npz",
+      "original_source_sha256": "7ce6e1128ec18eeda2878a002db970370f274ba8c642fc22cf7c205bde6b2ef7",
+      "sha256": "2dbbf8cbc832b797a0e4369bc0ce121650c43d858d703aa75648b653da417ff9",
+      "variant": "missing_bound"
+    }
+  ],
+  "initialization_output": {
+    "bytes": 856639,
+    "path": "results/tables/initialization_dawn.npz",
+    "sha256": "16ea0352b4ec7198daaa80eeeea5b6f6457c40f8537bbde6e7eef87f80e370bd"
+  },
+  "initialization_window": "saved native dawn samples, SZA99 to60; same accepted artificial geometry"
+}

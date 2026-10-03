@@ -1,0 +1,109 @@
+{
+  "M4C_R2_sha256": "2944c8a8e0899b320c69c45192ee6f03b9001114c4120a9db8c67a3f1bb8f1fe",
+  "accepted_baseline_sha": "6637b20eb4dafa35d68c766ff4370241c750def2",
+  "accepted_tag": "tfm-temporal-model-v1",
+  "maximum_scaled_QSSA_or_budget_residual": 4.1210294076131674e-16,
+  "physical_audit": {
+    "autumn": {
+      "algebraic_physical": true,
+      "dynamic_H2O2_budget_scaled_max": 3.0599316253988174e-16,
+      "exact_R_H": true,
+      "exact_shadow": true,
+      "family_budget_scaled_max": 1.5105918155749003e-16,
+      "finite_nonnegative": true,
+      "no_clipping_or_state_reset": true,
+      "output_samples": 156,
+      "retained_QSSA_scaled_max": 2.8940139132232107e-16,
+      "stored_chemical_background_recomputed_bitwise": true,
+      "stored_forcing_recomputed_bitwise": true
+    },
+    "equatorial": {
+      "algebraic_physical": true,
+      "dynamic_H2O2_budget_scaled_max": 3.2537193548615264e-16,
+      "exact_R_H": true,
+      "exact_shadow": true,
+      "family_budget_scaled_max": 1.6469407595594825e-16,
+      "finite_nonnegative": true,
+      "no_clipping_or_state_reset": true,
+      "output_samples": 147,
+      "retained_QSSA_scaled_max": 3.212995907926266e-16,
+      "stored_chemical_background_recomputed_bitwise": true,
+      "stored_forcing_recomputed_bitwise": true
+    },
+    "high_latitude": {
+      "algebraic_physical": true,
+      "dynamic_H2O2_budget_scaled_max": 4.1210294076131674e-16,
+      "exact_R_H": true,
+      "exact_shadow": true,
+      "family_budget_scaled_max": 1.60525580679967e-16,
+      "finite_nonnegative": true,
+      "no_clipping_or_state_reset": true,
+      "output_samples": 195,
+      "retained_QSSA_scaled_max": 2.9425481594578597e-16,
+      "stored_chemical_background_recomputed_bitwise": true,
+      "stored_forcing_recomputed_bitwise": true
+    },
+    "reference": {
+      "algebraic_physical": true,
+      "dynamic_H2O2_budget_scaled_max": 3.220981579499166e-16,
+      "exact_R_H": true,
+      "exact_shadow": true,
+      "family_budget_scaled_max": 1.5496458758229564e-16,
+      "finite_nonnegative": true,
+      "no_clipping_or_state_reset": true,
+      "output_samples": 159,
+      "retained_QSSA_scaled_max": 3.563348778461785e-16,
+      "stored_chemical_background_recomputed_bitwise": true,
+      "stored_forcing_recomputed_bitwise": true
+    },
+    "summer": {
+      "algebraic_physical": true,
+      "dynamic_H2O2_budget_scaled_max": 2.7670525468124757e-16,
+      "exact_R_H": true,
+      "exact_shadow": true,
+      "family_budget_scaled_max": 1.5311339688375001e-16,
+      "finite_nonnegative": true,
+      "no_clipping_or_state_reset": true,
+      "output_samples": 138,
+      "retained_QSSA_scaled_max": 3.045013620889737e-16,
+      "stored_chemical_background_recomputed_bitwise": true,
+      "stored_forcing_recomputed_bitwise": true
+    },
+    "winter": {
+      "algebraic_physical": true,
+      "dynamic_H2O2_budget_scaled_max": 3.7165755677364385e-16,
+      "exact_R_H": true,
+      "exact_shadow": true,
+      "family_budget_scaled_max": 1.5096539493155392e-16,
+      "finite_nonnegative": true,
+      "no_clipping_or_state_reset": true,
+      "output_samples": 193,
+      "retained_QSSA_scaled_max": 3.600025011622712e-16,
+      "stored_chemical_background_recomputed_bitwise": true,
+      "stored_forcing_recomputed_bitwise": true
+    }
+  },
+  "pytest": {
+    "elapsed_s": 41.63,
+    "log_sha256": "02ccddc19c00242df6b9a17cff6de1c37829488ac47bec92b26e807c799e99bf",
+    "passed": 913,
+    "subtests_passed": 13
+  },
+  "results_consistency": {
+    "M4C_R2_intact": true,
+    "figures": 11,
+    "output_checksums": true,
+    "reference_rows": 15,
+    "scenarios": 6,
+    "status": "PASS",
+    "table_consistency": true
+  },
+  "ruff": "PASS",
+  "solver_validation": "Accepted M5C BDF/base-tight and Radau validation reused; no unnecessary Radau reruns for ordinary scenarios",
+  "source_compatibility": {
+    "modules_checked": 39,
+    "only_allowed_patch": "four-ULP normalization of datetime coverage endpoints; chemistry and physical forcing queries unchanged"
+  },
+  "status": "PASS",
+  "visual_review": "All eleven PNG figures inspected; readable units/labels, common SZA comparisons, near-zero display masks"
+}

@@ -14,6 +14,7 @@ from uuid import uuid4
 import numpy as np
 from scipy.optimize import minimize_scalar
 
+from .dynamic_atmosphere import _time_within_coverage
 from .m4d_reconstruction.cia import load_cia
 from .m4d_reconstruction.sources import load_bands, load_solar, load_tips
 from .m4d_reconstruction.spectroscopy import K_B, SpectralSources
@@ -219,6 +220,7 @@ class DynamicNIRForcing:
 
     def __call__(self,time_s,sza_deg):
         times=self.atmosphere.times
+        time_s = _time_within_coverage(time_s, times[0], times[-1])
         if time_s<times[0] or time_s>times[-1]:
             raise ValueError('dynamic NIR time outside precomputed coverage')
         i=min(int(np.searchsorted(times,time_s,side='right'))-1,len(times)-2)

@@ -1,0 +1,9 @@
+{
+  "M4C_R2_intact": true,
+  "figures": 11,
+  "output_checksums": true,
+  "reference_rows": 15,
+  "scenarios": 6,
+  "status": "PASS",
+  "table_consistency": true
+}
