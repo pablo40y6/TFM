@@ -351,3 +351,37 @@ The derived [m5c_reference_dynamic_msis.npz](../evidence/m5c_reference_dynamic_m
 Final QA: **908 tests + 13 subtests PASS**, ruff PASS, five historical validators PASS, historical M4D mapping PASS. All previous dark/OH/H2O2/periodicity diagnostic regressions remain passing and historical. The full frozen API regression is bit-identical to M5B (all seven species maximum difference zero). M5A/M5B golden NPZ, frozen NIR and M4C-R2 hashes are unchanged; M4C-R2 remains 2944c8a8e0899b320c69c45192ee6f03b9001114c4120a9db8c67a3f1bb8f1fe. main is unchanged.
 
 Reproduce using scripts/validate_m5c_temporal.py: prepare with --step 3600 and 7200 plus authorized --sources/--hitran; run --step 300 --nir-step 3600 --solver base/tight/Radau, then 600/3600/tight and 300/7200/tight; assess --step 300 --nir-step 3600 --comparison-step 600 --comparison-nir-step 7200. Run cases with the local sources; bootstrap --step 300 --nir-step 3600 --start 2020-03-20T20:00:00+00:00 --solver tight. Supply the same --cache directory. numerics independently reproduces exact-profile/control audits using the five initializer cases. No periodic-search or automatic space-weather mode is called.
+
+## Repository consolidation
+
+M5C closure above is the accepted current temporal state. Earlier sections are
+chronological scientific provenance; their provisional blockers and old API
+restrictions are superseded by the final M5C closure. Current entry points are
+[README](../README.md) and [PROJECT_STATE](../PROJECT_STATE.md), with historical
+material indexed in [docs/archive](archive/README.md). The accepted M5 branch
+already contains isolated advanced-spectroscopy diagnostics; these are retained
+unchanged for provenance/regression, while PR #4 is not merged separately.
+Consolidation changes documentation and repository housekeeping only, preserves
+all three golden NPZ artifacts and frozen scientific assets, and starts no
+experiments or new milestone.
+
+Consolidation reproduction note: invoke M5 validators as modules from the
+repository root, e.g. `python -m scripts.validate_m5b_temporal --mode assess
+--cache /local/cache`. This resolves their existing `scripts.*` imports without
+changing the accepted validator code. Byte-based M4D/NIR cache fingerprints
+can differ between an older CRLF checkout and a fresh LF checkout. Reuse in
+consolidation QA is allowed only after checking normalized source bytes and
+Python AST equality and matching the original code hashes to accepted closure
+evidence; the compatibility record is retained with QA, outside runtime caches.
+No scientific fingerprint or accepted evidence is silently rewritten.
+
+Consolidation QA (2026-10-03): **908 tests + 13 subtests PASS**, ruff PASS,
+five historical validators PASS, M4D mapping PASS (430 matches; no unmatched,
+duplicate or ambiguous lines), M5A noon-assessment GO with regenerated golden
+SHA identical, M5B assessment GO / M4D accepted, M5C independent-grid assessment
+PASS. M5 assessments recheck the certified trajectories and numerical audits;
+they do not start new scientific experiments. All three golden NPZ files,
+packaged frozen NIR and M4C-R2 SHA are verified unchanged. A compact receipt is
+[evidence/repository_consolidation_qa.json](../evidence/repository_consolidation_qa.json).
+Main/PR CI now runs the full tests, lint, historical validators and M4C hash;
+source-dependent certification continues to use authorized external local files.

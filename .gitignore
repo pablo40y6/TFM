@@ -6,3 +6,18 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .m5-derived-cache/
+
+# Local outputs and restricted scientific inputs (never repository evidence)
+.ruff_cache/
+.m4d-derived-cache/
+.m5c-derived-cache/
+**/msis-cache/
+**/nir-cache/
+work/
+outputs/
+trajectory.npz
+pytest-cache-files-*/
+# Historical source bundles/raw HITRAN must be supplied outside the repository.
+/hitran-raw/
+/raw-hitran/
+/m4d-sources/
