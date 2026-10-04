@@ -1,0 +1,52 @@
+\documentclass[12pt,a4paper,oneside]{report}
+\usepackage[margin=25mm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern,amsmath,amssymb,graphicx,booktabs,longtable,array}
+\usepackage{setspace,microtype,caption,float}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+\onehalfspacing
+\setlength{\emergencystretch}{2em}
+\setcounter{tocdepth}{1}
+\graphicspath{{../results/figures/}}
+\newcommand{\ozone}{\ensuremath{\mathrm{O}_3}}
+\newcommand{\oxygen}{\ensuremath{\mathrm{O}_2}}
+\newcommand{\singlet}{\ensuremath{\mathrm{O}_2(a^1\Delta_g)}}
+\newcommand{\concunit}{\ensuremath{\mathrm{molecule\,cm^{-3}}}}
+\newcommand{\rateunit}{\ensuremath{\mathrm{molecule\,cm^{-3}\,s^{-1}}}}
+\newcommand{\missing}[1]{\textbf{[TO COMPLETE: #1]}}
+\newcommand{\resultfigure}[4]{\begin{figure}[p]\centering\includegraphics[width=\textwidth]{#1.pdf}\caption{#2}\label{#3}\end{figure}#4}
+\begin{document}
+\begin{titlepage}\centering
+{\Large\missing{University}}\par\vspace{1cm}
+{\large\missing{Official master's programme}}\par\vspace{2cm}
+{\LARGE\bfseries Photochemical modelling of Ozone and\par\vspace{0.3cm}\singlet\par}
+\vspace{1cm}{\large Master's thesis -- scientific review draft}\par
+\vfill
+\missing{Author's full name}\par\vspace{0.7cm}
+Supervisor: \missing{Supervisor's name}\par\vspace{0.7cm}
+Submission: \missing{Submission date}\par
+\vfill
+\small Title follows the original project brief; institutional wording awaits confirmation.
+\end{titlepage}
+\pagenumbering{roman}
+\input{chapters/frontmatter}
+\tableofcontents\listoffigures\listoftables
+\clearpage\pagenumbering{arabic}
+\input{chapters/01_introduction}
+\input{chapters/02_background}
+\input{chapters/03_chemistry}
+\input{chapters/04_forcing}
+\input{chapters/05_temporal}
+\input{chapters/06_validation}
+\input{chapters/07_results}
+\input{chapters/08_discussion}
+\input{chapters/09_conclusions}
+\input{chapters/10_future}
+\appendix
+\input{chapters/appendices}
+\bibliographystyle{unsrtnat}
+\bibliography{references}
+\end{document}
