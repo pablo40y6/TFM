@@ -1,0 +1,101 @@
+\chapter{Complete reaction network and coefficient laws}\label{app:network}
+The tables below are generated directly from the frozen reaction registry and rate-law metadata. They retain all 52 registered processes, including two elementary Barth placeholders absorbed into the effective source. Those placeholders are not separately evaluated events. The Hartley entry represents the actual reduced excited-channel event, not an extra gross-photolysis parent loss. Photon absorption is identified by the forcing coefficient; photons are not chemical concentration coordinates.
+
+K labels link process rows to coefficient laws. Radiative coefficients have units $\mathrm{s^{-1}}$, bimolecular laws $\mathrm{cm^3\,molecule^{-1}\,s^{-1}}$ and termolecular laws $\mathrm{cm^6\,molecule^{-2}\,s^{-1}}$. $T$ is kelvin and $M$ is total neutral density. The effective HO$_2$ self-reaction coefficient already contains its $M$-dependent term; that law is not multiplied by $M$ again.
+
+The historical numerical source is JPL Evaluation~18 where indicated \citep{jpl18}; the historical reduced excited-state/HOx topology and explicitly stated routing choices follow \citet{li2020} and \citet{brasseur2005}. The accepted $B_0$+ozone total coefficient is combined with model-specific Delta routing, not claimed as a measured unit branching fraction. For K36 and K37, JPL gives upper bounds $<10^{-20}$ and $<2\times10^{-16}$, respectively; the historical model adopts the boundary values. A JPL label therefore does not imply measured equality values. Source details remain in the coefficient registry and the provenance map.
+
+\begingroup\footnotesize\setstretch{1.05}
+\input{tables/network}
+\input{tables/rates}
+\endgroup
+
+The scalar model parameters are the excited Hartley yield 0.9, retained Lyman-alpha O($^1$D) yield 0.44, O($^1$D)+O$_2$ branches 0.8/0.2, and effective Barth denominator constants 6.6/19. These parameters accompany the event definitions rather than multiplying gross parent losses a second time. The effective Barth production is Eq.~\eqref{eq:barth}; no additional elementary transfer coefficient is invented.
+
+\chapter{Mathematical identities and admissibility}\label{app:math}
+\section{Family identity}
+Using Eqs.~\eqref{eq:OH} and~\eqref{eq:HO2}, the diagnostic family obeys
+\begin{align}
+\dot R_H={}&r_{\mathrm{H,O_2,M}}+r_{\mathrm{H,O_3}}-r_{\mathrm{O,OH}}-r_{\mathrm{OH,H_2}}
++r_{\mathrm{H,HO_2\to2OH}}\nonumber\\
+&-r_{\mathrm{H,HO_2\to H_2O+O}}-r_{\mathrm{H,HO_2\to H_2+O_2}}
+-2r_{\mathrm{OH,OH}}-2r_{\mathrm{OH,HO_2}}-2r_{\mathrm{HO_2,HO_2}}\nonumber\\
+&+2r_{\mathrm{H_2O_2},h\nu}+r_{\mathrm{H_2O,A}}+2r_{x,\mathrm{H_2O}}+r_{x,\mathrm{H_2}}.
+\label{eq:Rbudget}
+\end{align}
+This is an identity, not another integrated equation. The cancellation of OH+H$_2$O$_2$ follows because that event converts one OH into one HO$_2$. The O+HO$_2$ and HO$_2$+ozone events also exchange radical forms and cancel from the summed family. Self-reactions remove two members per event. These coefficients independently check the seven-species equations against the accepted family budget.
+
+\section{Positive boundaries}
+At $q=0$, every ozone loss in Eq.~\eqref{eq:O3} vanishes while association is nonnegative. At $h=0$, its association/ozone/HO$_2$ losses vanish while O+OH, OH+H$_2$, water photolysis and O($^1$D)+H$_2$ remain nonnegative sources. At $u=0$, every OH loss vanishes; at $v=0$, every HO$_2$ loss vanishes; at $w=0$, peroxide production is nonnegative. At $d=0$, all Delta losses vanish while direct/cascade production is nonnegative. At $o=0$, atomic-oxygen losses and the quadratic Barth sink vanish while its production terms remain nonnegative.
+
+With physical background and forcing, the retained QSSA ratios are nonnegative. Their positive radiative denominator terms prevent the dark singularity that occurred for peroxide. These statements concern the continuous accepted equations, with nonnegative photolysis complements; invalid complements are rejected rather than hidden through clipping.
+
+The pure-dark continuum with zero atoms/radicals/peroxide/Delta and arbitrary nonnegative ozone is a stationary family of the reduced network. It demonstrates why dark geometry alone cannot identify initial ozone. It is not used to define one preferred state and is not a claim of atmospheric dark equilibrium.
+
+\section{Solar Fourier definitions}
+For reproducibility, the NOAA fractional-year coefficients actually used are retained here \citep{noaa}. With day-of-year $D$, UTC hour $U$ and year length $N=365$ or 366,
+\begin{equation}\gamma=\frac{2\pi}{N}\left(D-1+\frac{U-12}{24}\right).\end{equation}
+The equation of time in minutes is
+\begin{align}
+E=229.18\bigl(&0.000075+0.001868\cos\gamma-0.032077\sin\gamma\nonumber\\
+&-0.014615\cos2\gamma-0.040849\sin2\gamma\bigr).
+\end{align}
+Declination in radians is
+\begin{align}
+\delta={}&0.006918-0.399912\cos\gamma+0.070257\sin\gamma
+-0.006758\cos2\gamma\nonumber\\
+&+0.000907\sin2\gamma-0.002697\cos3\gamma+0.001480\sin3\gamma.
+\end{align}
+For east-positive longitude $\lambda$ in degrees,
+\begin{equation}H_s=\left(\frac{60U+E+4\lambda}{4}-180\right)^\circ.\end{equation}
+Equation~\eqref{eq:SZA} then gives geometric SZA. These explicit conventions prevent civil-timezone or sign ambiguity. The cosine roundoff guard is geometric and does not project any chemical concentration.
+
+\chapter{Data and source provenance}\label{app:data}
+The model's input provenance is intentionally more specific than a list of publications. A paper title establishes scientific context; an exact file checksum establishes numerical source identity. The canonical data and manifests retain those distinctions. Table~\ref{tab:provenance} summarizes the inputs and their scope.
+
+\begin{table}[htbp]\centering\small
+\caption{Main data prescriptions. Historical identities are fixed by accepted metadata/manifests.}\label{tab:provenance}
+\begin{tabular}{p{0.26\textwidth}p{0.65\textwidth}}\toprule Input & Accepted role\\\midrule
+MSIS-00 / pymsis & Temperature/native neutral fields; version=0, pymsis 0.12.0; explicit quiet or supplied drivers \citep{picone2002}.\\
+SOCRATES reference VMRs & Prescribed H$_2$O/H$_2$ and exterior ozone, transcribed historical reference; approximate rather than observational truth \citep{brasseur2005}.\\
+Historical UV asset & 125-element inherited photon/cross-section backbone; exact tabulated spectral-element convention, no new spectrum claimed.\\
+JPL18 UV tables & Accepted water/peroxide cross sections and temperature polynomial; 189-nm correction separately documented \citep{jpl18}.\\
+HITRAN2016 & Authorized 14,085-record export; selected 430 A, 320 B, 835 IRA lines; raw export not redistributed \citep{hitran2016}.\\
+TIPS-2017 & Frozen isotopologue partition sums for line-strength temperature scaling \citep{tips2017}.\\
+Wehrli 1985 & Fixed extraterrestrial NIR solar spectrum, line-centre interpolation \citep{wehrli1985}.\\
+Historical CIA & Mate 253/273/296-K O$_2$--air attenuation data; no additional production or duplicate O$_2$--O$_2$ term \citep{mate1999}.\\\bottomrule
+\end{tabular}\end{table}
+
+The authorized HITRAN export is 2,268,239 bytes. Its SHA-256 is
+\begin{quote}\footnotesize\url{6b4acbc01cb649891f2d8597875c9cd8e4805cfdd4d3b7841c2d18cbf718de12}.\end{quote}
+The fixed selected line counts and spectral completeness/mapping checks accompany the source identity. The export's complete raw content is not needed to inspect the committed final plots, but is needed to rebuild its excitation tables under the same authorization/provenance conditions.
+
+The three accepted temporal evidence datasets retain the frozen artificial-equinox reference, frozen real-geometry reference and dynamic real-geometry comparison. Final campaign dawn files retain automatic-route cases separately. The initialization-sensitivity artifact is specifically the historical frozen/artificial experiment. No artifact is relabelled as a newly computed date/location scenario.
+
+All eleven figure pairs remain in the accepted results directory. This thesis references their PDF versions directly and does not duplicate or modify them. Four accepted CSV summaries are the authority for numerical result quotations; generated thesis tables extract a compact subset. Per-case manifests retain UTC interval, geometry, atmosphere, initialization, drivers, solver, interpolation and output hashes.
+
+\chapter{Numerical and reproduction information}\label{app:reproduction}
+\section{Accepted versions}
+The repository is \url{https://github.com/pablo40y6/TFM}. The scientific precursor is \texttt{tfm-temporal-model-v1}, commit \texttt{6637b20}. The complete final-results baseline is \texttt{tfm-final-results-v1}, commit \texttt{e6ecef1}; full commit identities are retained in the source map and thesis README. This draft changes thesis files only and does not change accepted scientific equations or results.
+
+The immutable M4C-R2 artifact SHA-256 is
+\begin{quote}\footnotesize\url{2944c8a8e0899b320c69c45192ee6f03b9001114c4120a9db8c67a3f1bb8f1fe}.\end{quote}
+Other artifact and figure hashes remain in the accepted manifests. Private local paths are not part of the reproduction instructions. Restricted external files must be supplied locally with matching identities; they are not fetched or redistributed by the thesis build.
+
+\section{Controls and checks}
+The chemistry grid is 50--100~km with 1-km spacing. The accepted radiative column has spherical 1-km shells to 150~km and Earth radius 6370~km. Native background nodes are spaced 300~s and NIR snapshots 3600~s. The BDF production controls are rtol=$2\times10^{-6}$, atol=$10^{-8}$ and maximum step 120~s; tighter BDF/Radau controls are $2\times10^{-8}$/$10^{-10}$/60~s. Exact provenance distinguishes reused tighter reference intervals from production-control continuations.
+
+The common seasonal/latitude dawn interval is descending SZA99--70. SZA60 is included only where crossed. The reference figure window is SZA99--60; the reused identical-y0 atmosphere sensitivity ends at 60.961. Canonical output interpolation is linear in saved concentrations. It does not extrapolate through unattainable geometry or substitute new ODE integrations.
+
+From the repository root, with the scientific environment and \texttt{src} plus the root on the module path, the accepted result scripts are:
+\begin{quote}\small\ttfamily
+python scripts/run\_final\_results.py --plan\par
+python scripts/plot\_final\_results.py --mode check\par
+python scripts/plot\_final\_results.py --mode all
+\end{quote}
+Rebuilding a scenario additionally selects its case and supplies the authorized historical sources/HITRAN export, as documented in the accepted results README. Inspection/plotting of committed canonical outputs does not require raw licensed input. Large native atmosphere, radiation and full-trajectory caches remain excluded from Git.
+
+The thesis tables are rebuilt with \texttt{python thesis/build\_tables.py}. The thesis build uses ordinary LaTeX inputs and BibTeX; the README gives portable Tectonic and conventional latexmk alternatives. Figures are resolved relative to \texttt{thesis/main.tex}. Generated compiler auxiliaries stay in an ignored output directory. Building the document requires no new photochemical simulation.
+
+\section{Interpretive boundaries}
+Reproducibility fixes the numerical scenario and its source identity. It does not make the prescribed profiles a validated climatology, prove a periodic attractor or certify observational agreement. Human scientific review should assess whether the declared reduced chemistry, initialized states and absent transport are adequate for the intended atmospheric application. Those judgments remain separate from whether the document compiles and its numbers match accepted evidence.

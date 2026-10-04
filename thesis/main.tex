@@ -1,7 +1,6 @@
 \documentclass[12pt,a4paper,oneside]{report}
 \usepackage[margin=25mm]{geometry}
 \usepackage[T1]{fontenc}
-\usepackage[utf8]{inputenc}
 \usepackage{lmodern,amsmath,amssymb,graphicx,booktabs,longtable,array}
 \usepackage{setspace,microtype,caption,float}
 \usepackage[numbers,sort&compress]{natbib}
@@ -17,8 +16,9 @@
 \newcommand{\concunit}{\ensuremath{\mathrm{molecule\,cm^{-3}}}}
 \newcommand{\rateunit}{\ensuremath{\mathrm{molecule\,cm^{-3}\,s^{-1}}}}
 \newcommand{\missing}[1]{\textbf{[TO COMPLETE: #1]}}
-\newcommand{\resultfigure}[4]{\begin{figure}[p]\centering\includegraphics[width=\textwidth]{#1.pdf}\caption{#2}\label{#3}\end{figure}#4}
+\newcommand{\resultfigure}[5][\textwidth]{\begin{figure}[p]\centering\includegraphics[width=#1]{#2.pdf}\caption{#3}\label{#4}\end{figure}#5}
 \begin{document}
+\hypersetup{pageanchor=false}
 \begin{titlepage}\centering
 {\Large\missing{University}}\par\vspace{1cm}
 {\large\missing{Official master's programme}}\par\vspace{2cm}
@@ -32,6 +32,7 @@ Submission: \missing{Submission date}\par
 \small Title follows the original project brief; institutional wording awaits confirmation.
 \end{titlepage}
 \pagenumbering{roman}
+\hypersetup{pageanchor=true}
 \input{chapters/frontmatter}
 \tableofcontents\listoffigures\listoftables
 \clearpage\pagenumbering{arabic}
