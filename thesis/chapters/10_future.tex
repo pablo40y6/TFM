@@ -1,0 +1,20 @@
+\chapter{Future work}\label{ch:future}
+\section{Initial-state constraints}
+The highest priority is a chemically and observationally informed initialization strategy. Native atomic fields, reference ozone and conditional fast equilibrium provide a reproducible bootstrap, but the sensitivities show that this does not remove large uncertainties. A future initializer should retain measured/climatological provenance, availability and uncertainty, and should be evaluated against the explicit-state route rather than silently replacing it.
+
+Observational constraints might also be introduced through assimilation or an ensemble of admissible initial profiles. That would require a defined statistical model, not simply interpreting the current low/high variants as confidence limits. The present sensitivities identify where improved input information could matter; they do not determine a probability distribution for that information.
+
+\section{Transport and atmospheric consistency}
+Vertical transport and advection should be added only with a documented continuity formulation and consistent boundary conditions. Prescribing a changing density while evolving local concentrations is not equivalent to a transport calculation. A future coupled model should distinguish chemical production/loss, material motion and density dilution explicitly. Literature on dynamical--photochemical coupling provides context for this extension \citep{zhu2007}.
+
+Such an extension would also require revisiting domain boundaries and exterior-column profiles. The current fixed H$_2$O/H$_2$ and reference exterior ozone VMR should become date/location-dependent only when versioned, justified inputs are available. Their present approximate character should not be hidden by adding unsupported seasonal adjustments.
+
+\section{Historical drivers and observations}
+The current activity interface accepts explicit drivers without automatic downloads. Reproducing a historical observation would require versioned solar/geomagnetic inputs and a clear account of which forcing components actually respond to them. It would also require an observed or appropriately constrained chemical state, rather than assuming that matching the date/location guarantees the correct composition.
+
+Validation against satellite or ground measurements is a separate objective. Concentration fields must be mapped to the relevant observable with instrument response, viewing geometry and appropriate emission transfer \citep{li2020,mlynczak2007}. The matchup should assess both numerical and input uncertainties and compare at compatible local solar phase. No observational precision target is inferred from the present solver tolerances.
+
+\section{Targeted refinement rather than indiscriminate complexity}
+Advanced spectroscopy should be reconsidered when an identified application requires it. The A1 downstream sensitivity does not show a current need to delay temporal interpretation for exact line mixing or Galatry reconstruction. A future high-precision retrieval might require those effects, but that decision should follow a demonstrated output requirement and source-supported conventions.
+
+Likewise long-time behaviour can be studied as a new scientific question rather than assumed as an initializer property. Numerical verification over the tested finite horizon does not establish a periodic orbit. Any later spin-up or attractor study should define its own physical assumptions, convergence norms and seed comparisons without retroactively describing the present reference trajectory as periodic.

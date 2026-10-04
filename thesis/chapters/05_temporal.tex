@@ -1,0 +1,88 @@
+\chapter{Temporal formulation and numerical methods}\label{ch:temporal}
+\section{Initial-value problem}
+The chemical grid comprises 51 levels at $z_j=50+j$~km, $j=0,\ldots,50$. Stacking the seven concentrations gives a 357-component physical state $Y(t)$. Its equation is
+\begin{equation}\frac{dY}{dt}=\mathcal F\bigl(t,Y;\mathcal B(t),\chi(t)\bigr),\qquad Y(t_0)=Y_0,\label{eq:IVP}\end{equation}
+where $\mathcal B$ denotes the prescribed background. The current O/O$_3$ column also determines UV opacity. There are no transport derivatives in $\mathcal F$. The absence of transport simplifies the spatial chemistry, while attenuation preserves coupling among levels.
+
+The state includes OH, HO$_2$ and H$_2$O$_2$ independently. $R_H=u+v$ is computed from those concentrations and has no separate initial or evolved coordinate. O($^1$D), $B_0$ and $B_1$ are recomputed from the instantaneous state and forcing. In particular, $\Delta$ remains dynamic throughout the run. Algebraic expressions used in finding an initial seed are not applied as continuing equilibrium constraints.
+
+The initial-value problem is non-autonomous because both solar geometry and prescribed atmosphere can vary in time. Even in a frozen atmosphere, illumination and opacity change. A solution over a finite dawn window need not be an equilibrium, and successful integration through one night and dawn does not establish a repeating daily attractor.
+
+\section{Retained quasi-steady-state closure}
+Write $x=P_x/L_x$, where
+\begin{align}
+P_x&=0.9J_Hq+(J_{\mathrm{SRC}}+0.44J_{\mathrm{Ly\alpha}})[\oxygen]+J_{\mathrm{H_2O,B}}[\mathrm{H_2O}],\nonumber\\
+L_x&=A_x+k_{x,\mathrm{N_2}}[\mathrm{N_2}]+k_{x,\mathrm{O_2}}[\oxygen]
++k_{x,\mathrm{H_2O}}[\mathrm{H_2O}]+k_{x,\mathrm{H_2}}[\mathrm{H_2}].
+\label{eq:qssax}
+\end{align}
+The positive radiative constant $A_x$ prevents a zero denominator even when a collisional reservoir is absent. The background and coefficients make all other denominator terms nonnegative.
+
+For $b_1=P_1/L_1$,
+\begin{align}
+P_1&=g_B[\oxygen]+0.8k_{x,\mathrm{O_2}}x[\oxygen],\nonumber\\
+L_1&=A_1+k_{1,\mathrm{O_2}}[\oxygen]+k_{1,\mathrm{N_2}}[\mathrm{N_2}]+k_{1,\mathrm{O}}o+k_{1,\mathrm{O_3}}q.
+\label{eq:qssab1}
+\end{align}
+For $b_0=P_0/L_0$,
+\begin{align}
+P_0={}&g_A[\oxygen]+0.2k_{x,\mathrm{O_2}}x[\oxygen]
++k_{1,\mathrm{O_2}}b_1[\oxygen]+k_{1,\mathrm{N_2}}b_1[\mathrm{N_2}]+P_{B_0}^{\mathrm{Barth}},\nonumber\\
+L_0={}&A_0+k_{0,\mathrm{N_2}}[\mathrm{N_2}]+k_{0,\mathrm{O_2}}[\oxygen]
++k_{0,\mathrm{O}}o+k_{0,\mathrm{O_3}}q+k_{0,\mathrm{CO_2}}[\mathrm{CO_2}].
+\label{eq:qssab0}
+\end{align}
+The branches 0.8/0.2 sum to unity and multiply the total O($^1$D)+O$_2$ event only once. $A_0$ and $A_1$ are also strictly positive. These expressions can therefore produce nonnegative physical concentrations from nonnegative production without a vanishing loss denominator in the domain.
+
+A positive algebraic denominator establishes mathematical well-posedness, not the universal physical accuracy of a QSSA. The remaining approximation inherits the timescale/routing scope of the reduced model. Its numerical residuals are checked during the certified trajectories; a more complete excited-state comparison was not simulated as part of this thesis.
+
+\section{Failure of the stationary \texorpdfstring{OH/HO$_2$}{OH/HO2} partition}
+The original reduction evolved $R_H$ and solved the OH production-minus-loss equation on the physical interval $0\leq u\leq R_H$, setting $v=R_H-u$. A stationary root was acceptable only when both radicals were nonnegative. This procedure reproduces the historical local closure where its algebraic solution exists.
+
+During temporal dawn evolution, the reference trajectory reaches a state for which no root remains inside that physical interval. A continued stationary solution would require the OH allocation to exceed the family abundance, leaving negative HO$_2$. The problem is not merely a poorly chosen numerical seed: a bounded physical-root search fails because the allowed algebraic manifold is exited by the evolving state and forcing.
+
+The remedy used here is to relax only the stationarity assumption. Equation~\eqref{eq:OH} integrates exactly the old production-minus-loss expression. HO$_2$ is obtained dynamically through Eq.~\eqref{eq:HO2}, preserving $\dot u+\dot v=\dot R_H$. No reaction, coefficient or photolysis frequency is changed. The scalar historical closure remains a reference for states on its valid manifold.
+
+This distinction is scientifically useful. A reduction calibrated or formulated for an instantaneous stationary problem need not remain valid along a non-equilibrium trajectory. The failure identifies a limitation of the reduction under time-varying illumination, not evidence that the physical chemical network must be altered. Historical regression tests retain the invalid-root witness so that the reason for adding the two dynamic species remains reproducible.
+
+\section{Failure of algebraic peroxide in darkness}
+Keeping peroxide QSSA after making OH/HO$_2$ dynamic would require
+\begin{equation}w_{\mathrm{QSSA}}=
+\frac{k_{\mathrm{HO_2,HO_2}}v^2}{J_{\mathrm{H_2O_2}}+k_{\mathrm{OH,H_2O_2}}u}.\label{eq:peroxideold}\end{equation}
+In darkness $J_{\mathrm{H_2O_2}}=0$. If OH approaches zero while HO$_2$ remains positive, production remains positive but the denominator vanishes. An algebraic steady peroxide concentration is then undefined. The temporal problem does not require such a concentration: peroxide can accumulate according to Eq.~\eqref{eq:H2O2}.
+
+Promoting peroxide therefore preserves the events while removing an elimination that is incompatible with this dark limit. At $w=0$, $\dot w=k_{\mathrm{HO_2,HO_2}}v^2\geq0$, so the peroxide boundary is physically inward-pointing. Peroxide is not forced toward the old algebraic value during later integration. Its dark-singularity witness is retained alongside the old OH-root failure and the dark-continuum regression.
+
+The combined change leaves exactly seven dynamic species. No additional intermediate is promoted preventively. On states where the old OH/peroxide conditions are valid, the new closure retains O($^1$D)/$B_0$/$B_1$ and flux consistency with the historical reference. This correspondence separates the change in timescale assumptions from a change in chemistry.
+
+\section{Initial conditions}
+An arbitrary date and location specify solar geometry and a background prescription, but they do not uniquely specify O, ozone or hydrogen radicals. The API therefore permits an explicit finite, nonnegative $(51,7)$ initial state in the defined species order. This route bypasses every reference-noon root solve and bootstrap. A user-supplied state is part of the scientific scenario and must be retained in provenance.
+
+The automatic alternative is an approximate reference-noon bootstrap. It locates the preceding apparent solar noon, obtains that background, and seeds ozone from the prescribed reference profile and atomic O/H from available native MSIS columns. Where native atoms are unavailable, the nominal convention sets them exactly to zero; it does not invent a climatological small-positive abundance. Availability data remain distinct from finite evolved concentrations.
+
+With O/O$_3$/H fixed, the initializer solves the four stationary fast tendencies for OH, HO$_2$, H$_2$O$_2$ and $\Delta$. Multiple positive numerical seeds are attempted at each height. Log coordinates and scaled production/loss residuals support the solve. cases require convergences to the same physical root within the tested multistart tolerance. The initializer then integrates all seven species from noon to the requested starting time. It is applied once, not repeatedly during the temporal run.
+
+This policy constructs an internally consistent fast subsystem conditional on its chosen atomic/ozone profiles. It does not establish that those profiles are correct for the real atmosphere, that the full state is an equilibrium, or that no different fast root could exist outside the searched seed domain. The initialization sensitivity in Chapter~\ref{ch:results} demonstrates the practical importance of that distinction.
+
+The reference-noon procedure is not replaced by dark equilibrium. Under zero forcing the historical network admits the continuum $[o=0,q=c,h=0,u=0,v=0,w=0,d=0]$, $c\geq0$, with vanishing retained fast intermediates. Such a continuum does not determine one unique chemical state from SZA. Its preservation is a regression of the network rather than a rule for selecting $Y_0$.
+
+\section{Positive-domain numerical treatment}
+For a strictly positive concentration $n_i$, a logarithmic coordinate $\eta_i=\log n_i$ gives $\dot\eta_i=\dot n_i/n_i$. This transformation can preserve positive representation without altering the physical tendency. Exact zero initial concentrations require linear coordinates; forcing them into a logarithm by inserting an arbitrary floor would alter the state. The implementation uses the mixed coordinate strategy to carry those boundaries.
+
+Implicit solvers evaluate trial states as part of Newton iteration. A trial outside the admissible physical domain is rejected and the step is retried under the existing numerical controls. concentrations are not projected, clipped or reset. This is distinct from a proof that every trial iterate remains physical. The independent solver comparison verifies the completed physical trajectories under the retry procedure.
+
+Analytically, every consumption event of a species contains that reactant concentration. Its loss therefore vanishes at the zero boundary, while production is nonnegative. The retained algebraic intermediates have nonnegative sources and positive denominators. Together these properties support invariance of the physical nonnegative orthant for the specified continuous equations. The actual discrete integration is also checked for nonnegative outputs and physical closure.
+
+\section{Stiff integration and radiation coupling}
+BDF is the primary solver and Radau supplies an independent implicit-method verification \citep{scipyivp}. The production controls are relative tolerance $2\times10^{-6}$, absolute tolerance $10^{-8}$ and maximum step 120~s. Tighter BDF/Radau use $2\times10^{-8}$, $10^{-10}$ and 60~s. These are numerical-coordinate controls; their physical output accuracy is assessed by trajectory comparisons rather than inferred from tolerance values alone.
+
+Integration is segmented at geometric illumination transitions so that the solver does not step across a shadow boundary without explicitly resolving the changed forcing. The geometric routine also locates extrema to retain short grazing intervals. Neither segmentation nor the mixed coordinates substitutes a stationary chemical state at sunrise.
+
+The approximate iteration Jacobian exploits local chemical blocks. Full evolving UV opacity remains in RHS evaluations; omitted radiation derivatives affect the iteration preconditioner rather than the equations being integrated. Therefore its adequacy is tested through method/tolerance agreement. Sparsity for iteration does not make the actual radiation-coupled problem a collection of entirely independent equations.
+
+\section{Interpolation and saved outputs}
+The native background grid and NIR snapshot grid control prescribed-forcing interpolation; adaptive solver steps control chemical integration. Saved samples are a third grid. These grids must be distinguished when reproducing a profile at an exact SZA. The final campaign retains native output samples, inserts the SZA99 boundary by linear concentration interpolation, and reevaluates its background, forcing and QSSA fields at that boundary.
+
+Profiles at intermediate SZA are interpolated outputs, not extra integrated solutions. Unreachable SZA values are left unavailable. The reference campaign reuses a tighter-BDF bootstrap/trajectory and integrates only the short continuation needed to reach SZA60 with production controls. Its provenance therefore differs from the five wholly new production-control scenarios, although all retain the same physical model.
+
+Numerical verification covers the reference noon-to-next-dawn evolution and analogous scenario windows. It does not depend on convergence to a 24-hour or subharmonic periodic orbit. Earlier long-time diagnostics are historical evidence, not a demonstrated attractor or a condition imposed on the final initialization.

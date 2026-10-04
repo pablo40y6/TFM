@@ -1,0 +1,110 @@
+\chapter{Results}\label{ch:results}
+\section{Experiment matrix and comparison convention}
+The final campaign uses the model without new reactions or fitted parameters. Table~\ref{tab:matrix} identifies the six scenarios. Longitude is $0^\circ$ east; activity is fixed at 150/150/4; the atmosphere is dynamic MSIS and initialization is the approximate reference-noon route. The date identifies the preceding noon/night. The extracted dawn occurs on the next UTC date, rather than on the labelled date itself.
+
+\begin{table}[htbp]\centering\small
+\caption{Final dawn scenarios. The SZA interval is descending on the dawn branch. An unreachable SZA60 is left unavailable.}\label{tab:matrix}
+\begin{tabular}{llll}\toprule Case & Preceding noon date & Latitude & Available SZA\\\midrule
+Reference & 20 March 2020 & $45^\circ$N & $99\to60^\circ$\\
+Summer & 21 June 2020 & $45^\circ$N & $99\to60^\circ$\\
+Autumn & 22 September 2020 & $45^\circ$N & $99\to60^\circ$\\
+Winter & 21 December 2020 & $45^\circ$N & $99\to68.426^\circ$\\
+Equatorial & 20 March 2020 & $0^\circ$ & $99\to60^\circ$\\
+High latitude & 20 March 2020 & $70^\circ$N & $99\to69.755^\circ$\\\bottomrule
+\end{tabular}\end{table}
+
+The reference reuses the verified automatic-route bootstrap and trajectory, with a newly integrated 393.217-s continuation to reach SZA60. The other five scenarios are newly simulated. The frozen/dynamic and initialization experiments reuse their stored trajectories and fingerprints; they are not recomputed as if they were additional campaign scenarios.
+
+Seasonal and latitudinal comparisons use common SZA rather than civil time. All cases share the descending interval $99\to70^\circ$, and their profile figures use $85/70^\circ$. Winter at $45^\circ$N and equinox at $70^\circ$N do not cross $60^\circ$ in these windows. Their actual minima, rather than invented extrapolated profiles, terminate the available dawn datasets.
+
+The quantities below are direct model output or explicitly defined sensitivities. Seasonal/latitude changes include solar geometry, prescribed background and noon initial conditions simultaneously. They do not isolate a single mechanism. Concentrations use \concunit; relative differences use Eq.~\eqref{eq:metric}, with near-zero masks and absolute differences as described in Chapter~\ref{ch:validation}.
+
+\section{Reference dawn}\label{sec:refresults}
+Figures~\ref{fig:refO3map} and~\ref{fig:refDmap} show the reference time--height fields. The ozone response is strongly height dependent. It is not described by one common decay factor across the column: upper-level destruction, lower-level persistence and a non-monotonic region near 80~km appear within the same dawn. The accompanying SZA context places the response relative to solar illumination rather than treating UTC as a universal sunrise clock.
+
+\resultfigure{01_reference_o3_heatmap}{Reference ozone through the dawn of 21 March 2020, following noon initialization on 20 March at $45^\circ$N, $0^\circ$E. The dynamic-MSIS background uses quiet activity 150/150/4. Concentration is in molecule cm$^{-3}$, altitude in km and time in UTC; the SZA context spans $99\to60^\circ$. This is a finite-horizon model field, not an observed climatology.}{fig:refO3map}{}
+\resultfigure{02_reference_delta_heatmap}{Reference \singlet\ concentration for the same case and UTC dawn interval as Figure~\ref{fig:refO3map}. Concentration is in molecule cm$^{-3}$ and altitude in km. The field records the evolving singlet state; it is not replaced by instantaneous production/loss equilibrium.}{fig:refDmap}{}
+
+At 90~km ozone decreases from $5.0281\times10^8$ at SZA99 to $5.2750\times10^7$ at SZA60. At 100~km the corresponding values are $1.8340\times10^8$ and $3.6527\times10^6$. These are large concentration changes compared with the numerical convergence differences. They establish temporal behaviour of the prescribed model, not the magnitude of an observed dawn decline.
+
+At 80~km, ozone instead passes from $9.5909\times10^6$ at SZA99 through $9.9255\times10^5$ at SZA85 and reaches $5.1138\times10^6$ at SZA60. The fall followed by recovery is visible in the selected-height curves and the changing vertical profiles (Figures~\ref{fig:refO3levels} and~\ref{fig:refprofiles}). Association, reactive losses and radiation all depend on height and time. Their presence in the equations makes a non-monotonic response possible, but this campaign does not contain a reaction-budget attribution experiment identifying one unique cause of the 80-km minimum.
+
+\resultfigure{03_reference_o3_levels}{Reference ozone evolution at 60, 70, 80, 90 and 100~km during SZA $99\to60^\circ$ on 21 March 2020, $45^\circ$N/$0^\circ$E. Concentrations are molecule cm$^{-3}$; UTC and SZA provide the temporal/solar context. Curves are saved model output, with no equilibrium reset.}{fig:refO3levels}{}
+
+The $\Delta$ field rises after solar production becomes effective (Figures~\ref{fig:refDmap} and~\ref{fig:refDlevels}). At 60~km its SZA99 concentration is effectively zero, whereas the SZA60 value is $6.0059\times10^9$. A percentage relative to its nearly zero starting value would be misleading. At 90~km, it changes from $1.5692\times10^7$ to $1.7523\times10^9$; at 100~km, from $7.5069\times10^6$ to $1.4886\times10^8$.
+
+The contrast between ozone destruction and singlet accumulation should not be read as a simple instantaneous inverse relationship. $\Delta$ has multiple source channels, collisional/radiative losses and temporal memory. The evolving ozone concentration also contributes to opacity. Figure~\ref{fig:refprofiles} consequently shows distributions that change shape, rather than one concentration profile merely scaling another.
+
+\resultfigure{04_reference_delta_levels}{Reference \singlet\ evolution at 60, 70, 80, 90 and 100~km for the same UTC/SZA window as Figure~\ref{fig:refO3levels}. Concentration is molecule cm$^{-3}$. Logarithmic display omits values at or below 1 molecule cm$^{-3}$ only for readability; canonical numerical values remain retained.}{fig:refDlevels}{}
+\resultfigure[0.88\textwidth]{05_reference_profiles}{Reference ozone and \singlet\ vertical profiles at SZA99, 85 and 60, in molecule cm$^{-3}$, through the dawn of 21 March 2020 at $45^\circ$N/$0^\circ$E. Intermediate profiles use linear interpolation of retained concentration outputs. Near-zero concentrations are omitted from the logarithmic display, without modifying data or integrated states.}{fig:refprofiles}{}
+
+Table~\ref{tab:reference} provides the compact numerical counterpart. The source table also includes atomic O/H, OH, HO$_2$, H$_2$O$_2$ and $R_H$, so that these figures can be traced to the complete state rather than only the plotted species. The selected entries are descriptive points within a non-equilibrium trajectory.
+\input{tables/reference}
+\clearpage
+
+\section{Seasonal dependence}
+These scenarios vary solar geometry, the prescribed MSIS background and approximate noon initialization. Quiet activity remains fixed at $F_{10.7}$/$\overline F_{10.7}$/$A_p=150/150/4$, as do reservoir profiles and the adopted incident UV/VUV and near-infrared spectra. No Earth--Sun distance irradiance rescaling is applied. The four dates are deterministic seasonal scenarios, rather than complete historical irradiance or climatological simulations.
+
+Figures~\ref{fig:seasonO3} and~\ref{fig:seasonD} compare four dates at $45^\circ$N. Common SZA aligns illumination angle, while night duration and the rate of solar-angle change still differ. The chemical histories are therefore not identical.
+
+At 80~km and SZA70, summer ozone is $6.5873\times10^6$, compared with $3.1097\times10^6$ in March and $3.3562\times10^6$ in winter. The summer/March ratio is approximately 2.12. Singlet oxygen at the same height/SZA is $1.7667\times10^9$ in summer, $1.2698\times10^9$ in March and $1.2684\times10^9$ in winter. Both species differ materially, but their amplitudes do not scale identically.
+
+At 100~km, the ozone ordering reverses: summer gives $8.7444\times10^5$, whereas March gives $3.7215\times10^6$. The summer/March ratio is approximately 0.235. Thus this model does not support an altitude-independent ``summer enhancement'' of ozone. Its seasonal response must be described by height and illumination phase.
+
+\resultfigure{06_seasonal_o3}{Seasonal ozone profiles at common SZA85 and 70 for $45^\circ$N/$0^\circ$E, dynamic MSIS and quiet activity 150/150/4. Legend dates identify the preceding bootstrap noon; dawn is on the following UTC date. Concentration is molecule cm$^{-3}$ and height is km. Geometry, background and initialization all vary. Winter cannot reach SZA60; no values are extrapolated there.}{fig:seasonO3}{}
+\resultfigure{07_seasonal_delta}{Seasonal \singlet\ profiles for the cases and common SZA values of Figure~\ref{fig:seasonO3}. Units are molecule cm$^{-3}$ and km. The comparison includes differing illumination history, prescribed atmospheric fields and approximate noon initialization, and is not a photolysis-only seasonal experiment.}{fig:seasonD}{}
+
+Winter's minimum SZA of $68.426^\circ$ is a geometric boundary. Common-SZA comparison respects this limit without extrapolating to an unattainable angle.
+Table~\ref{tab:seasonal} gives selected upper-level values from the seasonal CSV.
+\input{tables/seasonal}
+
+The seasonal CSV also records available extrema and common-window changes; percentages below the initial-concentration relevance floor are omitted.
+\clearpage
+
+\section{Latitude dependence}
+Figures~\ref{fig:latO3} and~\ref{fig:latD} compare $0^\circ$, $45^\circ$N and $70^\circ$N for the March scenario. At 90~km/SZA70, the equatorial ozone concentration is $9.0375\times10^7$ compared with $5.4765\times10^7$ at $45^\circ$N, approximately $65.0\%$ higher relative to the latter. The corresponding $\Delta$ concentrations are $2.4663\times10^9$ and $1.6927\times10^9$, approximately $45.7\%$ higher. These signed ratios relative to the 45N value differ from the symmetric difference metric used in sensitivity tables.
+
+At the same point the high-latitude case gives ozone $2.9652\times10^7$ and $\Delta=1.0785\times10^9$. The three profiles display a height-dependent response rather than a uniform latitude multiplier. In particular, their ozone minimum region and upper peak differ in shape and amplitude. A latitude-only solar-geometry attribution would not be justified because background and initialized chemistry also vary.
+
+\resultfigure{08_latitude_o3}{Ozone profiles at SZA85/70 for $0^\circ$, $45^\circ$N and $70^\circ$N, $0^\circ$E, with preceding noon on 20 March 2020 and dawn on 21 March. All cases use dynamic MSIS, approximate reference-noon initialization and activity 150/150/4. Units: molecule cm$^{-3}$ and km. The common dawn interval is $99\to70^\circ$; $70^\circ$N does not reach SZA60.}{fig:latO3}{}
+\resultfigure{09_latitude_delta}{\singlet\ profiles for the latitude cases of Figure~\ref{fig:latO3}, at common SZA85/70. Concentration is molecule cm$^{-3}$ and altitude km. The profiles quantify the complete model response to location, retaining different illumination histories, backgrounds and approximate initial states.}{fig:latD}{}
+
+The high-latitude minimum angle is $69.755^\circ$. The common 70-degree profile is consequently close to its local solar minimum, while the equatorial case continues to much smaller angles later. Comparing the same SZA controls the instantaneous angle but not its derivative or the elapsed time since initialization. This remaining distinction is part of the physical interpretation of a temporal calculation.
+
+The latitude summary retains the same common-window and near-zero conventions as the seasonal table. Unavailable 60-degree values are explicit. It should be used for any numerical citation beyond the rounded examples in this chapter.
+Table~\ref{tab:latitude} extracts the corresponding 80/90/100-km common-SZA values.
+\input{tables/latitude}
+\clearpage
+
+\section{Frozen versus dynamic atmosphere}
+The comparison in Figure~\ref{fig:atmsensitivity} uses exactly the same explicit initial concentrations for frozen and dynamic runs. It therefore isolates the effect of the evolving prescribed background within this model, including its effect on reaction coefficients, collisional partners and radiation. It does not compare two differently initialized automatic routes.
+
+Maximum relevant ozone difference is $69.2122\%$, with p90 $20.4115\%$ and p99 $40.5306\%$. The maximum relevant location is 83~km/SZA81.551. The largest absolute ozone difference is $1.666889\times10^8$. For $\Delta$, the maximum is $24.6128\%$, p90 $16.6901\%$ and p99 $20.8440\%$; the maximum relevant location is 99~km/SZA95.673, and maximum absolute difference is $3.580542\times10^8$.
+
+\begin{table}[htbp]\centering\small
+\caption{identical-initial-state frozen/dynamic dawn sensitivity. Percentages use the symmetric metric; locations refer to the relevant percentage maximum.}\label{tab:atmsensitivity}
+\begin{tabular}{lrrrrl}\toprule Species & Max (\%) & p90 (\%) & p99 (\%) & Height (km) & SZA ($^\circ$)\\\midrule
+O$_3$ & 69.2122 & 20.4115 & 40.5306 & 83 & 81.551\\
+$\Delta$ & 24.6128 & 16.6901 & 20.8440 & 99 & 95.673\\\bottomrule
+\end{tabular}\end{table}
+
+\resultfigure{10_frozen_dynamic_sensitivity}{Relevant relative concentration differences between frozen and dynamic backgrounds with exactly identical explicit initial state. Ozone and \singlet\ panels use $|a-b|/\max(a,b)$ in percent, altitude in km and SZA in degrees. Near-zero samples are masked and assessed absolutely. The reused window ends at SZA60.961 rather than exactly 60; no missing endpoint is extrapolated.}{fig:atmsensitivity}{}
+
+The largest near-zero $\Delta$ absolute difference is 5528.81~\concunit; no relative percentage is assigned there. The retained 21-hour sensitivity window ends at SZA60.961. It is scientifically separate from the automatic-route reference extended to 60 degrees. Its large differences exceed the numerical-refinement discrepancies, identifying atmospheric prescription as a material modelling choice for dawn predictions.
+\clearpage
+
+\section{Initialization sensitivity}
+Figure~\ref{fig:initsensitivity} reuses the frozen-atmosphere, artificial-equinox experiment. The variants scale available finite native O/H by 0.5 or 2, or use the positive missing-atom bound. Each variant re-solves the noon fast subsystem. They are not freshly generated dynamic-MSIS cases and do not supply a distribution of uncertainty for arbitrary dates/locations.
+
+The low-atom variant has maximum relevant dawn differences of $72.4950\%$ in ozone and $71.3846\%$ in $\Delta$. Their maximum relevant heights are 83 and 88~km, respectively. The high-atom variant gives $51.0830\%$ and $70.5680\%$. These responses demonstrate strong upper-mesospheric sensitivity to the supplied atomic state even after internally consistent initialization of fast species.
+
+The missing-atom bound has a different pattern: maximum ozone/$\Delta$ differences are $21.6170\%$/$14.0773\%$, both at 50~km in the recorded relevant maxima. Its strongest effect is not simply another version of the upper-level scaling response. The supplied concentrations and the meaning of the bound are therefore essential to interpretation.
+
+\resultfigure{11_initialization_sensitivity}{Maximum relevant dawn sensitivity versus altitude for ozone and \singlet\ in the frozen-reference, artificial-equinox initialization experiment. Variants are finite native O/H multiplied by 0.5 or 2 and the positive missing-atom bound, each with re-solved noon fast species. Relative differences are percentages against the nominal case using the symmetric denominator; near-zero values use separate absolute checks. This is an initial-condition sensitivity, not a solver error or dynamic-MSIS latitude experiment.}{fig:initsensitivity}{}
+
+Lower levels are comparatively less affected by some finite-atom scaling variants, while upper outputs can change markedly. The statement is variant-specific: the missing-atom bound shows that lower levels are not universally insensitive. The results support making initialization a prominent limitation instead of hiding it behind a deterministic date/location interface.
+
+These sensitivities are much larger than the tested solver discrepancy. Re-solving a physically admissible noon fast root does not remove uncertainty in the slow atomic/ozone state. Consequently the reference-noon procedure should be described as an approximate bootstrap, not a validated climatology or an observationally inferred unique initial condition.
+Table~\ref{tab:allsensitivity} summarizes the distributions with their separate experiment scopes.
+\input{tables/sensitivity}
+\clearpage

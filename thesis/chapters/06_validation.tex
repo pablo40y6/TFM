@@ -1,0 +1,47 @@
+\chapter{Numerical validation and reproducibility}\label{ch:validation}
+\section{What is validated}
+The validation distinguishes equation/implementation consistency, numerical convergence and physical accuracy. Equation checks establish that the event definitions and budgets are evaluated as specified. Numerical comparisons measure sensitivity to integration controls and forcing-grid refinement. Neither establishes observational agreement. The latter would require measured chemical/airglow quantities, compatible viewing geometry and uncertainty treatment that are not part of this campaign.
+
+The principal temporal certification uses a continuous 21-hour equinox trajectory with the same explicit initial state across compared runs. Holding $Y_0$ fixed prevents initializer changes from being mistaken for solver or interpolation effects. The final scientific campaign additionally checks every complete new trajectory and its extracted dawn subset for finite/nonnegative state, remaining QSSA, budgets and exact shadow.
+
+\section{Relative and near-zero metrics}
+For two nonnegative concentrations $a,b$, the relevant relative difference is
+\begin{equation}\epsilon=\frac{|a-b|}{\max(a,b)}.\label{eq:metric}\end{equation}
+It is evaluated only when either value exceeds the recorded relevance floor, normally $\max(1~\concunit,10^{-6}\times\text{nominal peak})$. Below that floor, absolute differences are used. A large percentage obtained by dividing two nearly zero concentrations is not treated as a physical discrepancy.
+
+The peak interval must also be specified. The frozen/dynamic comparison uses its full-run nominal peak; the initialization sensitivity uses its dawn nominal peak. The published manifests retain both the metric and the floor. Percentiles summarize the saved time--height samples, not a uniform SZA measure or statistical confidence distribution. The maximum identifies the most different retained sample, not an error bound for every conceivable atmospheric state.
+
+\section{Independent interpolation refinements}
+Native background and NIR cadence were refined separately. Table~\ref{tab:convergence} lists the maximum relevant output differences for ozone and $\Delta$. The 600/300-s comparison keeps NIR cadence fixed at 3600~s; the 7200/3600-s comparison keeps the native background at 300~s. This separation avoids confusing a density-interpolation error with a radiation-table error.
+
+\begin{table}[htbp]\centering\small
+\caption{Convergence comparisons over the 21-hour reference trajectory with identical explicit initial state. Values are maximum relevant relative differences in percent, not atmospheric accuracy estimates.}\label{tab:convergence}
+\begin{tabular}{lrr}\toprule Comparison & O$_3$ (\%) & $\Delta$ (\%)\\\midrule
+Background 600 versus 300~s & 0.183255 & 0.0120341\\
+NIR 7200 versus 3600~s & 0.000614071 & 0.0554322\\
+BDF base versus tighter & 0.0378396 & 0.0236265\\
+Tighter BDF versus tighter Radau & 0.00269619 & 0.000624184\\\bottomrule
+\end{tabular}\end{table}
+
+The final 300-s background and 3600-s NIR settings meet the practical approximately $0.5\%$ target for these relevant outputs. A coarser coupled atmosphere/radiation grid had failed the output criterion; independent refinement resolved that numerical issue. This observation supports the selected cadence within the tested scenario rather than proving that linear interpolation is optimal everywhere.
+
+Direct angular midpoint checks of the excitation tables remain below the adopted tolerance. Exact-Voigt comparisons also audit the performance approximations across representative shells and backgrounds. Those tests support evaluating the same selected lines efficiently; they do not justify replacing historical line parameters or deleting weak transitions.
+
+\section{Integration-method verification}
+The maximum relevant discrepancy across all seven species is $0.423641\%$ for base/tighter BDF and $0.00946013\%$ for tighter BDF/Radau. The corresponding ozone and $\Delta$ values are smaller, as Table~\ref{tab:convergence} shows. Near-zero absolute comparisons also pass their bounds. These outcomes indicate that the tested finite-horizon state is numerically resolved to the practical target under the prescribed model.
+
+The comparison is deliberately stronger than checking whether one solver reports success. Different implicit methods and tighter tolerances can expose errors hidden by an apparently smooth curve. Agreement nevertheless remains scoped: the final campaign does not rerun Radau for every ordinary seasonal/latitude case because those cases do not exhibit a new physical or numerical failure. It reuses the solver certification and applies the trajectory audits to the new outputs.
+
+\section{Positivity, fast-species residuals and family budgets}
+The zero-boundary analysis of Chapter~\ref{ch:temporal} is supplemented by sampled physical-state and trajectory tests. The three retained QSSA loss frequencies remain strictly positive. Finite nonnegative output states and physical algebraic concentrations are required. The implemented radical-family derivative agrees with the budget by construction and is checked independently through event coefficients and random physical states.
+
+For an algebraic concentration $n=P/L$, a scaled residual compares $P-Ln$ with the magnitudes of its production/loss terms. This dimensionless diagnostic tests algebraic evaluation rather than constituting a percentage uncertainty in the concentration. The final six-scenario audit reports a maximum scaled QSSA/family/peroxide-budget residual of $4.12103\times10^{-16}$. Its proximity to floating-point roundoff shows consistent bookkeeping; it does not mean that the atmospheric model is accurate to sixteen decimal places.
+
+Forcing stored in the final outputs is independently reevaluated from the provider and compared bitwise, as is the stored chemical background. $R_H=u+v$ is exact in the saved fields. Solar forcing vanishes exactly in solid-Earth shadow. Dark chemical reactions remain available, so exact solar shadow is not misinterpreted as zero total chemical tendency.
+
+More than 900 automated and regression tests support implementation consistency; details are given in Appendix~\ref{app:reproduction}.
+
+\section{Reproducible scope}
+Canonical datasets retain seven dynamic species, $R_H$, three fast fields, eleven forcings and scenario metadata. Figures and tables can be inspected without private spectroscopy inputs; rebuilding radiation requires the historical files with matching fingerprints. Appendix~\ref{app:reproduction} records controls, tags, commands and checksums.
+
+Reproducibility is conditional on fixed spectra, quiet activity, prescribed reservoir VMRs, approximate noon initialization and no transport. It does not imply that another initializer, observed atmosphere or longer integration must produce the same dawn.

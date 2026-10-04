@@ -1,0 +1,107 @@
+\chapter{Photochemical model}\label{ch:chemistry}
+\section{State, reservoirs and units}
+At each height, write $o=[\mathrm{O}]$, $q=[\ozone]$, $h=[\mathrm{H}]$, $u=[\mathrm{OH}]$, $v=[\mathrm{HO_2}]$, $w=[\mathrm{H_2O_2}]$ and $d=[\singlet]$. The dynamic state is $(o,q,h,u,v,w,d)$. The algebraic concentrations are $x=[\mathrm{O}(^1D)]$, $b_0=[B_0]$ and $b_1=[B_1]$. All concentrations use \concunit; their tendencies use \rateunit. Temperature is in kelvin. Molecular oxygen, nitrogen, carbon dioxide, water and molecular hydrogen are prescribed; $M$ is the total neutral collision-partner density.
+
+The network combines the reduced topology associated with \citet{li2020} with explicitly audited historical coefficients from JPL Evaluation~18 \citep{jpl18} and the historical airglow/photolysis framework \citep{li2017,brasseur2005}. This is a specified reduced model, not a verbatim transcription of every table in one publication. Several printed expressions required comparison with the historical kinetic evaluation. The final laws, rather than intermediate printed inconsistencies, are listed in Appendix~\ref{app:network}.
+
+Two routing choices are particularly important. First, the total $B_0+\ozone$ loss coefficient is combined with the reduced routing $B_0+\ozone\rightarrow\Delta+\ozone$. This does not assert that the evaluated total coefficient establishes a unit physical branching fraction. Second, the effective Barth source is routed to $B_0$ in this model. Neither convention is presented as a new elementary reaction measurement. These choices are retained through all comparisons.
+
+\section{Event-flux formulation}
+Let $r_e\geq0$ be the frequency of events of process $e$ per unit volume. If $\nu_{ie}$ is the net change of species $i$ in one event, the chemical tendency is
+\begin{equation}\dot n_i=\sum_e\nu_{ie}r_e.\label{eq:eventsum}\end{equation}
+For a bimolecular reaction $A+B$, $r_e=k_e[A][B]$; for a termolecular association, $r_e=k_e[A][B]M$; and for a photolysis event, $r_e=J_e[A]$. Identical-reactant event conventions are retained exactly as defined by the kinetic source. Consumption multiplicities belong in $\nu_{ie}$ and are not additional factors in $r_e$.
+
+In the following equations $r_{A,B}$ denotes the event involving reactants $A,B$, with extra product labels where competing channels have the same reactants. $r_{A,\gamma}$ is radiative decay; $r_{A,h\nu}$ is photolysis. The notation is chemical, not a listing of software function names. Appendix~\ref{app:network} maps every retained process to its equation and coefficient.
+
+\section{Oxygen and ozone equations}
+The atomic-oxygen equation is
+\begin{align}
+\dot o={}&-r_{\mathrm{O,O_2,M}}-r_{\mathrm{O,O_3}}-2r_{\mathrm{Barth}}
+-r_{\mathrm{O,OH}}-r_{\mathrm{O,HO_2}} \nonumber\\
+&+r_{\mathrm{H,HO_2\to H_2O+O}}+r_{\mathrm{OH,OH}}
++r_{\mathrm{O_3,ground}}+r_{\mathrm{O_2,SRC}}+r_{\mathrm{O_2,Ly\alpha}}
++2r_{\mathrm{O_2,ground}} \nonumber\\
+&+r_{x,\gamma}+r_{x,\mathrm{N_2}}+r_{x,\mathrm{O_2\to B_1}}
++r_{x,\mathrm{O_2\to B_0}}+r_{B_1,\mathrm{O_3}}+r_{\Delta,\mathrm{O_3}}.
+\label{eq:O}
+\end{align}
+The two-atom coefficient in the effective molecular-oxygen ground channel and the factor $-2$ in the Barth recombination reflect event stoichiometry. O($^1$D) quenching or radiative decay can return ground-state atomic oxygen; reactions of $B_1$ or $\Delta$ with ozone also produce atomic oxygen in the topology.
+
+The ozone tendency is
+\begin{align}
+\dot q={}&r_{\mathrm{O,O_2,M}}-r_{\mathrm{O,O_3}}-r_{\mathrm{H,O_3}}
+-r_{\mathrm{OH,O_3}}-r_{\mathrm{HO_2,O_3}}\nonumber\\
+&-r_{\mathrm{O_3,ground}}-r_{\mathrm{O_3,exc}}
+-r_{B_1,\mathrm{O_3}}-r_{\Delta,\mathrm{O_3}}.
+\label{eq:O3}
+\end{align}
+The two ozone photolysis event rates sum to $J_{\mathrm{O_3,total}}q$. In particular, the excited-channel yield is not applied again to the total parent loss. Association supplies ozone while the remaining terms remove it. This equation contains no equilibrium substitution for $q$.
+
+\section{Hydrogen and radical equations}
+Atomic hydrogen obeys
+\begin{align}
+\dot h={}&-r_{\mathrm{H,O_2,M}}-r_{\mathrm{H,O_3}}+r_{\mathrm{O,OH}}
++r_{\mathrm{OH,H_2}}\nonumber\\
+&-r_{\mathrm{H,HO_2\to2OH}}-r_{\mathrm{H,HO_2\to H_2O+O}}
+-r_{\mathrm{H,HO_2\to H_2+O_2}}
++r_{\mathrm{H_2O,A}}+r_{x,\mathrm{H_2}}.
+\label{eq:H}
+\end{align}
+OH evolves according to the production-minus-loss expression that the original reduced closure set to zero:
+\begin{align}
+\dot u={}&r_{\mathrm{H,O_3}}+r_{\mathrm{O,HO_2}}+r_{\mathrm{HO_2,O_3}}
++2r_{\mathrm{H,HO_2\to2OH}}+2r_{\mathrm{H_2O_2},h\nu}
++r_{\mathrm{H_2O,A}}\nonumber\\
+&+2r_{x,\mathrm{H_2O}}+r_{x,\mathrm{H_2}}
+-r_{\mathrm{O,OH}}-r_{\mathrm{OH,O_3}}-r_{\mathrm{OH,H_2}}
+-2r_{\mathrm{OH,OH}}-r_{\mathrm{OH,HO_2}}-r_{\mathrm{OH,H_2O_2}}.
+\label{eq:OH}
+\end{align}
+The complementary HO$_2$ equation, derived from the family budget, is
+\begin{align}
+\dot v={}&r_{\mathrm{H,O_2,M}}+r_{\mathrm{OH,O_3}}+r_{\mathrm{OH,H_2O_2}}
+-r_{\mathrm{O,HO_2}}-r_{\mathrm{HO_2,O_3}}\nonumber\\
+&-r_{\mathrm{H,HO_2\to2OH}}-r_{\mathrm{H,HO_2\to H_2O+O}}
+-r_{\mathrm{H,HO_2\to H_2+O_2}}
+-r_{\mathrm{OH,HO_2}}-2r_{\mathrm{HO_2,HO_2}}.
+\label{eq:HO2}
+\end{align}
+Adding Eqs.~\eqref{eq:OH} and~\eqref{eq:HO2} gives exactly the $\dot R_H$. Terms that merely exchange OH and HO$_2$ cancel. For example, OH+H$_2$O$_2$ contributes $-r$ to OH and $+r$ to HO$_2$, with zero net family effect. This identity is checked event by event and in random-state tests.
+
+Peroxide is prognostic:
+\begin{equation}\dot w=r_{\mathrm{HO_2,HO_2}}-r_{\mathrm{H_2O_2},h\nu}-r_{\mathrm{OH,H_2O_2}}.
+\label{eq:H2O2}\end{equation}
+Its self-reaction source has no added factor of one-half. Only the two-radical consumption coefficient enters the radical equation. Keeping $w$ dynamic avoids division by a vanishing photochemical loss at the dark boundary.
+
+\section{The singlet-oxygen equation}
+The concentration $d$ evolves through direct excitation, ozone photolysis and transfer from $B_0$:
+\begin{align}
+\dot d={}&r_{\mathrm{O_2,IRA}}+r_{\mathrm{O_3,exc}}
++r_{B_0,\mathrm{N_2}}+r_{B_0,\mathrm{O_2}}+r_{B_0,\mathrm{O}}
++r_{B_0,\mathrm{O_3}}+r_{B_0,\mathrm{CO_2}}\nonumber\\
+&-r_{\Delta,\gamma}-r_{\Delta,\mathrm{O_2}}-r_{\Delta,\mathrm{N_2}}
+-r_{\Delta,\mathrm{O}}-r_{\Delta,\mathrm{O_3}}.
+\label{eq:Delta}
+\end{align}
+The last ozone-quenching process consumes ozone and produces atomic oxygen in the historical kinetic topology. It is therefore also present in Eqs.~\eqref{eq:O} and~\eqref{eq:O3}; it is not treated as a catalyst-preserving ozone collision.
+
+Although Eq.~\eqref{eq:Delta} can be written $\dot d=P_d-L_dd$, the ratio $P_d/L_d$ is not imposed during integration. $P_d$ and $L_d$ depend on the evolving chemical state and prescribed forcing. A ratio may serve as an initializer seed, but finite temporal memory remains in the subsequent evolution.
+
+\section{Reduced photolysis and effective sources}
+The retained excited ozone rate is $J_3^*=0.9J_H$. Its ground complement is $J_3^g=J_{\mathrm{O_3,total}}-J_3^*$. For molecular oxygen, $J_2^*=J_{\mathrm{SRC}}+0.44J_{\mathrm{Ly\alpha}}$ and $J_2^g=J_{\mathrm{O_2,total}}-J_2^*$. Thus
+\begin{equation}r_{\mathrm{O_3,exc}}=J_3^*q,\quad r_{\mathrm{O_3,ground}}=J_3^gq,
+\quad r_{\mathrm{O_2,ground}}=J_2^g[\oxygen].\label{eq:partition}\end{equation}
+Separate SRC and Lyman-alpha event terms retain their excited-product definitions. Negative complements indicate inconsistent injected frequencies and are rejected. Gross photolysis diagnostics are not additional events; counting them as well would duplicate parent destruction.
+
+For the effective Barth mechanism, define
+\begin{equation}r_{\mathrm{Barth}}=k_{\mathrm{Barth}}o^2M,\qquad
+P_{B_0}^{\mathrm{Barth}}=r_{\mathrm{Barth}}
+\frac{[\oxygen]}{6.6[\oxygen]+19o}.\label{eq:barth}\end{equation}
+The two-atom sink acts on $o$, while the effective source enters the $B_0$ closure. The denominator constants are empirical model parameters adopted in the historical reduced formulation \citep{li2020}. The intermediate excited reservoir is not another dynamic species, and unused elementary transfer steps must not be added alongside the effective source.
+
+\section{Budgets and the limits of a reduced network}
+Reaction stoichiometry provides local consistency checks. The hydrogen-radical family identity is exact for the retained events. The odd-oxygen photolysis account distinguishes a total parent loss from product yields and closes its reduced atom count. These checks do not imply conservation of all oxygen or hydrogen atoms in the seven-dimensional state: the model exchanges atoms with prescribed molecular reservoirs and eliminates fast intermediates.
+
+The final temporal formulation changes which species are integrated, not the reaction coefficients or event rates. On a state satisfying the original algebraic OH/peroxide conditions, the dynamic closure reproduces the original fluxes and retained oxygen tendencies. Away from that manifold, the radicals and peroxide can change rather than being forced back onto an instantaneous algebraic partition. This is the central mathematical distinction between the static reference and its temporal extension.
+
+No chemical parameter is adjusted to match a desired dawn curve. Every scenario uses the same network. Atmospheric and initialization sensitivities therefore arise from prescribed inputs and temporal response, rather than from refitting chemistry for each case.

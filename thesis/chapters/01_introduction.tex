@@ -1,0 +1,40 @@
+\chapter{Introduction}\label{ch:introduction}
+\section{Motivation}
+Mesospheric ozone is a minor constituent whose abundance is closely connected to illumination and reactive oxygen--hydrogen chemistry. Its small daytime concentration makes direct measurement demanding, while oxygen airglow provides an indirect observational route. In particular, the emission of \singlet\ near 1.27~$\mu$m has been used to infer ozone from satellite measurements, from early Solar Mesosphere Explorer observations to later SABER and OSIRIS analyses \citep{thomas1983,mlynczak2007,li2020}. The chemical connection is valuable, but it requires a suitable model of excited-state production and loss.
+
+Measurements near local sunrise motivate the temporal formulation. If a measured singlet-oxygen abundance is interpreted with instantaneous photochemical equilibrium while it still reflects an earlier illumination history, inferred ozone can be misleading. A time-dependent kinetic calculation addresses that forward-modelling problem without assuming that all species have already adjusted to the current illumination.
+
+Moving from equilibrium to an initial-value problem requires more than applying an ODE solver to every old algebraic expression. The initial state must be specified, the illumination must vary consistently, and any retained reduction must possess physical solutions along the whole trajectory. The original stationary radical and peroxide eliminations did not satisfy the last requirement during temporal tests. Their limited dynamic promotion is consequently an important part of the model formulation, rather than an incidental numerical implementation detail.
+
+The study focuses on ozone and $\Delta$, but their tendencies depend on a coupled reactive network. Atomic oxygen, hydrogen, OH, HO$_2$ and peroxide are evolved alongside them. Three fast species remain algebraic. The resulting calculation contains 357 ODEs at 51 levels from 50 to 100~km, coupled by evolving ultraviolet attenuation and driven by real date/location solar geometry.
+
+\section{From a stationary airglow model to a temporal framework}
+Previous airglow kinetic treatments establish that singlet oxygen has multiple production pathways in addition to ozone photolysis \citep{mlynczak1993}. The historical reduced formulation used here draws on that framework and on the OSIRIS-related model of \citet{li2020}, with explicit coefficient and routing audits. The purpose is not to construct a new comprehensive atmospheric chemical mechanism, but to develop a reproducible temporal extension of that specified reduced network.
+
+A stationary model can evaluate a local balance given atmospheric inputs and solar forcing. A temporal model additionally carries a state through changing illumination, allowing ozone, radicals and excited oxygen to retain memory of earlier conditions. That memory is particularly relevant across night and sunrise. It also makes initialization unavoidable: solar geometry cannot identify a unique chemical abundance vector.
+
+Atmospheric prescription is another substantive choice. A frozen reference offers a controlled and self-contained regression case; a dynamic MSIS background permits time/date/location dependence under explicit drivers. The two routes share chemistry but need not produce the same dawn. The thesis therefore examines background and initialization sensitivities alongside the reference evolution, rather than presenting one numerical curve as an unqualified atmospheric prediction.
+
+\section{Objectives and scope}
+The scientific objectives are to:
+\begin{enumerate}
+\item formulate a reproducible reduced photochemical model over 50--100~km with explicit event budgets and units;
+\item implement UV/VUV photolysis and oxygen-band excitation with spherical solar attenuation and solid-Earth shadow;
+\item extend the static chemistry to a physical temporal initial-value formulation;
+\item support UTC date/latitude/longitude solar geometry and frozen or prescribed dynamic atmospheres;
+\item establish numerical convergence and consistency for representative finite-horizon trajectories;
+\item quantify reference-dawn, seasonal, latitude, background and initialization responses under declared assumptions.
+\end{enumerate}
+These objectives describe what the implementation demonstrates. The broader scientific motivation includes retrieval applications, satellite comparisons and reduced dependence on an initial seed through long-time relaxation. This thesis does not claim to have completed those broader objectives. Its numerical verification covers a finite horizon, and neither a periodic attractor nor observational agreement is established.
+
+The forward API is general in date and geographic coordinates within its validated input conventions. Its scientific accuracy is more limited than that syntactic generality: the background and chemical reduction have prescribed assumptions, and an explicit state or approximate reference-noon bootstrap must still be supplied. The campaign samples selected seasons and latitudes rather than certifying a global climatology.
+
+\section{Research questions}
+Three questions organize the work. First, can the historical reduced chemistry be evolved through dawn without losing a physical state? The OH/HO$_2$ and peroxide QSSA diagnoses answer this by identifying which eliminations must be relaxed. Second, can the resulting finite-horizon solution be resolved numerically under practical solver and interpolation settings? Independent refinements and BDF/Radau comparisons provide the evidence. Third, how strongly do the predicted ozone and singlet fields depend on atmospheric prescription and initial conditions? The sensitivities make those limitations quantitative.
+
+Seasonal and geographic scenarios provide a related descriptive question: how does the complete prescribed model respond when date or latitude changes? These experiments are not designed to isolate one causal component. Their conclusions therefore concern the combined response and its altitude dependence, not a unique decomposition into solar geometry, atmosphere and initialization.
+
+\section{Evidence and thesis organization}
+The repository records the equations, source fingerprints, configs and canonical results. It is the authority for statements about what was implemented and computed. Scientific literature provides the physical background and historical coefficient provenance; internal implementation reports are not used as substitute atmospheric references.
+
+Chapters~\ref{ch:background}--\ref{ch:temporal} develop the physical context, network, forcing and temporal method. Chapter~\ref{ch:validation} distinguishes numerical checks from physical validation. Chapters~\ref{ch:results} and~\ref{ch:discussion} present and interpret the results. Conclusions and future work address the scoped objective; appendices retain the network and reproduction information.
