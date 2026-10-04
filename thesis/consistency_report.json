@@ -1,0 +1,45 @@
+{
+  "accepted_base": "e6ecef1f76dc3730484969d94a9a9f2f3743d0d8",
+  "status": "PASS",
+  "seven_tendencies_and_family_transcription": "exact accepted event coefficients",
+  "figures": {
+    "01_reference_o3_heatmap": "faa7c3900d26ebb3836de1e5eeda7e24639205cbf3c2bcc3573a64c7e7e3ad8d",
+    "02_reference_delta_heatmap": "173224fe2190042d225fc80641d3f0bcc9af7d11602b30618e5c036d1392747e",
+    "03_reference_o3_levels": "7f89c6bdb1cf392172cadccfc4b25fb6d5f5fdf216c917ae09a5e765d9cedf45",
+    "04_reference_delta_levels": "bb8a1b47cd3c57cf914983be6be6007ead57984e549881f11908ebfec49b7949",
+    "05_reference_profiles": "91c8c9d71128e7175e95bb4279ada4aa1c2538050747f5977c51365d3bb8e312",
+    "06_seasonal_o3": "09808bbac802c39d704d03c9cbce82813d20cd839916d999c2225f0d14f00cd6",
+    "07_seasonal_delta": "18f08101b1ecb2e644dabdec91596416f2839dcb87953a27fa188c18e324ec09",
+    "08_latitude_o3": "0c2ceb6b8a5f20f7bd5a02b3534e546207e4809a9b2b237a268b58dc4b91ea15",
+    "09_latitude_delta": "07307a9030c8375c8e1d639568dcacb87aa21692aab35de33f6737cdf6131b62",
+    "10_frozen_dynamic_sensitivity": "ac55bca4d5b6bd590f6e6732417315f9a671dcf4ef9fda450c2b5386caca6a17",
+    "11_initialization_sensitivity": "4f946a6a1686dd213cc143960105a9b20620f215206c5fd5b2b6d8db1b91b268"
+  },
+  "bibliography_entries": 15,
+  "cited_entries": 15,
+  "main_chapters": 10,
+  "appendices": 4,
+  "pdf_pages": 67,
+  "main_scientific_body_pages": 46,
+  "main_prose_word_estimate": 11247,
+  "word_count_method": "source prose/captions excluding math, references and included tables; TeX macros removed",
+  "accepted_code_evidence_results_unchanged": true,
+  "m4c_r2_sha256": "PASS",
+  "compiler": "Tectonic 0.17.0",
+  "undefined_citations_references_overfull": 0,
+  "pdf_sha256": "18d9b77dc91d262e1788fe3cef806651172a46bed06a9eb18b5da49672ccc404",
+  "administrative_placeholders": [
+    "university",
+    "programme",
+    "author",
+    "supervisor",
+    "submission date",
+    "optional acknowledgements"
+  ],
+  "human_review": [
+    "registered title and institutional layout",
+    "initialization and prescribed reservoirs",
+    "reduced excited-state routing",
+    "finite-horizon and observational claim scope"
+  ]
+}
