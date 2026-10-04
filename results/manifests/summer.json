@@ -1,0 +1,425 @@
+{
+  "QA": {
+    "algebraic_physical": true,
+    "dynamic_H2O2_budget_scaled_max": 2.7670525468124757e-16,
+    "exact_R_H": true,
+    "exact_shadow": true,
+    "family_budget_scaled_max": 1.5311339688375001e-16,
+    "finite_nonnegative": true,
+    "no_clipping_or_state_reset": true,
+    "output_samples": 138,
+    "retained_QSSA_scaled_max": 3.045013620889737e-16,
+    "stored_chemical_background_recomputed_bitwise": true,
+    "stored_forcing_recomputed_bitwise": true
+  },
+  "accepted_model_git_sha": "6637b20eb4dafa35d68c766ff4370241c750def2",
+  "config": {
+    "NIR_step_s": 3600.0,
+    "activity": {
+      "Ap": 4.0,
+      "F107": 150.0,
+      "F107a": 150.0
+    },
+    "atmosphere": "dynamic_msis",
+    "attainable_minimum_sza_deg": 21.54536147852921,
+    "background_step_s": 300.0,
+    "baseline_git_sha": "6637b20eb4dafa35d68c766ff4370241c750def2",
+    "baseline_tag": "tfm-temporal-model-v1",
+    "case": "summer",
+    "date": "2020-06-21",
+    "dawn_start_utc": "2020-06-22T03:11:45.082415+00:00",
+    "end_datetime_utc": "2020-06-22T07:20:22.575469+00:00",
+    "initialization": "reference_noon; approximate bootstrap, not climatology",
+    "latitude_deg": 45.0,
+    "longitude_deg_east": 0.0,
+    "previous_noon_utc": "2020-06-21T12:01:26.679355+00:00",
+    "reaches_sza60": true,
+    "solver": {
+      "atol": 1e-08,
+      "max_step_s": 120.0,
+      "method": "BDF",
+      "output_step_s": 300.0,
+      "rtol": 2e-06
+    },
+    "start_datetime_utc": "2020-06-21T20:00:00+00:00"
+  },
+  "dawn_QA": {
+    "algebraic_physical": true,
+    "dynamic_H2O2_budget_scaled_max": 2.7670525468124757e-16,
+    "exact_R_H": true,
+    "exact_shadow": true,
+    "family_budget_scaled_max": 1.5749128313189986e-16,
+    "finite_nonnegative": true,
+    "no_clipping_or_state_reset": true,
+    "output_samples": 52,
+    "retained_QSSA_scaled_max": 3.045013620889737e-16,
+    "stored_chemical_background_recomputed_bitwise": true,
+    "stored_forcing_recomputed_bitwise": true
+  },
+  "external_sources_sha256": {
+    "O2-O2_2011.cia": "8cc3ecc87bf7a02492b385ecc71abf279b058da853aea768825deb81237d5ee3",
+    "guest1593878592.txt": "6b4acbc01cb649891f2d8597875c9cd8e4805cfdd4d3b7841c2d18cbf718de12",
+    "hapi.py": "81d9d2f4fc6dd80021d329280810008e0385109d8c5295f41615f51d405b0964",
+    "wehrli85.txt": "daad62d53f188d8c48bfb60e4b78afd22c74ffc49180e2ac249c6d95b8f96d43"
+  },
+  "full_local_output_sha256": "29c628fa4e660f5899a70eb22af031518910a6c04167ef72a69b8a36a128b72f",
+  "full_trajectory_metadata": {
+    "atmosphere": {
+      "CO2_vmr": 0.000405,
+      "H2O_H2": "accepted prescribed VMR profiles",
+      "N2_vmr": 0.78,
+      "O2_vmr": 0.21,
+      "activity": {
+        "ap": 4.0,
+        "f107": 150.0,
+        "f107a": 150.0,
+        "policy": "explicit constant quiet reference, no downloads"
+      },
+      "end_datetime_utc": "2020-06-22T07:20:22.575469+00:00",
+      "external_O3": "accepted SOCRATES fixed VMR times dynamic M; not date-dependent climatology",
+      "external_O_unavailable": "exact zero",
+      "interpolation": "linear native densities and temperature; no RHS MSIS calls",
+      "latitude_deg": 45.0,
+      "longitude_deg_east": 0.0,
+      "model": "NRLMSISE-00",
+      "msis_version": 0,
+      "number_density_units": "cm^-3; native m^-3 times 1e-6",
+      "options": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "ordinary_M": "sum N2/O2/O/He/H/Ar/N; unavailable=0; anomalous O excluded",
+      "policy": "dynamic_msis",
+      "pymsis_version": "0.12.0",
+      "start_datetime_utc": "2020-06-21T12:01:26.679355+00:00",
+      "step_s": 300.0
+    },
+    "atmosphere_tracks_location": true,
+    "dynamic_atmosphere": true,
+    "end_datetime_utc": "2020-06-22T07:20:22.575469+00:00",
+    "geometry": {
+      "algorithm": "NOAA fractional-year Fourier approximation",
+      "latitude_deg": 45.0,
+      "longitude_deg_east": 0.0,
+      "origin_utc": "2020-06-21T20:00:00+00:00",
+      "refraction": false,
+      "shadow": "accepted spherical solid-Earth shell geometry",
+      "source": "https://gml.noaa.gov/grad/solcalc/solareqns.PDF",
+      "zenith_units": "degrees"
+    },
+    "initialization": {
+      "LST_h": 12.0,
+      "SZA_deg": 21.54522245233831,
+      "atom_factor": 1.0,
+      "bootstrap_duration_s": 28713.320645,
+      "bootstrap_solver": {
+        "atol": 1e-08,
+        "max_step_s": 120.0,
+        "method": "BDF",
+        "nfev": 2727,
+        "njev": 101,
+        "rtol": 2e-06,
+        "segments": 1,
+        "trial_rejections": 0
+      },
+      "climatologically_validated": false,
+      "date": "2020-06-21T12:01:26.679355+00:00",
+      "latitude_deg": 45.0,
+      "longitude_deg": 0.0,
+      "missing_fraction": 0.0,
+      "multiseed_certification": {
+        "full_seed_log": "preserved in canonical NPZ metadata",
+        "levels": 51,
+        "maximum_normalized_residual": 7.26207367164454e-14,
+        "maximum_root_relative_spread": 2.1006055527593632e-13,
+        "minimum_physical_convergences": 5
+      },
+      "native_H_missing_z_km": [
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72
+      ],
+      "native_O_missing_z_km": [
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72
+      ],
+      "noon_datetime_utc": "2020-06-21T12:01:26.679355+00:00",
+      "policy": "reference_noon; approximate bootstrap, not climatology",
+      "simulation_start_datetime_utc": "2020-06-21T20:00:00+00:00",
+      "stationary_only_at_t0": [
+        "OH",
+        "HO2",
+        "H2O2",
+        "Delta"
+      ],
+      "unavailable_native_O_H": "exact zero; no extrapolation"
+    },
+    "radiation": {
+      "NIR": {
+        "CIA": "historical O2-Air attenuation only",
+        "angular_audits": [
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 3,
+            "optimized_nodes": 3,
+            "relative_max": 0.0015365810187203308
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 4,
+            "optimized_nodes": 4,
+            "relative_max": 0.001872444387053413
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 4,
+            "optimized_nodes": 4,
+            "relative_max": 0.002376581034278627
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 5,
+            "optimized_nodes": 5,
+            "relative_max": 0.004292580632194938
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 5,
+            "optimized_nodes": 5,
+            "relative_max": 0.0043053466566087386
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 6,
+            "optimized_nodes": 6,
+            "relative_max": 0.004316487779742562
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 10,
+            "optimized_nodes": 10,
+            "relative_max": 0.0037411706834525565
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 25,
+            "optimized_nodes": 25,
+            "relative_max": 0.0045908015394919895
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 9.995299216024904e-16,
+            "nodes": 291,
+            "optimized_nodes": 291,
+            "relative_max": 0.004961873286927028
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 9.943004419227943e-16,
+            "nodes": 271,
+            "optimized_nodes": 271,
+            "relative_max": 0.00496082727064735
+          },
+          {
+            "dark": true,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "relative_max": 0.0
+          },
+          {
+            "dark": true,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "relative_max": 0.0
+          },
+          {
+            "dark": true,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "relative_max": 0.0
+          },
+          {
+            "dark": true,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "relative_max": 0.0
+          },
+          {
+            "dark": true,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "relative_max": 0.0
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 9.877985347602339e-16,
+            "nodes": 264,
+            "optimized_nodes": 264,
+            "relative_max": 0.004994196765695766
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 9.948052504841288e-16,
+            "nodes": 289,
+            "optimized_nodes": 289,
+            "relative_max": 0.004954354270305168
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 25,
+            "optimized_nodes": 25,
+            "relative_max": 0.004650575118356028
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 10,
+            "optimized_nodes": 10,
+            "relative_max": 0.0037392133178342844
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 5,
+            "optimized_nodes": 5,
+            "relative_max": 0.00373671849708456
+          },
+          {
+            "cached_reference_nodes": 0,
+            "dark": false,
+            "near_zero_absolute_max_s1": 0.0,
+            "nodes": 2,
+            "optimized_nodes": 2,
+            "relative_max": 0.0014782146759944011
+          }
+        ],
+        "atmosphere_step_s": 3600.0,
+        "numerics": {
+          "cached_reference": "validated far_order=4 / near_cm1=2 direct rates; row provenance retained",
+          "fresh_far_order": 8,
+          "fresh_near_cm1": 0.25,
+          "outputs": "nominal only; unused CIA envelope/raw evaluations omitted without equation changes"
+        },
+        "policy": "dynamic background A0/B/IRA snapshot tables; no frozen-NIR substitution",
+        "raw_hitran_distributed": false,
+        "temporal_interpolation": "linear rates between adjacent atmospheres at actual SZA"
+      },
+      "UV": "accepted M4C with current prescribed background and dynamic chemical O/O3"
+    },
+    "solver": {
+      "atol": 1e-08,
+      "max_step_s": 120.0,
+      "method": "BDF",
+      "nfev": 15656,
+      "njev": 539,
+      "rtol": 2e-06,
+      "segments": 103,
+      "trial_rejections": 0
+    },
+    "start_datetime_utc": "2020-06-21T20:00:00+00:00",
+    "transport": false
+  },
+  "output": {
+    "bytes": 825941,
+    "path": "results/tables/summer_dawn.npz",
+    "sha256": "7f5a5de3e2f00721d182017580e7159c144ff104d6004affaafc0944c6923a0a"
+  },
+  "production_git_sha": "d0d89abcd7dbc13e0b72c631bf33baf65fc67537",
+  "publication_runner_sha256": "37cc29c7ffcb1f45b93cf55250767ec52e7c4c945948aedcbb86924da190a2d5",
+  "reused_accepted_artifacts": [],
+  "scientific_source_compatibility": null,
+  "software": {
+    "numpy": "2.5.3",
+    "pymsis": "0.12.0",
+    "python": "3.14.3",
+    "scipy": "1.18.1"
+  }
+}

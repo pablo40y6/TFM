@@ -20,6 +20,22 @@ from .historical_2020.prescribed_profiles import external_o3_vmr, prescribed_h2o
 from .solar_geometry import utc_datetime, validate_location
 
 
+def _time_within_coverage(time_s, lower, upper):
+    """Normalize only floating roundoff at a physical time-coverage endpoint.
+
+    A sum of datetime-derived offset and duration can exceed the independently
+    computed duration by one ULP. Four ULPs cover the two additions; real
+    out-of-coverage queries still fail. No concentration or forcing is clipped.
+    Interior time values are returned unchanged.
+    """
+    tolerance = 4 * np.spacing(max(abs(lower), abs(upper), 1.))
+    if lower-tolerance <= time_s < lower:
+        return lower
+    if upper < time_s <= upper+tolerance:
+        return upper
+    return time_s
+
+
 @dataclass(frozen=True)
 class QuietReferenceActivity:
     f107: float = 150.
@@ -164,6 +180,7 @@ class DynamicMSISAtmosphere:
         self._last_background=None
 
     def raw_at(self,time_s):
+        time_s = _time_within_coverage(time_s, 0., self.times[-1])
         if not np.isfinite(time_s) or time_s<0 or time_s>self.times[-1]:
             raise ValueError("time outside precomputed atmosphere coverage")
         i=min(int(np.searchsorted(self.times,time_s,side='right'))-1,len(self.times)-2)

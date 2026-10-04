@@ -1,0 +1,30 @@
+{
+  "NIR_step_s": 3600.0,
+  "activity": {
+    "Ap": 4.0,
+    "F107": 150.0,
+    "F107a": 150.0
+  },
+  "atmosphere": "dynamic_msis",
+  "attainable_minimum_sza_deg": 69.75517094006922,
+  "background_step_s": 300.0,
+  "baseline_git_sha": "6637b20eb4dafa35d68c766ff4370241c750def2",
+  "baseline_tag": "tfm-temporal-model-v1",
+  "case": "high_latitude",
+  "date": "2020-03-20",
+  "dawn_start_utc": "2020-03-21T04:17:24.248650+00:00",
+  "end_datetime_utc": "2020-03-21T12:08:18.147204+00:00",
+  "initialization": "reference_noon; approximate bootstrap, not climatology",
+  "latitude_deg": 70.0,
+  "longitude_deg_east": 0.0,
+  "previous_noon_utc": "2020-03-20T12:07:55.363681+00:00",
+  "reaches_sza60": false,
+  "solver": {
+    "atol": 1e-08,
+    "max_step_s": 120.0,
+    "method": "BDF",
+    "output_step_s": 300.0,
+    "rtol": 2e-06
+  },
+  "start_datetime_utc": "2020-03-20T20:00:00+00:00"
+}
