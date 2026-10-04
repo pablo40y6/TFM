@@ -1,0 +1,10 @@
+{
+  "inputs": {
+    "results/tables/reference_dawn_summary.csv": "d14904f13c665bf7273c5253e173c22bf74a00ec8c18a06d55bbc844cd3ff9b3",
+    "src/tfm_photochem/historical_2020/kinetics.py": "75d4ce195acd19cbae39605789dbd26eb8cf2695056932a433bbf4549aa77618",
+    "src/tfm_photochem/historical_2020/reactions.py": "507909ee1a66705c4f9fc93f68216eb87d699eb4d1e85ba99ff09fb112744256"
+  },
+  "rate_laws": 38,
+  "reference_rows": 15,
+  "registry_processes": 52
+}
