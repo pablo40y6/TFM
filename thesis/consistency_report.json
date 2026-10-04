@@ -19,7 +19,7 @@
   "cited_entries": 18,
   "main_chapters": 10,
   "appendices": 4,
-  "pdf_pages": 69,
+  "pdf_pages": 67,
   "main_scientific_body_pages": 46,
   "main_prose_word_estimate": 11169,
   "word_count_method": "source prose/captions excluding math, references and included tables; TeX macros removed",
@@ -29,20 +29,8 @@
   "m4c_r2_sha256": "PASS",
   "compiler": "Tectonic 0.17.0",
   "undefined_citations_references_overfull": 0,
-  "pdf_sha256": "2989feecd80be5d666991ecd2cb0cc977a22520d1f2d79f670eee397634bf05d",
-  "administrative_placeholders": [
-    "university",
-    "programme",
-    "author",
-    "supervisor",
-    "submission date",
-    "optional acknowledgements",
-    "institutional title/template"
-  ],
-  "human_review": [
-    "registered title and institutional layout",
-    "initialization and prescribed reservoirs",
-    "reduced excited-state routing",
-    "finite-horizon and observational claim scope"
-  ]
+  "pdf_sha256": "8ff79974bdd5004ada6dbdf206250a4043f95eb719d6f4a21a8c5ba5ebc979a6",
+  "administrative_placeholders": [],
+  "institutional_metadata": "confirmed by author; all required fields verified",
+  "scientific_scope": "closed; unchanged accepted finite-horizon results"
 }

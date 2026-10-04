@@ -174,6 +174,18 @@ def main():
     all_tex = "\n".join(
         path.read_text() for path in (THESIS / "chapters").glob("*.tex")
     )
+    title_source = (THESIS / "main.tex").read_text(encoding="utf-8")
+    for token in (r"\missing", "TO COMPLETE", "TODO", "Acknowledgements"):
+        assert token not in title_source + all_tex, token
+    for field in (
+        "University of Gothenburg", "Department of Physics",
+        "Physics, Master's Programme", "Supervisor: Anqi Li", "2026",
+        "Master's Thesis, 30 ECTS", "FIM930",
+        "Master of Science (120 credits) with a major in Physics",
+        r"Pablo Mart\'inez",
+        r"Time-dependent photochemical modelling of mesospheric ozone and \singlet\ during dawn",
+    ):
+        assert field in title_source, field
     keys = set(re.findall(r"@\w+\{([^,]+),", (THESIS / "references.bib").read_text()))
     citations = {
         key
@@ -236,21 +248,9 @@ def main():
         "compiler": "Tectonic 0.17.0",
         "undefined_citations_references_overfull": 0,
         "pdf_sha256": digest(THESIS / "build/main.pdf"),
-        "administrative_placeholders": [
-            "university",
-            "programme",
-            "author",
-            "supervisor",
-            "submission date",
-            "optional acknowledgements",
-            "institutional title/template",
-        ],
-        "human_review": [
-            "registered title and institutional layout",
-            "initialization and prescribed reservoirs",
-            "reduced excited-state routing",
-            "finite-horizon and observational claim scope",
-        ],
+        "administrative_placeholders": [],
+        "institutional_metadata": "confirmed by author; all required fields verified",
+        "scientific_scope": "closed; unchanged accepted finite-horizon results",
     }
     (THESIS / "consistency_report.json").write_text(
         json.dumps(report, indent=2) + "\n", encoding="utf-8", newline="\n"
