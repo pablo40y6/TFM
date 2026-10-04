@@ -13,6 +13,12 @@ English body and Abstract; Spanish Resumen; contents, figure/table lists and fou
 
 From `thesis/`, use portable Tectonic 0.17.0:
 
+Set `SOURCE_DATE_EPOCH=1791102838` (the immutable scientific-results baseline
+timestamp) before compiling. In PowerShell use
+`$env:SOURCE_DATE_EPOCH='1791102838'`; in a POSIX shell use
+`export SOURCE_DATE_EPOCH=1791102838`. This fixes PDF metadata timestamps so
+the checked branch and merged main produce byte-identical PDFs.
+
 ```text
 tectonic --keep-logs --keep-intermediates --outdir build main.tex
 ```
