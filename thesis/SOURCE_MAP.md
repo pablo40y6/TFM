@@ -82,3 +82,27 @@ Season/latitude vary geometry, background and initialization simultaneously.
 Missing SZA60 for winter45N/equinox70N is a geometry limitation, not missing data
 to be interpolated. Initialization sensitivities use the accepted frozen,
 artificial-equinox experiment; do not describe them as fresh dynamic-MSIS runs.
+
+## Targeted academic revision: added literature
+
+Bibliography expanded from 15 to 18 sources. Metadata (full authors, title,
+journal, year, volume/issue and page range) was checked against the existing
+documents, not inferred from filenames. No scientific source PDF was edited.
+
+| Entry | Document and metadata check | Supported claim and scope |
+|---|---|---|
+| Thomas et al. (1983), GRL 10(4), 245–248 | `1983-Ozone_density_distribution_in_the_mesosphere_(50-90_km)_measured_by_the_SME_limb_scanning_near_infrared_spectromete.pdf`, pp. 245–248; complete nine-author list on p. 245; DOI corroborated in Li et al. (2020)'s bibliography | Chapters 1/2/8: historical 1.27 μm SME ozone inference, secondary vertical maximum and height-dependent variability; afternoon measurements are not a dawn matchup. |
+| Allen, Lunine and Yung (1984), JGR 89(D3), 4841–4872 | `1984-The_Vertical_Distribution_of_Ozone_in_the_Mesosphere_and_Lower_Thermosphere (1).pdf`, title/abstract p. 4841; DOI corroborated by the publisher | Chapters 2/8: mesospheric/mesopause ozone structure, diurnal behaviour and coupled oxygen–hydrogen chemistry with sensitivity to illumination, water and thermal structure; no transferred validation statistics. |
+| Koppers and Murtagh (1996), Ann. Geophys. 14(1), 68–79 | `koppers&murtagh.pdf`, scanned title/abstract p. 68; full metadata and DOI corroborated by the journal | Chapters 2/8: Schumann–Runge parameterization depends on slant column, temperature and SZA and can affect ozone-related chemistry; no coefficient substitution or borrowed error bound. |
+
+Primary corroborating records: [Allen et al.](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/JD089iD03p04841),
+[Koppers and Murtagh](https://angeo.copernicus.org/articles/14/68/1996/),
+[Li et al. bibliography](https://amt.copernicus.org/articles/13/6215/2020/amt-13-6215-2020-relations.html).
+`murtaghSR.pdf` was also inspected visually (1989 ESA SP-291 proceedings,
+pp. 49–53 plus a blank scanned page); it adds overlapping parameterization
+context and was not added solely to increase the reference count.
+
+This revision preserves all displayed equations and generated table data rows,
+all numerical results, the eleven figure PDFs and the consolidated scientific
+tree. Software endpoint and detailed regression coverage moved to Appendix D;
+the main validation chapter retains numerical convergence and physical checks.

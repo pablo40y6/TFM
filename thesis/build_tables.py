@@ -197,7 +197,7 @@ def generate():
         )
     write(
         "sensitivity.tex",
-        r"\begin{table}[htbp]\centering\small\caption{Accepted relevant dawn sensitivity distributions in percent. Atmosphere uses identical explicit initial state; initialization variants use the frozen/artificial reference.}\label{tab:allsensitivity}\begin{tabular}{llrrr}\toprule Comparison & Species & Max & p90 & p99\\\midrule"
+        r"\begin{table}[htbp]\centering\small\caption{Relevant dawn sensitivity distributions in percent. Atmosphere uses identical explicit initial state; initialization variants use the frozen/artificial reference.}\label{tab:allsensitivity}\begin{tabular}{llrrr}\toprule Comparison & Species & Max & p90 & p99\\\midrule"
         + "\n"
         + "\n".join(data)
         + r"\bottomrule\end{tabular}\end{table}",

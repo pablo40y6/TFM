@@ -97,5 +97,14 @@ Rebuilding a scenario additionally selects its case and supplies the authorized 
 
 The thesis tables are rebuilt with \texttt{python thesis/build\_tables.py}. The thesis build uses ordinary LaTeX inputs and BibTeX; the README gives portable Tectonic and conventional latexmk alternatives. Figures are resolved relative to \texttt{thesis/main.tex}. Generated compiler auxiliaries stay in an ignored output directory. Building the document requires no new photochemical simulation.
 
+\section{Software verification and endpoint regression}
+The final results campaign records 913 tests and 13 subtests passing, together with lint and result-generation checks. These include event-coefficient identities, random-state budget checks, input/source mapping and frozen-reference regressions. Test counts document implementation coverage; they are not a measure of atmospheric accuracy or a substitute for the convergence evidence in Chapter~\ref{ch:validation}.
+
+One software defect arose when separately computed datetime durations differed by one floating-point unit at an endpoint. A physically valid final query was rejected as outside precomputed coverage. The correction normalizes only roundoff within four units of the endpoint representation; genuinely outside queries still fail. It changes neither the chemical state nor valid interior forcing queries. The concrete datetime witness and endpoint equality have regression coverage.
+
+The dark ozone continuum, the invalid stationary OH/HO$_2$ root and the peroxide singularity remain reproducible regression cases. They record the mathematical limits of the earlier eliminations, while the final formulation retains their underlying reactions and integrates the affected species dynamically. The original scalar closure is kept as a frozen regression reference on states where its algebraic solution is physical. These checks distinguish a change in assumed timescale from a change in chemistry.
+
+Source fingerprints and the immutable ultraviolet artifact provide a separate integrity check. Raw HITRAN and licensed source bundles are not redistributed. Published sources establish scientific provenance; versioned reports and manifests establish which coefficients, controls and scenarios were actually evaluated.
+
 \section{Interpretive boundaries}
 Reproducibility fixes the numerical scenario and its source identity. It does not make the prescribed profiles a validated climatology, prove a periodic attractor or certify observational agreement. Human scientific review should assess whether the declared reduced chemistry, initialized states and absent transport are adequate for the intended atmospheric application. Those judgments remain separate from whether the document compiles and its numbers match accepted evidence.

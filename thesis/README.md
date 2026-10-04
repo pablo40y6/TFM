@@ -54,8 +54,14 @@ than an invented year. NOAA and SciPy documentation include access dates.
 ## Unresolved administrative fields and scientific review
 
 Placeholders: university, official programme, author's full name, supervisor,
-submission date and optional acknowledgements. The original brief's title is
+submission date, optional acknowledgements and institutional title/template.
+The original brief's title is
 retained pending confirmation of the official registered title.
+
+If no institutional title is already registered, the recommended descriptive
+title for human consideration is **Time-dependent photochemical modelling of
+mesospheric ozone and O2(a1Delta_g) during dawn** (with the oxygen state typeset
+as O2(a¹Δg)). This is a recommendation only; the displayed title is unchanged.
 
 Scientific review should assess the sufficiency of approximate noon states,
 prescribed reservoir/exterior ozone fields, absent transport and reduced
@@ -68,9 +74,9 @@ accepted delivered forward-model scope.
 ## Draft verification
 
 The compiled draft contains 10 chapters, 4 appendices, English Abstract and
-Spanish Resumen: 67 PDF pages including front matter, 46 main-body pages,
-approximately 11,247 main-body prose/caption words, 11 original accepted figures
-and 15 verified and cited bibliography entries. The word estimate excludes
+Spanish Resumen: 69 PDF pages including front matter, 46 main-body pages,
+approximately 11,169 main-body prose/caption words, 11 original accepted figures
+and 18 verified and cited bibliography entries. The word estimate excludes
 mathematics and included registry/data tables; it is not a PDF token count.
 
 Tectonic 0.17.0 compilation passes with no undefined citations/references,
@@ -88,3 +94,23 @@ Initial local attempts encountered missing MSIS on the search path and Windows
 temporary-directory permissions; the complete run used the existing MSIS
 dependency and an authorized workspace temporary directory. No model changes
 were needed. This draft adds document audits rather than new physical runs.
+
+## Academic revision before institutional formatting
+
+The reviewed scientific core is preserved. The targeted pass removes repeated
+project-internal acceptance wording from the main body, moves endpoint-defect
+and detailed regression material from Chapter 6 to Appendix D, and retains all
+convergence, positivity, QSSA/budget and shadow evidence. Chapters 1/2/8 gain
+three locally verified literature sources (Thomas et al. 1983, Allen et al. 1984,
+Koppers and Murtagh 1996), mapped to their specific claims in SOURCE_MAP.md.
+Results/Discussion explicitly distinguish geometry/MSIS/initialization changes
+from fixed activity, reservoir profiles and incident spectra, with no Earth–Sun
+distance irradiance rescaling. The Spanish Resumen and Abstract/Conclusions
+are edited without changing numerical claims or adding observational validation.
+
+The document audit additionally compares every displayed equation and every
+generated table data row with independently reviewed draft `37d8a04`, and checks
+that numerical math in the Results chapter is retained. The prior complete
+913-test/13-subtest QA remains applicable because no scientific files change;
+this revision repeats document compilation, consistency, visual review and lint.
+PR #7 remains draft and must not be marked ready or merged at this stage.

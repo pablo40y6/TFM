@@ -130,6 +130,47 @@ def main():
         found = events(source[start:stop].split("=", 1)[1])
         assert found == expected[species], (species, found, expected[species])
     chapters = sorted((THESIS / "chapters").glob("[0-9]*.tex"))
+    # The independently reviewed draft is the editorial revision reference.
+    reviewed = "37d8a04682b96a390ae166ed64169fcdaab95666"
+    display_math = r"\\begin\{(align|equation)\}.*?\\end\{\1\}"
+    for path in chapters + [THESIS / "chapters/appendices.tex"]:
+        relative = path.relative_to(ROOT).as_posix()
+        old = subprocess.check_output(
+            ["git", "show", f"{reviewed}:{relative}"], cwd=ROOT, text=True
+        )
+        original_math = [m.group() for m in re.finditer(display_math, old, re.S)]
+        revised_math = [
+            m.group() for m in re.finditer(display_math, path.read_text(), re.S)
+        ]
+        assert original_math == revised_math, relative
+    for path in (THESIS / "tables").glob("*.tex"):
+        relative = path.relative_to(ROOT).as_posix()
+        old = subprocess.check_output(
+            ["git", "show", f"{reviewed}:{relative}"], cwd=ROOT, text=True
+        )
+        original_rows = [
+            line
+            for line in old.splitlines()
+            if " & " in line and not line.startswith(r"\begin")
+        ]
+        revised_rows = [
+            line
+            for line in path.read_text().splitlines()
+            if " & " in line and not line.startswith(r"\begin")
+        ]
+        assert original_rows == revised_rows, relative
+    results_old = subprocess.check_output(
+        ["git", "show", f"{reviewed}:thesis/chapters/07_results.tex"],
+        cwd=ROOT,
+        text=True,
+    )
+    def numerical_math(source):
+        return Counter(
+            item for item in re.findall(r"\$([^$]+)\$", source) if re.search(r"\d", item)
+        )
+    assert not numerical_math(results_old) - numerical_math(
+        (THESIS / "chapters/07_results.tex").read_text()
+    )
     all_tex = "\n".join(
         path.read_text() for path in (THESIS / "chapters").glob("*.tex")
     )
@@ -189,6 +230,8 @@ def main():
         ),
         "word_count_method": "source prose/captions excluding math, references and included tables; TeX macros removed",
         "accepted_code_evidence_results_unchanged": True,
+        "reviewed_draft_equations_and_table_rows_unchanged": True,
+        "results_chapter_numerical_math_retained": True,
         "m4c_r2_sha256": "PASS",
         "compiler": "Tectonic 0.17.0",
         "undefined_citations_references_overfull": 0,
@@ -200,6 +243,7 @@ def main():
             "supervisor",
             "submission date",
             "optional acknowledgements",
+            "institutional title/template",
         ],
         "human_review": [
             "registered title and institutional layout",
@@ -208,7 +252,9 @@ def main():
             "finite-horizon and observational claim scope",
         ],
     }
-    (THESIS / "consistency_report.json").write_text(json.dumps(report, indent=2) + "\n")
+    (THESIS / "consistency_report.json").write_text(
+        json.dumps(report, indent=2) + "\n", encoding="utf-8", newline="\n"
+    )
     print(
         json.dumps(
             {key: value for key, value in report.items() if key != "figures"}, indent=2
